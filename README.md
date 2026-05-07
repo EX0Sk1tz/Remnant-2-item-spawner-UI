@@ -153,16 +153,6 @@ Opens the corresponding Remnant 2 wiki page.
 
 ---
 
-# Notes
-
-Some DLC assets are not fully loaded by the game until they have been summoned once through the console.
-
-If a normal spawn does not work:
-1. Use Force once
-2. Afterwards normal Spawn usually works
-
----
-
 # Troubleshooting
 
 ## Spawn does nothing
