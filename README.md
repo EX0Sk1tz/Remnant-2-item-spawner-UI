@@ -160,7 +160,6 @@ Opens the corresponding Remnant 2 wiki page.
 Check:
 - UE4SS is installed correctly
 - all required mods are enabled
-- the game is running
 - the correct Win64 folder is selected
 
 ---
