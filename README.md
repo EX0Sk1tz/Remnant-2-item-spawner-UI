@@ -20,7 +20,7 @@ A lightweight WPF companion app and UE4SS Lua bridge for spawning Remnant 2 item
 
 # Requirements
 
-- Scripts I uploaded [here](https://github.com/EX0Sk1tz/Remnant-2-item-spawner-scripts).
+- Scripts I uploaded [here](https://github.com/EX0Sk1tz/Remnant-2-item-spawner-scripts). (They are already included in the latest release)
 - UE4SS installed
 - Mods enabled in UE4SS
 
