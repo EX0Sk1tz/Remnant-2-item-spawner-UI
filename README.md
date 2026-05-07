@@ -1,6 +1,6 @@
 # Remnant 2 Item Spawner UI
 
-A lightweight WPF companion app and UE4SS Lua bridge for spawning Remnant 2 items through a searchable interface.
+<img width="1301" height="750" alt="image" src="https://github.com/user-attachments/assets/b3391058-e907-43cd-b42e-0f2994b4d66f" />
 
 ---
 
