@@ -1,4 +1,4 @@
-# Remnant 2 Unlocker
+# Remnant 2 Item Spawner UI
 
 A lightweight WPF companion app and UE4SS Lua bridge for spawning Remnant 2 items through a searchable interface.
 
