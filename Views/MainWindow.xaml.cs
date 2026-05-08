@@ -66,30 +66,15 @@ public partial class MainWindow : Window
 
     private void OpenWiki_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not System.Windows.Controls.Button button)
-            return;
+        var item = GetItemFromSender(sender);
 
-        if (button.DataContext is not RemnantItem item)
-            return;
-
-        if (DataContext is not MainViewModel vm)
-            return;
-
-        string url;
-
-        if (vm.SelectedWiki == "Fextralife")
+        if (item == null)
         {
-            var pageName = Uri.EscapeDataString(item.Name.Replace(" ", "+"));
-            url = $"https://remnant2.wiki.fextralife.com/{pageName}";
+            _viewModel.StatusText = "Wiki failed: item context missing";
+            return;
         }
-        else
-        {
-            var pageName = item.Name
-                .Replace(" ", "_")
-                .Replace("'", "%27");
 
-            url = $"https://remnant2.wiki.gg/wiki/{pageName}";
-        }
+        var url = _viewModel.BuildWikiUrl(item);
 
         Process.Start(new ProcessStartInfo
         {

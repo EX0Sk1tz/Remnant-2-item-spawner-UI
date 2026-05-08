@@ -10,6 +10,21 @@ namespace Remnant2UnlockerApp.ViewModels;
 
 public sealed class MainViewModel : INotifyPropertyChanged
 {
+    private static readonly HashSet<string> WikiLowercaseWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "of",
+        "the",
+        "and",
+        "a",
+        "an",
+        "in",
+        "on",
+        "to",
+        "for",
+        "with",
+        "from"
+    };
+
     private readonly GamePathService _pathService;
     private readonly ItemRepository _itemRepository;
     private readonly QueueWriter _queueWriter;
@@ -46,6 +61,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _alwaysOnTop = settings.AlwaysOnTop;
         _teleportHotkey = string.IsNullOrWhiteSpace(settings.Teleport) ? "F6" : settings.Teleport;
         _consoleKey = string.IsNullOrWhiteSpace(settings.ConsoleKey) ? "F10" : settings.ConsoleKey;
+        _selectedWiki = string.IsNullOrWhiteSpace(settings.Wiki) ? "wiki.gg" : settings.Wiki;
 
         CategoryGroups = new ObservableCollection<CategoryGroup>
         {
@@ -101,6 +117,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsWikiGgSelected));
             OnPropertyChanged(nameof(IsFextralifeSelected));
+            SaveHotkeySettings();
         }
     }
 
@@ -381,6 +398,52 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StatusText = $"{Items.Count} items shown";
     }
 
+    public string BuildWikiUrl(RemnantItem item)
+    {
+        if (SelectedWiki == "Fextralife")
+        {
+            var pageName = Uri.EscapeDataString(item.Name.Replace(" ", "+"));
+            return $"https://remnant2.wiki.fextralife.com/{pageName}";
+        }
+
+        var wikiTitle = BuildWikiGgTitle(item.Name);
+        return $"https://remnant2.wiki.gg/wiki/{wikiTitle}";
+    }
+
+    private static string BuildWikiGgTitle(string itemName)
+    {
+        if (string.IsNullOrWhiteSpace(itemName))
+            return "";
+
+        var parts = itemName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        for (var i = 0; i < parts.Length; i++)
+        {
+            var word = parts[i];
+
+            if (i > 0 && WikiLowercaseWords.Contains(word))
+            {
+                parts[i] = word.ToLowerInvariant();
+                continue;
+            }
+
+            parts[i] = ToTitleWord(word);
+        }
+
+        return Uri.EscapeDataString(string.Join("_", parts));
+    }
+
+    private static string ToTitleWord(string word)
+    {
+        if (string.IsNullOrWhiteSpace(word))
+            return "";
+
+        if (word.Length == 1)
+            return word.ToUpperInvariant();
+
+        return char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant();
+    }
+
     public async Task SpawnItemAsync(RemnantItem item)
     {
         RefreshPathState();
@@ -478,7 +541,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         SaveHotkeySettings();
 
-        StatusText = $"Teleport hotkey saved: {TeleportHotkey}. Restart the game to apply it.";
+        StatusText = $"Teleport hotkey saved: {TeleportHotkey}";
     }
 
     public void SetConsoleKey(string key)
@@ -500,7 +563,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             AlwaysOnTop = AlwaysOnTop,
             ConsoleKey = ConsoleKey,
-            Teleport = TeleportHotkey
+            Teleport = TeleportHotkey,
+            Wiki = SelectedWiki
         });
     }
 
