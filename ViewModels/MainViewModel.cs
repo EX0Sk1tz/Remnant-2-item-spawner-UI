@@ -15,13 +15,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly QueueWriter _queueWriter;
     private readonly WikiImageService _wikiImageService;
     private readonly ConsoleSpawnService _consoleSpawnService;
+    private readonly HotkeySettingsService _hotkeySettingsService;
 
     private List<RemnantItem> _allItems = new();
     private string _searchText = "";
     private string _selectedGroup = "All";
     private string _selectedType = "All";
+    private string _selectedWiki = "wiki.gg";
     private RemnantItem? _selectedItem;
     private string _statusText = "Ready";
+
+    private bool _alwaysOnTop;
+    private bool _isCapturingTeleportHotkey;
+    private bool _isCapturingConsoleKey;
+    private string _teleportHotkey = "F6";
+    private string _consoleKey = "F10";
 
     public MainViewModel()
     {
@@ -31,6 +39,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _queueWriter = new QueueWriter(_pathService);
         _wikiImageService = new WikiImageService();
         _consoleSpawnService = new ConsoleSpawnService();
+        _hotkeySettingsService = new HotkeySettingsService(_pathService);
+
+        var settings = _hotkeySettingsService.Load();
+
+        _alwaysOnTop = settings.AlwaysOnTop;
+        _teleportHotkey = string.IsNullOrWhiteSpace(settings.Teleport) ? "F6" : settings.Teleport;
+        _consoleKey = string.IsNullOrWhiteSpace(settings.ConsoleKey) ? "F10" : settings.ConsoleKey;
 
         CategoryGroups = new ObservableCollection<CategoryGroup>
         {
@@ -39,7 +54,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             new() { Name = "Accessories", Types = new List<string> { "Amulet", "Ring" } },
             new() { Name = "Traits", Types = new List<string> { "Archetype Trait", "Core Trait", "Trait" } },
             new() { Name = "Items", Types = new List<string> { "Concoction", "Consumable", "Curative", "Grenade", "Relic" } },
-            new() { Name = "Materials", Types = new List<string> { "Crafting Material", "Currency", "Engram Material", "Upgrade Material" } },
+            new() { Name = "Materials", Types = new List<string> { "Crafting Material", "Currency", "Engram Material", "Material", "Upgrade Material" } },
             new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special", "Trait Point" } }
         };
 
@@ -47,6 +62,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         UnlockGroupCommand = new RelayCommand(async () => await UnlockGroupAsync());
         ReloadCommand = new RelayCommand(async () => await LoadAsync());
         SelectGamePathCommand = new RelayCommand(async () => await SelectGamePathAsync());
+        StartTeleportHotkeyCaptureCommand = new RelayCommand(StartTeleportHotkeyCapture);
+        StartConsoleKeyCaptureCommand = new RelayCommand(StartConsoleKeyCapture);
 
         RefreshPathState();
     }
@@ -64,6 +81,118 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand ReloadCommand { get; }
 
     public RelayCommand SelectGamePathCommand { get; }
+
+    public RelayCommand StartTeleportHotkeyCaptureCommand { get; }
+
+    public RelayCommand StartConsoleKeyCaptureCommand { get; }
+
+    public List<string> WikiOptions { get; } = new()
+    {
+        "wiki.gg",
+        "Fextralife"
+    };
+
+    public string SelectedWiki
+    {
+        get => _selectedWiki;
+        set
+        {
+            _selectedWiki = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsWikiGgSelected));
+            OnPropertyChanged(nameof(IsFextralifeSelected));
+        }
+    }
+
+    public bool IsWikiGgSelected
+    {
+        get => SelectedWiki == "wiki.gg";
+        set
+        {
+            if (value)
+                SelectedWiki = "wiki.gg";
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsFextralifeSelected));
+        }
+    }
+
+    public bool IsFextralifeSelected
+    {
+        get => SelectedWiki == "Fextralife";
+        set
+        {
+            if (value)
+                SelectedWiki = "Fextralife";
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsWikiGgSelected));
+        }
+    }
+
+    public bool AlwaysOnTop
+    {
+        get => _alwaysOnTop;
+        set
+        {
+            _alwaysOnTop = value;
+            OnPropertyChanged();
+            SaveHotkeySettings();
+            StatusText = AlwaysOnTop ? "Always on top enabled" : "Always on top disabled";
+        }
+    }
+
+    public bool IsCapturingTeleportHotkey
+    {
+        get => _isCapturingTeleportHotkey;
+        set
+        {
+            _isCapturingTeleportHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TeleportHotkeyDisplay));
+        }
+    }
+
+    public bool IsCapturingConsoleKey
+    {
+        get => _isCapturingConsoleKey;
+        set
+        {
+            _isCapturingConsoleKey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ConsoleKeyDisplay));
+        }
+    }
+
+    public string TeleportHotkey
+    {
+        get => _teleportHotkey;
+        set
+        {
+            _teleportHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TeleportHotkeyDisplay));
+        }
+    }
+
+    public string ConsoleKey
+    {
+        get => _consoleKey;
+        set
+        {
+            _consoleKey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ConsoleKeyDisplay));
+        }
+    }
+
+    public string TeleportHotkeyDisplay => IsCapturingTeleportHotkey
+        ? "Press key..."
+        : TeleportHotkey;
+
+    public string ConsoleKeyDisplay => IsCapturingConsoleKey
+        ? "Press key..."
+        : ConsoleKey;
 
     public bool IsGamePathValid => _pathService.IsConfigured;
 
@@ -283,7 +412,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            await _consoleSpawnService.SpawnViaConsoleAsync(item);
+            await _consoleSpawnService.SpawnViaConsoleAsync(item, ConsoleKey);
 
             StatusText = $"Force spawn sent: {item.Name}";
         }
@@ -325,6 +454,54 @@ public sealed class MainViewModel : INotifyPropertyChanged
         await _queueWriter.UnlockTypesAsync(new[] { SelectedType });
 
         StatusText = $"Group spawn sent: {SelectedType}";
+    }
+
+    private void StartTeleportHotkeyCapture()
+    {
+        IsCapturingConsoleKey = false;
+        IsCapturingTeleportHotkey = true;
+    }
+
+    private void StartConsoleKeyCapture()
+    {
+        IsCapturingTeleportHotkey = false;
+        IsCapturingConsoleKey = true;
+    }
+
+    public void SetTeleportHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        TeleportHotkey = key;
+        IsCapturingTeleportHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = $"Teleport hotkey saved: {TeleportHotkey}. Restart the game to apply it.";
+    }
+
+    public void SetConsoleKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        ConsoleKey = key;
+        IsCapturingConsoleKey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = $"Console key saved: {ConsoleKey}";
+    }
+
+    private void SaveHotkeySettings()
+    {
+        _hotkeySettingsService.Save(new HotkeySettings
+        {
+            AlwaysOnTop = AlwaysOnTop,
+            ConsoleKey = ConsoleKey,
+            Teleport = TeleportHotkey
+        });
     }
 
     private void RefreshPathState()
