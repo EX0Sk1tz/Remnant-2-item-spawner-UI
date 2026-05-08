@@ -1,6 +1,6 @@
 # Remnant 2 Item Spawner UI
 
-<img width="1301" height="750" alt="image" src="https://github.com/user-attachments/assets/b3391058-e907-43cd-b42e-0f2994b4d66f" />
+<img width="1700" height="768" alt="image" src="https://github.com/user-attachments/assets/c765ca59-2cc7-4882-b185-d9976b0e6aa4" />
 
 ---
 
@@ -12,6 +12,8 @@
 - Force spawn through in game console
 - Copy summon command to clipboard
 - Integrated wiki button
+- Hotkey Customization
+- Teleport
 - DLC and hidden item support
 - Clean standalone executable
 - No external .NET installation required
@@ -67,15 +69,18 @@ Win64
 └─ Mods
    └─ Remnant2Unlocker
       ├─ scripts
+      │  ├─ hotkeys.lua
+      │  ├─ inventory.lua
+      │  ├─ json.lua
       │  ├─ main.lua
-      │  ├─ queue.lua
-      │  ├─ spawner.lua
       │  ├─ player.lua
-      │  └─ json.lua
+      │  ├─ queue.lua
+      │  └─ spawner.lua
       │
-      ├─ items.json
-      ├─ enabled.txt
       ├─ command_queue.json
+      ├─ enabled.txt
+      ├─ hotkeys.json
+      ├─ items.json
       └─ status.json
 ```
 
@@ -202,6 +207,16 @@ bin\Release\net8.0-windows\win-x64\publish
 ```
 
 ---
+
+# Notice:
+If experiencing crashes with the Spawn Button, just use the Force Button.
+This will open the console ingame and paste the summon command, the hotkey for the console can be configured in the app.
+
+Teleport will kill you if the vertical distance downwards would be lethal through falling.
+Upwards no restriction. Best to use against a surface.
+Pressing Shift aka. Sprinting while trying to Teleport will not work.
+Any environment blocking your character from its path to the desired location will result in shorter teleport.
+Imagine it being a very fast fly mod, the line of sight must be clear.
 
 # Disclaimer
 
