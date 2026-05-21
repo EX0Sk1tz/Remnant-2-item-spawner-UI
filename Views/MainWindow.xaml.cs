@@ -14,6 +14,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _viewModel;
 
+        _viewModel.GroupSpawnQueued += (_, title) => OpenSpawnProgressWindow(title);
+
         Loaded += async (_, _) => await _viewModel.LoadAsync();
     }
 
@@ -92,4 +94,37 @@ public partial class MainWindow : Window
 
         window.ShowDialog();
     }
+
+    private void OpenDiagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.RefreshDiagnostics();
+
+        var window = new DiagnosticsWindow(_viewModel.DiagnosticReport)
+        {
+            Owner = this
+        };
+
+        window.ShowDialog();
+    }
+
+    private void OpenGroupProgress_Click(object sender, RoutedEventArgs e)
+    {
+        OpenSpawnProgressWindow("Safe Group Spawn");
+    }
+
+    private void OpenSpawnProgressWindow(string title)
+    {
+        var viewModel = new SpawnProgressViewModel(
+            _viewModel.BridgeStatusService,
+            _viewModel.QueueWriter,
+            title);
+
+        var window = new SpawnProgressWindow(viewModel)
+        {
+            Owner = this
+        };
+
+        window.Show();
+    }
+
 }

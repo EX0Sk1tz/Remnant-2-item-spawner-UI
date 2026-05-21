@@ -296,12 +296,24 @@
                 </Grid>
 
                 <ScrollViewer VerticalScrollBarVisibility="Hidden"
-                              HorizontalScrollBarVisibility="Disabled">
+                    HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
+
+                        <TextBox Text="{Binding CategorySearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Height="38"
+                             FontSize="13"
+                             Padding="12,8"
+                             Margin="0,0,0,10"
+                             Background="#1A1D27"
+                             Foreground="#F2F2F2"
+                             BorderBrush="#303645"
+                             BorderThickness="1"
+                             ToolTip="Search subcategories"/>
+
                         <Button Content="All"
-                                Command="{Binding SelectTypeCommand}"
-                                CommandParameter="All"
-                                Style="{StaticResource AllCategoryButtonStyle}"/>
+                            Command="{Binding SelectTypeCommand}"
+                            CommandParameter="All"
+                            Style="{StaticResource AllCategoryButtonStyle}"/>
 
                         <ItemsControl ItemsSource="{Binding CategoryGroups}">
                             <ItemsControl.ItemTemplate>
@@ -539,24 +551,57 @@
             <Grid Grid.Row="2" Margin="0,18,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="190"/>
                     <ColumnDefinition Width="390"/>
                     <ColumnDefinition Width="180"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
-                           Text="{Binding StatusText}"
-                           Foreground="#B8BFCC"
-                           VerticalAlignment="Center"
-                           FontSize="14"/>
+               Text="{Binding StatusText}"
+               Foreground="#B8BFCC"
+               VerticalAlignment="Center"
+               FontSize="14"/>
 
-                <Border Grid.Column="1"
-                        Background="#1A1D27"
-                        BorderBrush="#273044"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Height="44"
-                        Margin="8,0,0,0"
-                        Padding="12,0">
+                <Button Grid.Column="1"
+            Click="OpenDiagnostics_Click"
+            Height="36"
+            Margin="8,0,0,0"
+            Background="#252936"
+            Foreground="#FACC15">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+
+                    <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+                        <TextBlock Text="ⓘ"
+                       FontSize="15"
+                       FontWeight="Bold"
+                       Margin="0,0,6,0"/>
+
+                        <TextBlock Text="{Binding DiagnosticHint}"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       TextTrimming="CharacterEllipsis"
+                       MaxWidth="140"/>
+                    </StackPanel>
+                </Button>
+
+                <Border Grid.Column="2"
+            Background="#1A1D27"
+            BorderBrush="#273044"
+            BorderThickness="1"
+            CornerRadius="10"
+            Height="44"
+            Margin="8,0,0,0"
+            Padding="12,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="12"/>
@@ -565,9 +610,9 @@
                         </Grid.ColumnDefinitions>
 
                         <Ellipse Grid.Column="0"
-                                 Width="8"
-                                 Height="8"
-                                 VerticalAlignment="Center">
+                     Width="8"
+                     Height="8"
+                     VerticalAlignment="Center">
                             <Ellipse.Style>
                                 <Style TargetType="Ellipse">
                                     <Setter Property="Fill" Value="#DC2626"/>
@@ -581,34 +626,34 @@
                         </Ellipse>
 
                         <StackPanel Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    Margin="8,0,8,0">
+                        VerticalAlignment="Center"
+                        Margin="8,0,8,0">
                             <TextBlock Text="{Binding GamePathStatus}"
-                                       Foreground="#F2F2F2"
-                                       FontSize="12"
-                                       FontWeight="SemiBold"/>
+                           Foreground="#F2F2F2"
+                           FontSize="12"
+                           FontWeight="SemiBold"/>
 
                             <TextBlock Text="{Binding GamePathDisplay}"
-                                       Foreground="#8F95A3"
-                                       FontSize="11"
-                                       TextTrimming="CharacterEllipsis"/>
+                           Foreground="#8F95A3"
+                           FontSize="11"
+                           TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
 
                         <Button Grid.Column="2"
-                                Content="Browse"
-                                Command="{Binding SelectGamePathCommand}"
-                                Height="30"
-                                Background="#252936"
-                                Foreground="#D8DCE5"/>
+                    Content="Browse"
+                    Command="{Binding SelectGamePathCommand}"
+                    Height="30"
+                    Background="#252936"
+                    Foreground="#D8DCE5"/>
                     </Grid>
                 </Border>
 
-                <Button Grid.Column="2"
-                        Content="Spawn Group"
-                        Command="{Binding UnlockGroupCommand}"
-                        Height="44"
-                        Margin="8,0,0,0"
-                        Background="#3A3F51"/>
+                <Button Grid.Column="3"
+            Content="Spawn Group"
+            Command="{Binding UnlockGroupCommand}"
+            Height="44"
+            Margin="8,0,0,0"
+            Background="#3A3F51"/>
             </Grid>
         </Grid>
     </Grid>

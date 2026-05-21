@@ -4,47 +4,47 @@ using Remnant2UnlockerApp.Models;
 
 namespace Remnant2UnlockerApp.Services;
 
-public sealed class HotkeySettingsService
+public sealed class CheatSettingsService
 {
     private readonly GamePathService _gamePathService;
 
-    public HotkeySettingsService(GamePathService gamePathService)
+    public CheatSettingsService(GamePathService gamePathService)
     {
         _gamePathService = gamePathService;
     }
 
-    public string GetHotkeysPath()
+    private string GetCheatsPath()
     {
-        return Path.Combine(_gamePathService.GetModRootPath(), "hotkeys.json");
+        return Path.Combine(_gamePathService.GetModRootPath(), "cheats.json");
     }
 
-    public HotkeySettings Load()
+    public CheatSettings Load()
     {
         try
         {
-            var path = GetHotkeysPath();
+            var path = GetCheatsPath();
 
             if (!File.Exists(path))
-                return new HotkeySettings();
+                return new CheatSettings();
 
             var json = File.ReadAllText(path);
 
-            return JsonSerializer.Deserialize<HotkeySettings>(
+            return JsonSerializer.Deserialize<CheatSettings>(
                 json,
                 new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                }) ?? new HotkeySettings();
+                }) ?? new CheatSettings();
         }
         catch
         {
-            return new HotkeySettings();
+            return new CheatSettings();
         }
     }
 
-    public void Save(HotkeySettings settings)
+    public void Save(CheatSettings settings)
     {
-        var path = GetHotkeysPath();
+        var path = GetCheatsPath();
         var directory = Path.GetDirectoryName(path);
 
         if (!string.IsNullOrWhiteSpace(directory))
@@ -53,15 +53,8 @@ public sealed class HotkeySettingsService
         var json = JsonSerializer.Serialize(
             new
             {
-                alwaysOnTop = settings.AlwaysOnTop,
-                consoleKey = settings.ConsoleKey,
-                teleport = settings.Teleport,
-                destroyTarget = settings.DestroyTarget,
-                wiki = settings.Wiki,
-                movementSpeedMultiplier = settings.MovementSpeedMultiplier,
                 infiniteHealth = settings.InfiniteHealth,
-                infiniteStamina = settings.InfiniteStamina,
-                stackSize = settings.StackSize,
+                infiniteStamina = settings.InfiniteStamina
             },
             new JsonSerializerOptions
             {
