@@ -28,9 +28,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly GamePathService _pathService;
     private readonly ItemRepository _itemRepository;
     private readonly QueueWriter _queueWriter;
+    private readonly BridgeStatusService _bridgeStatusService;
     private readonly WikiImageService _wikiImageService;
     private readonly ConsoleSpawnService _consoleSpawnService;
     private readonly HotkeySettingsService _hotkeySettingsService;
+    private readonly CheatSettingsService _cheatSettingsService;
+    private readonly DiagnosticsService _diagnosticsService;
+    private DiagnosticReport _diagnosticReport = DiagnosticReport.Empty;
+    private string _categorySearchText = "";
+    private readonly List<CategoryGroup> _allCategoryGroups = new();
+
 
     private List<RemnantItem> _allItems = new();
     private string _searchText = "";
@@ -43,8 +50,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _alwaysOnTop;
     private bool _isCapturingTeleportHotkey;
     private bool _isCapturingConsoleKey;
+    private bool _isCapturingDestroyTargetHotkey;
     private string _teleportHotkey = "F6";
     private string _consoleKey = "F10";
+    private string _destroyTargetHotkey = "None";
+    private double _movementSpeedMultiplier = 1.0;
+    private bool _infiniteHealth;
+    private bool _infiniteStamina;
+    private int _stackSize = 1;
 
     public MainViewModel()
     {
@@ -52,18 +65,29 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         _itemRepository = new ItemRepository(_pathService);
         _queueWriter = new QueueWriter(_pathService);
+        _bridgeStatusService = new BridgeStatusService(_pathService);
         _wikiImageService = new WikiImageService();
         _consoleSpawnService = new ConsoleSpawnService();
         _hotkeySettingsService = new HotkeySettingsService(_pathService);
+        _cheatSettingsService = new CheatSettingsService(_pathService);
+        _diagnosticsService = new DiagnosticsService(_pathService);
+        RefreshDiagnostics();
+
+        var cheatSettings = _cheatSettingsService.Load();
+        _infiniteHealth = cheatSettings.InfiniteHealth;
+        _infiniteStamina = cheatSettings.InfiniteStamina;
 
         var settings = _hotkeySettingsService.Load();
 
         _alwaysOnTop = settings.AlwaysOnTop;
         _teleportHotkey = string.IsNullOrWhiteSpace(settings.Teleport) ? "F6" : settings.Teleport;
         _consoleKey = string.IsNullOrWhiteSpace(settings.ConsoleKey) ? "F10" : settings.ConsoleKey;
+        _destroyTargetHotkey = string.IsNullOrWhiteSpace(settings.DestroyTarget) ? "None" : settings.DestroyTarget;
         _selectedWiki = string.IsNullOrWhiteSpace(settings.Wiki) ? "wiki.gg" : settings.Wiki;
+        _movementSpeedMultiplier = settings.MovementSpeedMultiplier <= 0 ? 1.0 : settings.MovementSpeedMultiplier;
+        _stackSize = settings.StackSize <= 0 ? 1 : settings.StackSize;
 
-        CategoryGroups = new ObservableCollection<CategoryGroup>
+        _allCategoryGroups = new List<CategoryGroup>
         {
             new() { Name = "Weapons", Types = new List<string> { "Bow", "Handgun", "Long Gun", "Melee" } },
             new() { Name = "Armor", Types = new List<string> { "Body", "Gloves", "Head", "Legs" } },
@@ -74,17 +98,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
             new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special", "Trait Point" } }
         };
 
+        CategoryGroups = new ObservableCollection<CategoryGroup>();
+
+        ApplyCategoryFilter();
+
         SelectTypeCommand = new RelayCommand<string>(SelectType);
         UnlockGroupCommand = new RelayCommand(async () => await UnlockGroupAsync());
         ReloadCommand = new RelayCommand(async () => await LoadAsync());
         SelectGamePathCommand = new RelayCommand(async () => await SelectGamePathAsync());
         StartTeleportHotkeyCaptureCommand = new RelayCommand(StartTeleportHotkeyCapture);
         StartConsoleKeyCaptureCommand = new RelayCommand(StartConsoleKeyCapture);
+        StartDestroyTargetHotkeyCaptureCommand = new RelayCommand(StartDestroyTargetHotkeyCapture);
 
         RefreshPathState();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public event EventHandler<string>? GroupSpawnQueued;
 
     public ObservableCollection<RemnantItem> Items { get; } = new();
 
@@ -102,11 +133,200 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public RelayCommand StartConsoleKeyCaptureCommand { get; }
 
+    public RelayCommand StartDestroyTargetHotkeyCaptureCommand { get; }
+
     public List<string> WikiOptions { get; } = new()
     {
         "wiki.gg",
         "Fextralife"
     };
+
+    public DiagnosticReport DiagnosticReport => _diagnosticReport;
+
+    public BridgeStatusService BridgeStatusService => _bridgeStatusService;
+
+    public QueueWriter QueueWriter => _queueWriter;
+
+    public bool HasDiagnosticIssue => _diagnosticReport.HasIssues;
+
+    public string DiagnosticHint => _diagnosticReport.Hint;
+
+    public int StackSize
+    {
+        get => _stackSize;
+        set
+        {
+            var clamped = value;
+
+            if (clamped < 1)
+                clamped = 1;
+
+            if (clamped > 999)
+                clamped = 999;
+
+            if (_stackSize == clamped)
+                return;
+
+            _stackSize = clamped;
+            OnPropertyChanged();
+
+            SaveHotkeySettings();
+
+            StatusText = $"Default stack size saved: {_stackSize}";
+        }
+    }
+
+    private static bool IsRelicFragment(RemnantItem item)
+    {
+        if (item.Type.Contains("Relic Fragment", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (item.Name.Contains("Relic Fragment", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (item.Path.Contains("RelicFragment_", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (item.Path.Contains("/Items/Gems/", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private int GetItemLevel(RemnantItem item)
+    {
+        return IsRelicFragment(item) ? 31 : 0;
+    }
+
+    public string BuildSummonCommand(RemnantItem item)
+    {
+        var stackSize = Math.Clamp(StackSize, 1, 999);
+        var itemLevel = GetItemLevel(item);
+
+        if (itemLevel > 0)
+            return $"summon {item.Path} 1 {stackSize} {itemLevel}";
+
+        return $"summon {item.Path} 1 {stackSize}";
+    }
+
+    public void RefreshDiagnostics()
+    {
+        _diagnosticReport = _diagnosticsService.Run();
+
+        OnPropertyChanged(nameof(DiagnosticReport));
+        OnPropertyChanged(nameof(HasDiagnosticIssue));
+        OnPropertyChanged(nameof(DiagnosticHint));
+    }
+
+    public string CategorySearchText
+    {
+        get => _categorySearchText;
+        set
+        {
+            _categorySearchText = value;
+            OnPropertyChanged();
+            ApplyCategoryFilter();
+        }
+    }
+
+    private void ApplyCategoryFilter()
+    {
+        CategoryGroups.Clear();
+
+        var search = CategorySearchText.Trim();
+
+        foreach (var group in _allCategoryGroups)
+        {
+            var types = group.Types;
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                types = group.Types
+                    .Where(x => x.Contains(search, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (types.Count == 0)
+                continue;
+
+            CategoryGroups.Add(new CategoryGroup
+            {
+                Name = group.Name,
+                Types = types
+            });
+        }
+    }
+
+    private void SaveCheatSettings()
+    {
+        try
+        {
+            _cheatSettingsService.Save(new CheatSettings
+            {
+                InfiniteHealth = InfiniteHealth,
+                InfiniteStamina = InfiniteStamina
+            });
+
+            StatusText = $"Cheat settings saved. Health={InfiniteHealth}, Stamina={InfiniteStamina}";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Cheat settings save failed: {ex.Message}";
+        }
+    }
+
+    public void SetDestroyTargetHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        DestroyTargetHotkey = key;
+        IsCapturingDestroyTargetHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = DestroyTargetHotkey == "None"
+            ? "DestroyTarget hotkey cleared"
+            : $"DestroyTarget hotkey saved: {DestroyTargetHotkey}";
+    }
+
+    public bool InfiniteHealth
+    {
+        get => _infiniteHealth;
+        set
+        {
+            if (_infiniteHealth == value)
+                return;
+
+            _infiniteHealth = value;
+            OnPropertyChanged();
+
+            StatusText = InfiniteHealth
+                ? "Infinite Health enabled"
+                : "Infinite Health disabled";
+
+            SaveCheatSettings();
+        }
+    }
+
+    public bool InfiniteStamina
+    {
+        get => _infiniteStamina;
+        set
+        {
+            if (_infiniteStamina == value)
+                return;
+
+            _infiniteStamina = value;
+            OnPropertyChanged();
+
+            StatusText = InfiniteStamina
+                ? "Infinite Stamina enabled"
+                : "Infinite Stamina disabled";
+
+            SaveCheatSettings();
+        }
+    }
 
     public string SelectedWiki
     {
@@ -181,6 +401,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public bool IsCapturingDestroyTargetHotkey
+    {
+        get => _isCapturingDestroyTargetHotkey;
+        set
+        {
+            _isCapturingDestroyTargetHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DestroyTargetHotkeyDisplay));
+        }
+    }
+
+    private void StartDestroyTargetHotkeyCapture()
+    {
+        IsCapturingTeleportHotkey = false;
+        IsCapturingConsoleKey = false;
+        IsCapturingDestroyTargetHotkey = true;
+    }
+
     public string TeleportHotkey
     {
         get => _teleportHotkey;
@@ -203,6 +441,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public string DestroyTargetHotkey
+    {
+        get => _destroyTargetHotkey;
+        set
+        {
+            _destroyTargetHotkey = string.IsNullOrWhiteSpace(value) ? "None" : value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DestroyTargetHotkeyDisplay));
+        }
+    }
+
     public string TeleportHotkeyDisplay => IsCapturingTeleportHotkey
         ? "Press key..."
         : TeleportHotkey;
@@ -210,6 +459,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string ConsoleKeyDisplay => IsCapturingConsoleKey
         ? "Press key..."
         : ConsoleKey;
+
+    public string DestroyTargetHotkeyDisplay => IsCapturingDestroyTargetHotkey
+    ? "Press key..."
+    : DestroyTargetHotkey;
+
+    public double MovementSpeedMultiplier
+    {
+        get => _movementSpeedMultiplier;
+        set
+        {
+            var rounded = Math.Round(value, 1);
+
+            if (rounded < 1.0)
+                rounded = 1.0;
+
+            if (rounded > 5.0)
+                rounded = 5.0;
+
+            _movementSpeedMultiplier = rounded;
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MovementSpeedDisplay));
+
+            SaveHotkeySettings();
+
+            StatusText = $"Movement speed multiplier saved: {MovementSpeedDisplay}";
+        }
+    }
+
+    public string MovementSpeedDisplay => $"{MovementSpeedMultiplier:0.0}x";
 
     public bool IsGamePathValid => _pathService.IsConfigured;
 
@@ -278,6 +557,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         try
         {
             RefreshPathState();
+            RefreshDiagnostics();
 
             if (!IsGamePathValid)
             {
@@ -327,6 +607,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _pathService.SetWin64Path(dialog.SelectedPath);
 
         RefreshPathState();
+        RefreshDiagnostics();
 
         if (!IsGamePathValid)
         {
@@ -366,7 +647,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        var group = CategoryGroups.FirstOrDefault(x => x.Types.Contains(type));
+        var group = _allCategoryGroups.FirstOrDefault(x => x.Types.Contains(type));
 
         if (group != null)
             SelectedGroup = group.Name;
@@ -460,7 +741,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        await _queueWriter.SpawnAsync(item);
+        await _queueWriter.SpawnAsync(item, StackSize, GetItemLevel(item));
 
         StatusText = $"Spawn sent: {item.Name}";
     }
@@ -493,7 +774,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        Forms.Clipboard.SetText(item.SummonCommand);
+        Forms.Clipboard.SetText(BuildSummonCommand(item));
 
         StatusText = $"Copied summon command: {item.Name}";
     }
@@ -501,6 +782,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private async Task UnlockGroupAsync()
     {
         RefreshPathState();
+        RefreshDiagnostics();
 
         if (!IsGamePathValid)
         {
@@ -514,20 +796,53 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        await _queueWriter.UnlockTypesAsync(new[] { SelectedType });
+        var groupItems = _allItems
+            .Where(x => string.Equals(x.Type, SelectedType, StringComparison.OrdinalIgnoreCase))
+            .Where(x => !string.IsNullOrWhiteSpace(x.Path))
+            .ToList();
 
-        StatusText = $"Group spawn sent: {SelectedType}";
+        if (groupItems.Count == 0)
+        {
+            StatusText = $"No spawnable items found for {SelectedType}";
+            return;
+        }
+
+        if (groupItems.Count > 50)
+        {
+            var result = Forms.MessageBox.Show(
+                $"This group contains {groupItems.Count} items.\n\n" +
+                "Large groups are spawned one item at a time to reduce crash risk.\n\n" +
+                "Settings:\n" +
+                "• 1 item every 500 ms\n\n" +
+                "Start safe group spawn?",
+                "Safe Group Spawn",
+                Forms.MessageBoxButtons.YesNo,
+                Forms.MessageBoxIcon.Warning);
+
+            if (result != Forms.DialogResult.Yes)
+            {
+                StatusText = $"Group spawn cancelled: {SelectedType}";
+                return;
+            }
+        }
+
+        await _queueWriter.UnlockTypesAsync(new[] { SelectedType }, StackSize);
+
+        StatusText = $"Safe group spawn queued: {SelectedType} ({groupItems.Count} items)";
+        GroupSpawnQueued?.Invoke(this, $"Safe Spawn: {SelectedType}");
     }
 
     private void StartTeleportHotkeyCapture()
     {
         IsCapturingConsoleKey = false;
+        IsCapturingDestroyTargetHotkey = false;
         IsCapturingTeleportHotkey = true;
     }
 
     private void StartConsoleKeyCapture()
     {
         IsCapturingTeleportHotkey = false;
+        IsCapturingDestroyTargetHotkey = false;
         IsCapturingConsoleKey = true;
     }
 
@@ -564,7 +879,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
             AlwaysOnTop = AlwaysOnTop,
             ConsoleKey = ConsoleKey,
             Teleport = TeleportHotkey,
-            Wiki = SelectedWiki
+            DestroyTarget = DestroyTargetHotkey,
+            Wiki = SelectedWiki,
+            MovementSpeedMultiplier = MovementSpeedMultiplier,
+            StackSize = StackSize,
+            InfiniteHealth = InfiniteHealth,
+            InfiniteStamina = InfiniteStamina
         });
     }
 
@@ -573,6 +893,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsGamePathValid));
         OnPropertyChanged(nameof(GamePathStatus));
         OnPropertyChanged(nameof(GamePathDisplay));
+        OnPropertyChanged(nameof(HasDiagnosticIssue));
+        OnPropertyChanged(nameof(DiagnosticHint));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

@@ -74,4 +74,49 @@ public partial class SettingsWindow : Window
 
         _viewModel.SetTeleportHotkey(keyName);
     }
+
+    private void DestroyTargetHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel)
+            return;
+
+        if (!viewModel.IsCapturingDestroyTargetHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            viewModel.SetDestroyTargetHotkey("None");
+            return;
+        }
+
+        var key = e.Key == System.Windows.Input.Key.System
+            ? e.SystemKey
+            : e.Key;
+
+        viewModel.SetDestroyTargetHotkey(key.ToString());
+    }
+
+    private void DestroyTargetHotkeyButton_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel)
+            return;
+
+        if (!viewModel.IsCapturingDestroyTargetHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = e.ChangedButton switch
+        {
+            System.Windows.Input.MouseButton.XButton1 => "MouseButton4",
+            System.Windows.Input.MouseButton.XButton2 => "MouseButton5",
+            System.Windows.Input.MouseButton.Middle => "MiddleMouseButton",
+            _ => ""
+        };
+
+        if (!string.IsNullOrWhiteSpace(key))
+            viewModel.SetDestroyTargetHotkey(key);
+    }
 }
