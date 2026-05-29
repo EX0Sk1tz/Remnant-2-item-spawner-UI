@@ -493,7 +493,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsGamePathValid => _pathService.IsConfigured;
 
     public string GamePathStatus => IsGamePathValid
-        ? "Game path configured"
+        ? $"Game path configured ({_pathService.PlatformName})"
         : "Game path not configured";
 
     public string GamePathDisplay => string.IsNullOrWhiteSpace(_pathService.Win64Path)
@@ -588,7 +588,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         using var dialog = new Forms.FolderBrowserDialog
         {
-            Description = "Select Remnant2\\Remnant2\\Binaries\\Win64",
+            Description = "Select Remnant 2 executable folder. Steam/Epic: Binaries\\Win64. Game Pass: Binaries\\WinGDK",
             UseDescriptionForTitle = true,
             ShowNewFolderButton = false
         };
@@ -612,7 +612,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!IsGamePathValid)
         {
             Items.Clear();
-            StatusText = "Invalid folder. Select the folder that contains Remnant2-Win64-Shipping.exe and Mods\\Remnant2Unlocker";
+            StatusText = "Invalid folder. Select the folder that contains Remnant2-Win64-Shipping.exe or Remnant2-WinGDK-Shipping.exe and Mods\\Remnant2Unlocker";
             return;
         }
 
