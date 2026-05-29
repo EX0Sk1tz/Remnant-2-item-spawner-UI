@@ -26,7 +26,7 @@ public sealed class DiagnosticsService
                 "Game path missing",
                 "The app does not know where your Remnant 2 Win64 folder is.",
                 "Click Browse and select the folder that contains Remnant2-Win64-Shipping.exe.",
-                "Expected folder: Remnant2\\Remnant2\\Binaries\\Win64",
+                "Steam/Epic expected folder: Remnant2\\Remnant2\\Binaries\\Win64\nGame Pass expected folder: XboxGames\\Remnant 2\\Content\\Remnant2\\Binaries\\WinGDK",
                 true);
 
             return report;
@@ -79,14 +79,7 @@ public sealed class DiagnosticsService
             "Copy the Remnant2Unlocker folder into Win64\\Mods.",
             true);
 
-        CheckFile(
-            report,
-            Path.Combine(unlockerPath, "items.json"),
-            "items.json missing",
-            "items.json missing",
-            "The item database is missing.",
-            "Reinstall the release package and make sure items.json is inside Mods\\Remnant2Unlocker.",
-            true);
+        CheckGameExecutable(report, path);
 
         CheckFile(
             report,
@@ -172,7 +165,26 @@ public sealed class DiagnosticsService
 
     private static bool IsGameRunning()
     {
-        return Process.GetProcessesByName("Remnant2-Win64-Shipping").Length > 0;
+        return Process.GetProcessesByName("Remnant2-Win64-Shipping").Length > 0
+            || Process.GetProcessesByName("Remnant2-WinGDK-Shipping").Length > 0;
+    }
+
+    private static void CheckGameExecutable(DiagnosticReport report, string path)
+    {
+        var steamExe = Path.Combine(path, "Remnant2-Win64-Shipping.exe");
+        var gamePassExe = Path.Combine(path, "Remnant2-WinGDK-Shipping.exe");
+
+        if (File.Exists(steamExe) || File.Exists(gamePassExe))
+            return;
+
+        AddIssue(
+            report,
+            "Game executable missing",
+            "Game exe missing",
+            "The selected folder does not contain a supported Remnant 2 executable.",
+            "Select the exact executable folder. Steam/Epic uses Binaries\\Win64. Game Pass uses Binaries\\WinGDK.",
+            $"Checked for:{Environment.NewLine}{steamExe}{Environment.NewLine}{gamePassExe}",
+            true);
     }
 
     private static void CheckAllowModsMod(DiagnosticReport report, string modsPath)

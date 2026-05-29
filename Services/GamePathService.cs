@@ -8,6 +8,9 @@ public sealed class GamePathService
     private readonly string _settingsDir;
     private readonly string _settingsPath;
 
+    private const string SteamExeName = "Remnant2-Win64-Shipping.exe";
+    private const string GamePassExeName = "Remnant2-WinGDK-Shipping.exe";
+
     public GamePathService()
     {
         _settingsDir = Path.Combine(
@@ -23,13 +26,50 @@ public sealed class GamePathService
 
     public UserSettings Settings { get; private set; }
 
-    public string Win64Path => Settings.Win64Path ?? "";
+    public string GameRootPath => Settings.Win64Path ?? "";
 
-    public bool IsConfigured => IsValidWin64Path(Win64Path);
+    public string Win64Path => GameRootPath;
+
+    public bool IsConfigured => IsValidGamePath(GameRootPath);
+
+    public bool IsSteamInstall => IsSteamPath(GameRootPath);
+
+    public bool IsGamePassInstall => IsGamePassPath(GameRootPath);
+
+    public string PlatformName
+    {
+        get
+        {
+            if (IsSteamInstall)
+                return "Steam/Epic";
+
+            if (IsGamePassInstall)
+                return "Game Pass";
+
+            return "Unknown";
+        }
+    }
+
+    public string ExpectedFolderHint =>
+        "Steam/Epic: Remnant2\\Remnant2\\Binaries\\Win64\n" +
+        "Game Pass: Remnant 2\\Content\\Remnant2\\Binaries\\WinGDK";
+
+    public string GetGameExePath()
+    {
+        var steamExe = Path.Combine(GameRootPath, SteamExeName);
+        if (File.Exists(steamExe))
+            return steamExe;
+
+        var gamePassExe = Path.Combine(GameRootPath, GamePassExeName);
+        if (File.Exists(gamePassExe))
+            return gamePassExe;
+
+        return "";
+    }
 
     public string GetModRootPath()
     {
-        return Path.Combine(Win64Path, "Mods", "Remnant2Unlocker");
+        return Path.Combine(GameRootPath, "Mods", "Remnant2Unlocker");
     }
 
     public string GetItemsPath()
@@ -60,20 +100,50 @@ public sealed class GamePathService
 
     public static bool IsValidWin64Path(string? path)
     {
+        return IsValidGamePath(path);
+    }
+
+    public static bool IsValidGamePath(string? path)
+    {
         if (string.IsNullOrWhiteSpace(path))
             return false;
 
-        var exe = Path.Combine(path, "Remnant2-Win64-Shipping.exe");
+        var hasExe = HasSupportedGameExe(path);
         var mods = Path.Combine(path, "Mods");
-        var modRoot = Path.Combine(path, "Mods", "Remnant2Unlocker");
+        var modRoot = Path.Combine(mods, "Remnant2Unlocker");
         var items = Path.Combine(modRoot, "items.json");
         var scripts = Path.Combine(modRoot, "scripts");
 
-        return File.Exists(exe)
+        return hasExe
             && Directory.Exists(mods)
             && Directory.Exists(modRoot)
             && File.Exists(items)
             && Directory.Exists(scripts);
+    }
+
+    public static bool HasSupportedGameExe(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        return File.Exists(Path.Combine(path, SteamExeName))
+            || File.Exists(Path.Combine(path, GamePassExeName));
+    }
+
+    public static bool IsSteamPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        return File.Exists(Path.Combine(path, SteamExeName));
+    }
+
+    public static bool IsGamePassPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        return File.Exists(Path.Combine(path, GamePassExeName));
     }
 
     private UserSettings LoadSettings()
