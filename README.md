@@ -1,6 +1,6 @@
 # Remnant 2 Item Spawner UI
 
-<img width="1700" height="768" alt="image" src="https://github.com/user-attachments/assets/c765ca59-2cc7-4882-b185-d9976b0e6aa4" />
+<img width="1921" height="769" alt="image" src="https://github.com/user-attachments/assets/c1dbc76f-fa37-41f9-94c3-99f479cdfcb0" />
 
 ---
 
