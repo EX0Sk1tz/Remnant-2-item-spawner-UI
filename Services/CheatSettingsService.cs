@@ -36,8 +36,9 @@ public sealed class CheatSettingsService
                     PropertyNameCaseInsensitive = true
                 }) ?? new CheatSettings();
         }
-        catch
+        catch (Exception ex)
         {
+            AppLogService.Error($"Failed to load cheats.json from {GetCheatsPath()}", ex);
             return new CheatSettings();
         }
     }

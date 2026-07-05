@@ -36,8 +36,9 @@ public sealed class HotkeySettingsService
                     PropertyNameCaseInsensitive = true
                 }) ?? new HotkeySettings();
         }
-        catch
+        catch (Exception ex)
         {
+            AppLogService.Error($"Failed to load hotkeys.json from {GetHotkeysPath()}", ex);
             return new HotkeySettings();
         }
     }
@@ -59,8 +60,6 @@ public sealed class HotkeySettingsService
                 destroyTarget = settings.DestroyTarget,
                 wiki = settings.Wiki,
                 movementSpeedMultiplier = settings.MovementSpeedMultiplier,
-                infiniteHealth = settings.InfiniteHealth,
-                infiniteStamina = settings.InfiniteStamina,
                 stackSize = settings.StackSize,
             },
             new JsonSerializerOptions

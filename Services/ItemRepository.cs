@@ -20,19 +20,29 @@ public sealed class ItemRepository
         if (!File.Exists(path))
             return new List<RemnantItem>();
 
-        await using var stream = File.OpenRead(path);
+        try
+        {
+            await using var stream = File.OpenRead(path);
 
-        var items = await JsonSerializer.DeserializeAsync<List<RemnantItem>>(
-            stream,
-            new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var items = await JsonSerializer.DeserializeAsync<List<RemnantItem>>(
+                stream,
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
 
-        return items?
-            .Where(x => !string.IsNullOrWhiteSpace(x.Name) && !string.IsNullOrWhiteSpace(x.Path))
-            .OrderBy(x => x.Type)
-            .ThenBy(x => x.Name)
-            .ToList() ?? new List<RemnantItem>();
+            return items?
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name) && !string.IsNullOrWhiteSpace(x.Path))
+                .OrderBy(x => x.Type)
+                .ThenBy(x => x.Name)
+                .ToList() ?? new List<RemnantItem>();
+        }
+        catch (Exception ex)
+        {
+            // Surfaced as its own Diagnostics entry (DiagnosticsService checks items.json validity);
+            // fail soft here so a corrupt catalog doesn't crash the whole app on load.
+            AppLogService.Error($"Failed to load items.json from {path}", ex);
+            return new List<RemnantItem>();
+        }
     }
 }

@@ -37,6 +37,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private DiagnosticReport _diagnosticReport = DiagnosticReport.Empty;
     private string _categorySearchText = "";
     private readonly List<CategoryGroup> _allCategoryGroups = new();
+    private readonly SummonableTraitsService _summonableTraitsService;
+    private bool _isSummonableTraitsInstalled;
 
 
     private List<RemnantItem> _allItems = new();
@@ -70,7 +72,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _consoleSpawnService = new ConsoleSpawnService();
         _hotkeySettingsService = new HotkeySettingsService(_pathService);
         _cheatSettingsService = new CheatSettingsService(_pathService);
-        _diagnosticsService = new DiagnosticsService(_pathService);
+        _summonableTraitsService = new SummonableTraitsService(_pathService);
+        _diagnosticsService = new DiagnosticsService(_pathService, _summonableTraitsService);
         RefreshDiagnostics();
 
         var cheatSettings = _cheatSettingsService.Load();
@@ -92,10 +95,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             new() { Name = "Weapons", Types = new List<string> { "Bow", "Handgun", "Long Gun", "Melee" } },
             new() { Name = "Armor", Types = new List<string> { "Body", "Gloves", "Head", "Legs" } },
             new() { Name = "Accessories", Types = new List<string> { "Amulet", "Ring" } },
-            new() { Name = "Traits", Types = new List<string> { "Archetype Trait", "Core Trait", "Trait" } },
+            new() { Name = "Traits", Types = new List<string> { "Archetype Trait", "Core Trait", "Trait", "Trait Point" } },
             new() { Name = "Items", Types = new List<string> { "Concoction", "Consumable", "Curative", "Grenade", "Relic" } },
-            new() { Name = "Materials", Types = new List<string> { "Crafting Material", "Currency", "Engram Material", "Material", "Upgrade Material" } },
-            new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special", "Trait Point" } }
+            new() { Name = "Materials", Types = new List<string> { "Crafting Material", "Currency", "Engram Material", "Upgrade Material" } },
+            new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special" } }
         };
 
         CategoryGroups = new ObservableCollection<CategoryGroup>();
@@ -151,6 +154,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string DiagnosticHint => _diagnosticReport.Hint;
 
+    public bool IsSummonableTraitsInstalled
+    {
+        get => _isSummonableTraitsInstalled;
+        private set
+        {
+            _isSummonableTraitsInstalled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SummonableTraitsStatus));
+        }
+    }
+
+    public string SummonableTraitsStatus => IsSummonableTraitsInstalled
+        ? "Summonable Traits detected"
+        : "Summonable Traits not installed";
+
     public int StackSize
     {
         get => _stackSize;
@@ -174,6 +192,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             StatusText = $"Default stack size saved: {_stackSize}";
         }
+    }
+    private void RefreshSummonableTraitsState()
+    {
+        IsSummonableTraitsInstalled = _summonableTraitsService.IsInstalled();
+
+        foreach (var item in _allItems)
+            item.IsSummonableTraitsInstalled = IsSummonableTraitsInstalled;
+
+        foreach (var item in Items)
+            item.IsSummonableTraitsInstalled = IsSummonableTraitsInstalled;
     }
 
     private static bool IsRelicFragment(RemnantItem item)
@@ -490,6 +518,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MovementSpeedDisplay => $"{MovementSpeedMultiplier:0.0}x";
 
+    public ObservableCollection<ToastMessage> Toasts => ToastService.Toasts;
+
     public bool IsGamePathValid => _pathService.IsConfigured;
 
     public string GamePathStatus => IsGamePathValid
@@ -569,10 +599,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             StatusText = "Loading items...";
 
             _allItems = await _itemRepository.LoadItemsAsync();
+            RefreshSummonableTraitsState();
 
             ApplyFilter();
 
             _ = LoadImagesInBackgroundAsync();
+
+            AppLogService.Info($"Reload requested ({_allItems.Count} items loaded from items.json)");
 
             await _queueWriter.ReloadItemsAsync();
 
@@ -581,6 +614,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             StatusText = ex.Message;
+
+            AppLogService.Error("LoadAsync failed", ex);
         }
     }
 
@@ -674,7 +709,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
 
         foreach (var item in query.OrderBy(x => x.Type).ThenBy(x => x.Name))
+        {
+            item.IsSummonableTraitsInstalled = IsSummonableTraitsInstalled;
             Items.Add(item);
+        }
 
         StatusText = $"{Items.Count} items shown";
     }
@@ -732,18 +770,37 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!IsGamePathValid)
         {
             StatusText = "Spawn blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (item.IsTraitEntry && !item.IsTraitPoint)
+        {
+            StatusText = IsSummonableTraitsInstalled
+                ? "Use Spawn Trait or Add Trait for trait entries"
+                : "Trait spawn blocked: Summonable Traits mod is not installed";
+
+            ShowBlockedToast(StatusText);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(item.Path))
         {
             StatusText = $"Spawn blocked: missing path for {item.Name}";
+            ShowBlockedToast(StatusText);
             return;
         }
 
-        await _queueWriter.SpawnAsync(item, StackSize, GetItemLevel(item));
+        var itemLevel = GetItemLevel(item);
+
+        AppLogService.Info($"Spawn requested: {item.Name} (path={item.Path}, stack={StackSize}, level={itemLevel})");
+
+        await _queueWriter.SpawnAsync(item, StackSize, itemLevel);
 
         StatusText = $"Spawn sent: {item.Name}";
+        ShowSpawnedToast("Spawn sent", item.Name);
+
+        _ = LogBridgeOutcomeAsync($"Spawn '{item.Name}'");
     }
 
     public async Task ForceConsoleSpawnItemAsync(RemnantItem item)
@@ -753,16 +810,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (string.IsNullOrWhiteSpace(item.Path))
             {
                 StatusText = $"Force spawn blocked: missing path for {item.Name}";
+                ShowBlockedToast(StatusText);
                 return;
             }
+
+            AppLogService.Info($"Force console spawn requested: {item.Name} (path={item.Path})");
 
             await _consoleSpawnService.SpawnViaConsoleAsync(item, ConsoleKey);
 
             StatusText = $"Force spawn sent: {item.Name}";
+            ShowSpawnedToast("Force spawn sent", item.Name);
+
+            AppLogService.Info($"Force console spawn sent: {item.Name}");
         }
         catch (Exception ex)
         {
             StatusText = ex.Message;
+
+            ToastService.Show("Force spawn failed", ex.Message, ToastType.Error, 5000);
+
+            AppLogService.Warn($"Force console spawn failed: {item.Name}", ex);
         }
     }
 
@@ -779,6 +846,100 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StatusText = $"Copied summon command: {item.Name}";
     }
 
+    public async Task SummonTraitAsync(RemnantItem item)
+    {
+        RefreshPathState();
+        RefreshSummonableTraitsState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Trait spawn blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (!item.IsTraitEntry || item.IsTraitPoint)
+        {
+            StatusText = "Trait spawn blocked: selected item is not a trait";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (!IsSummonableTraitsInstalled)
+        {
+            StatusText = "Trait spawn blocked: Summonable Traits mod is not installed";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"SummonTrait requested: {item.Name} (path={item.Path})");
+
+        await _queueWriter.SendConsoleCommandAsync($"SummonTrait {item.Path}");
+
+        StatusText = $"SummonTrait sent: {item.Name}";
+        ShowSpawnedToast("SummonTrait sent", item.Name);
+
+        _ = LogBridgeOutcomeAsync($"SummonTrait '{item.Name}'");
+    }
+
+    public async Task AddTraitAsync(RemnantItem item)
+    {
+        RefreshPathState();
+        RefreshSummonableTraitsState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "AddTrait blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (!item.IsTraitEntry || item.IsTraitPoint)
+        {
+            StatusText = "AddTrait blocked: selected item is not a trait";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (!IsSummonableTraitsInstalled)
+        {
+            StatusText = "AddTrait blocked: Summonable Traits mod is not installed";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"AddTrait requested: {item.Name} (path={item.Path})");
+
+        await _queueWriter.SendConsoleCommandAsync($"AddTrait {item.Path}");
+
+        StatusText = $"AddTrait sent: {item.Name}";
+        ShowSpawnedToast("AddTrait sent", item.Name);
+
+        _ = LogBridgeOutcomeAsync($"AddTrait '{item.Name}'");
+    }
+
+    private static void ShowBlockedToast(string message)
+    {
+        ToastService.Show("Blocked", message, ToastType.Warning, 3500);
+    }
+
+    private static void ShowSpawnedToast(string title, string itemName)
+    {
+        ToastService.Show(title, itemName, ToastType.Success, 2200);
+    }
+
+    private async Task LogBridgeOutcomeAsync(string action, int delayMs = 700)
+    {
+        await Task.Delay(delayMs);
+
+        var status = _bridgeStatusService.Read();
+
+        if (!string.IsNullOrWhiteSpace(status.Error))
+            AppLogService.Warn($"{action} -> {status.LastMessage} (bridge error: {status.Error})");
+        else
+            AppLogService.Info($"{action} -> {status.LastMessage}");
+    }
+
     private async Task UnlockGroupAsync()
     {
         RefreshPathState();
@@ -787,12 +948,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!IsGamePathValid)
         {
             StatusText = "Group spawn blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
             return;
         }
 
         if (SelectedType == "All")
         {
             StatusText = "Select a subcategory before spawning a group";
+            ShowBlockedToast(StatusText);
             return;
         }
 
@@ -804,6 +967,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (groupItems.Count == 0)
         {
             StatusText = $"No spawnable items found for {SelectedType}";
+            ShowBlockedToast(StatusText);
             return;
         }
 
@@ -825,6 +989,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
         }
+
+        AppLogService.Info($"Group spawn requested: {SelectedType} ({groupItems.Count} items, stack={StackSize})");
 
         await _queueWriter.UnlockTypesAsync(new[] { SelectedType }, StackSize);
 
@@ -882,9 +1048,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             DestroyTarget = DestroyTargetHotkey,
             Wiki = SelectedWiki,
             MovementSpeedMultiplier = MovementSpeedMultiplier,
-            StackSize = StackSize,
-            InfiniteHealth = InfiniteHealth,
-            InfiniteStamina = InfiniteStamina
+            StackSize = StackSize
         });
     }
 
@@ -927,10 +1091,25 @@ public sealed class RelayCommand : System.Windows.Input.ICommand
 
     public async void Execute(object? parameter)
     {
-        if (_asyncExecute != null)
-            await _asyncExecute();
+        try
+        {
+            if (_asyncExecute != null)
+                await _asyncExecute();
 
-        _execute?.Invoke();
+            _execute?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            // Execute is async void (required by ICommand) so an unhandled exception here
+            // would otherwise crash the whole app with no way for the caller to catch it.
+            AppLogService.Error("A command failed", ex);
+
+            ToastService.Show(
+                "Something went wrong",
+                $"{ex.Message}\n\nDetails were written to the app log.",
+                ToastType.Error,
+                6000);
+        }
     }
 }
 

@@ -12,13 +12,9 @@ public sealed class WikiImageService
     private readonly string _cacheDir =
         Path.Combine(AppContext.BaseDirectory, "Cache", "Images");
 
-    private readonly string _debugDir =
-        Path.Combine(AppContext.BaseDirectory, "Cache", "Debug");
-
     public WikiImageService()
     {
         Directory.CreateDirectory(_cacheDir);
-        Directory.CreateDirectory(_debugDir);
 
         Http.DefaultRequestHeaders.UserAgent.ParseAdd(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
@@ -41,10 +37,6 @@ public sealed class WikiImageService
             Debug.WriteLine($"[WikiImage] Loading page: {pageUrl}");
 
             var html = await Http.GetStringAsync(pageUrl);
-
-            await File.WriteAllTextAsync(
-                Path.Combine(_debugDir, SafeFileName(itemName) + ".html"),
-                html);
 
             var imageUrl = ExtractImageUrl(html);
 

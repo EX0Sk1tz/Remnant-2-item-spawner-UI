@@ -44,7 +44,7 @@ public sealed class QueueWriter
         {
             Id = CreateId(),
             Action = "unlock_types_safe",
-            Types = types.ToArray(),
+            Types = types.ToList(),
             DropQuantity = 1,
             StackSize = Math.Clamp(stackSize, 1, 999),
             DelayMs = 500
@@ -77,34 +77,26 @@ public sealed class QueueWriter
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-        await File.WriteAllTextAsync(queuePath, json);
+        // Write to a temp file and rename over the target so the bridge's 200ms poll
+        // never observes a partially-written command_queue.json.
+        var tempPath = queuePath + ".tmp";
+
+        await File.WriteAllTextAsync(tempPath, json);
+        File.Move(tempPath, queuePath, overwrite: true);
+    }
+
+    public async Task SendConsoleCommandAsync(string command)
+    {
+        await WriteCommandAsync(new QueueCommand
+        {
+            Id = CreateId(),
+            Action = "console_command",
+            Command = command
+        });
     }
 
     private static long CreateId()
     {
         return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-    }
-
-    private sealed class QueueCommand
-    {
-        public long Id { get; set; }
-
-        public string Action { get; set; } = "idle";
-
-        public string? Path { get; set; }
-
-        public string? Name { get; set; }
-
-        public string[]? Paths { get; set; }
-
-        public string[]? Types { get; set; }
-
-        public int DropQuantity { get; set; } = 1;
-
-        public int StackSize { get; set; } = 1;
-
-        public int ItemLevel { get; set; }
-
-        public int DelayMs { get; set; } = 500;
     }
 }
