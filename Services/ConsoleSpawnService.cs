@@ -14,13 +14,28 @@ public sealed class ConsoleSpawnService
     {
         var process = Process
             .GetProcessesByName("Remnant2-Win64-Shipping")
-            .FirstOrDefault();
+            .FirstOrDefault()
+            ?? Process
+                .GetProcessesByName("Remnant2-WinGDK-Shipping")
+                .FirstOrDefault();
 
         if (process == null)
             throw new InvalidOperationException("Remnant 2 is not running.");
 
         var command = item.SummonCommand;
         var sendKey = ToSendKeys(consoleKey);
+
+        Forms.IDataObject? previousClipboard = null;
+
+        try
+        {
+            previousClipboard = Forms.Clipboard.GetDataObject();
+        }
+        catch (Exception ex)
+        {
+            // Clipboard can throw if another process holds it open; not worth failing the spawn over.
+            AppLogService.Warn("Could not read clipboard before force console spawn", ex);
+        }
 
         SetForegroundWindow(process.MainWindowHandle);
 
@@ -36,6 +51,19 @@ public sealed class ConsoleSpawnService
         await Task.Delay(20);
 
         Forms.SendKeys.SendWait("{ENTER}");
+
+        try
+        {
+            if (previousClipboard != null)
+                Forms.Clipboard.SetDataObject(previousClipboard, true);
+            else
+                Forms.Clipboard.Clear();
+        }
+        catch (Exception ex)
+        {
+            // Best-effort restore; not worth failing the spawn over.
+            AppLogService.Warn("Could not restore clipboard after force console spawn", ex);
+        }
     }
 
     private static string ToSendKeys(string? key)

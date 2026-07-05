@@ -16,6 +16,18 @@ public partial class SettingsWindow : Window
         DataContext = _viewModel;
     }
 
+    private void OpenDiagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.RefreshDiagnostics();
+
+        var window = new DiagnosticsWindow(_viewModel)
+        {
+            Owner = this
+        };
+
+        window.ShowDialog();
+    }
+
     private void ConsoleKeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (!_viewModel.IsCapturingConsoleKey)
@@ -64,8 +76,11 @@ public partial class SettingsWindow : Window
             MouseButton.Left => "LeftMouseButton",
             MouseButton.Right => "RightMouseButton",
             MouseButton.Middle => "MiddleMouseButton",
-            MouseButton.XButton1 => "ThumbMouseButton",
-            MouseButton.XButton2 => "ThumbMouseButton2",
+            // Must match the "MouseButton4"/"MouseButton5" naming that Scripts/hotkeys.lua's
+            // GetKeyEnum recognizes (see DestroyTargetHotkeyButton_PreviewMouseDown below) --
+            // any other name silently fails to bind in-game.
+            MouseButton.XButton1 => "MouseButton4",
+            MouseButton.XButton2 => "MouseButton5",
             _ => ""
         };
 

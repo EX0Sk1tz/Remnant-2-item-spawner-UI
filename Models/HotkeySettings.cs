@@ -14,9 +14,5 @@ public sealed class HotkeySettings
 
     public double MovementSpeedMultiplier { get; set; } = 1.0;
 
-    public bool InfiniteHealth { get; set; }
-
-    public bool InfiniteStamina { get; set; }
-
     public int StackSize { get; set; } = 1;
 }

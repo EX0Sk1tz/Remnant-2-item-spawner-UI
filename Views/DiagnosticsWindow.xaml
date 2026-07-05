@@ -25,6 +25,8 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
@@ -33,13 +35,30 @@
                    FontSize="22"
                    FontWeight="Bold"/>
 
-                    <TextBlock Text="{Binding Summary}"
+                    <TextBlock Text="{Binding DiagnosticReport.Summary}"
                    Foreground="#8F95A3"
                    FontSize="13"
                    Margin="0,6,0,0"/>
                 </StackPanel>
 
-                <Border Grid.Column="1"
+                <Button Grid.Column="1"
+                        Content="Run Checks"
+                        Click="RunChecks_Click"
+                        Style="{StaticResource ChipButtonStyle}"
+                        Background="#2563EB"
+                        BorderBrush="#2563EB"
+                        Foreground="#FFFFFF"
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Top"/>
+
+                <Button Grid.Column="2"
+                        Content="Open Folder"
+                        Click="OpenFolder_Click"
+                        Style="{StaticResource ChipButtonStyle}"
+                        Margin="0,0,10,0"
+                        VerticalAlignment="Top"/>
+
+                <Border Grid.Column="3"
                     Background="#252936"
                     BorderBrush="#33405F"
                     BorderThickness="1"
@@ -69,22 +88,46 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
 
-                <ItemsControl ItemsSource="{Binding Issues}">
+                <ItemsControl x:Name="ResultsItemsControl"
+                              ItemsSource="{Binding DiagnosticReport.Results}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="#252936"
+                            <Border x:Name="Card"
+                                    Background="#252936"
                                     BorderBrush="#33405F"
-                                    BorderThickness="1"
+                                    BorderThickness="1,1,1,1"
                                     CornerRadius="12"
                                     Padding="14"
-                                    Margin="0,0,0,12">
+                                    Margin="0,0,0,10">
 
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Title}"
-                                               Foreground="#F2F2F2"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               TextWrapping="Wrap"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Title}"
+                                                   Foreground="#F2F2F2"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   TextWrapping="Wrap"/>
+
+                                        <Border x:Name="Badge"
+                                                Grid.Column="1"
+                                                Background="#7F1D1D"
+                                                CornerRadius="6"
+                                                Padding="8,3"
+                                                Margin="10,0,0,0"
+                                                VerticalAlignment="Top">
+                                            <TextBlock x:Name="BadgeText"
+                                                       Text="ISSUE"
+                                                       Foreground="#FCA5A5"
+                                                       FontSize="10"
+                                                       FontWeight="Bold"/>
+                                        </Border>
+                                    </Grid>
 
                                     <TextBlock Text="{Binding Details}"
                                                Foreground="#D8DCE5"
@@ -92,16 +135,18 @@
                                                Margin="0,10,0,0"
                                                TextWrapping="Wrap"/>
 
-                                    <TextBlock Text="How to fix"
-                                               Foreground="#60A5FA"
-                                               FontSize="12"
-                                               FontWeight="Bold"
-                                               Margin="0,14,0,4"/>
+                                    <StackPanel x:Name="FixPanel">
+                                        <TextBlock Text="How to fix"
+                                                   Foreground="#60A5FA"
+                                                   FontSize="12"
+                                                   FontWeight="Bold"
+                                                   Margin="0,14,0,4"/>
 
-                                    <TextBlock Text="{Binding Fix}"
-                                               Foreground="#D8DCE5"
-                                               FontSize="13"
-                                               TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Fix}"
+                                                   Foreground="#D8DCE5"
+                                                   FontSize="13"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
 
                                     <TextBlock Text="Technical details"
                                                Foreground="#8F95A3"
@@ -115,6 +160,23 @@
                                                TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="Info">
+                                    <Setter TargetName="Card" Property="BorderBrush" Value="#2C4A6E"/>
+                                    <Setter TargetName="Badge" Property="Background" Value="#1E3A5F"/>
+                                    <Setter TargetName="BadgeText" Property="Text" Value="INFO"/>
+                                    <Setter TargetName="BadgeText" Property="Foreground" Value="#93C5FD"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Passed">
+                                    <Setter TargetName="Card" Property="BorderBrush" Value="#1F3D2B"/>
+                                    <Setter TargetName="Card" Property="Padding" Value="14,10"/>
+                                    <Setter TargetName="Badge" Property="Background" Value="#173B24"/>
+                                    <Setter TargetName="BadgeText" Property="Text" Value="PASS"/>
+                                    <Setter TargetName="BadgeText" Property="Foreground" Value="#86EFAC"/>
+                                    <Setter TargetName="FixPanel" Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

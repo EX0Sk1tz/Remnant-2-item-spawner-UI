@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Text.Json;
 using Remnant2UnlockerApp.Models;
 
 namespace Remnant2UnlockerApp.Services;
@@ -7,10 +9,12 @@ namespace Remnant2UnlockerApp.Services;
 public sealed class DiagnosticsService
 {
     private readonly GamePathService _pathService;
+    private readonly SummonableTraitsService _summonableTraitsService;
 
-    public DiagnosticsService(GamePathService pathService)
+    public DiagnosticsService(GamePathService pathService, SummonableTraitsService summonableTraitsService)
     {
         _pathService = pathService;
+        _summonableTraitsService = summonableTraitsService;
     }
 
     public DiagnosticReport Run()
@@ -27,8 +31,9 @@ public sealed class DiagnosticsService
                 "The app does not know where your Remnant 2 Win64 folder is.",
                 "Click Browse and select the folder that contains Remnant2-Win64-Shipping.exe.",
                 "Steam/Epic expected folder: Remnant2\\Remnant2\\Binaries\\Win64\nGame Pass expected folder: XboxGames\\Remnant 2\\Content\\Remnant2\\Binaries\\WinGDK",
-                true);
+                DiagnosticStatus.Error);
 
+            LogSummary(report);
             return report;
         }
 
@@ -41,26 +46,20 @@ public sealed class DiagnosticsService
                 "The selected Win64 path does not exist on this system.",
                 "Click Browse and select the real Win64 folder again.",
                 path,
-                true);
+                DiagnosticStatus.Error);
 
+            LogSummary(report);
             return report;
         }
 
-        CheckFile(
-            report,
-            Path.Combine(path, "Remnant2-Win64-Shipping.exe"),
-            "Game executable missing",
-            "Game exe missing",
-            "The selected folder does not contain Remnant2-Win64-Shipping.exe.",
-            "Select the exact Win64 folder, not the Steam library root.",
-            true);
+        AddPass(report, "Game path is configured", "The Win64 folder is set and exists.", path);
 
         var modsPath = Path.Combine(path, "Mods");
 
         CheckDirectory(
             report,
             modsPath,
-            "Mods folder missing",
+            "Mods folder",
             "Mods folder missing",
             "The selected Win64 folder does not contain a Mods folder.",
             "Install UE4SS into the Win64 folder again.",
@@ -73,7 +72,7 @@ public sealed class DiagnosticsService
         CheckDirectory(
             report,
             unlockerPath,
-            "Remnant2Unlocker folder missing",
+            "Remnant2Unlocker folder",
             "Unlocker missing",
             "The Remnant2Unlocker mod folder is missing.",
             "Copy the Remnant2Unlocker folder into Win64\\Mods.",
@@ -84,7 +83,7 @@ public sealed class DiagnosticsService
         CheckFile(
             report,
             Path.Combine(unlockerPath, "command_queue.json"),
-            "command_queue.json missing",
+            "command_queue.json",
             "Queue file missing",
             "The command queue file is missing.",
             "Create command_queue.json or reinstall the release package.",
@@ -93,7 +92,7 @@ public sealed class DiagnosticsService
         CheckFile(
             report,
             Path.Combine(unlockerPath, "status.json"),
-            "status.json missing",
+            "status.json",
             "Status file missing",
             "The status file is missing.",
             "Create status.json or start the game once with the mod installed.",
@@ -102,11 +101,51 @@ public sealed class DiagnosticsService
         CheckFile(
             report,
             Path.Combine(unlockerPath, "scripts", "main.lua"),
-            "Remnant2Unlocker main.lua missing",
+            "Remnant2Unlocker main.lua",
             "Unlocker script missing",
             "The Lua entry script for Remnant2Unlocker is missing.",
             "Reinstall the scripts folder from the release package.",
             true);
+
+        CheckJsonFile(
+            report,
+            Path.Combine(unlockerPath, "items.json"),
+            "items.json",
+            "Item catalog corrupted",
+            "items.json exists but could not be parsed as valid JSON, so the item list will fail to load.",
+            "Reinstall the Remnant2Unlocker mod package to restore a valid items.json.");
+
+        CheckJsonFile(
+            report,
+            Path.Combine(unlockerPath, "command_queue.json"),
+            "command_queue.json",
+            "Queue file corrupted",
+            "command_queue.json exists but could not be parsed as valid JSON.",
+            "Delete the file, or spawn/unlock an item once to let the app regenerate it automatically.");
+
+        CheckJsonFile(
+            report,
+            Path.Combine(unlockerPath, "status.json"),
+            "status.json",
+            "Status file corrupted",
+            "status.json exists but could not be parsed as valid JSON, so spawn progress cannot be read.",
+            "Delete the file; it will be regenerated automatically the next time the bridge mod runs.");
+
+        CheckJsonFile(
+            report,
+            Path.Combine(unlockerPath, "hotkeys.json"),
+            "hotkeys.json",
+            "Hotkey settings corrupted",
+            "hotkeys.json exists but could not be parsed as valid JSON, so saved hotkeys and settings may be ignored.",
+            "Delete the file, or change any hotkey/setting in the app to let it regenerate automatically.");
+
+        CheckJsonFile(
+            report,
+            Path.Combine(unlockerPath, "cheats.json"),
+            "cheats.json",
+            "Cheat settings corrupted",
+            "cheats.json exists but could not be parsed as valid JSON.",
+            "Delete the file, or toggle a cheat setting in the app to let it regenerate automatically.");
 
         CheckRequiredLuaMod(
             report,
@@ -144,23 +183,66 @@ public sealed class DiagnosticsService
         CheckModEnabled(report, path, "CheatManagerEnablerMod");
         CheckModEnabled(report, path, "Remnant2Unlocker");
 
+        CheckSummonableTraits(report);
+
         if (IsGameRunning())
         {
             AddIssue(
                 report,
-                "Runtime log checks skipped",
-                "Game is running",
-                "The game is currently running, so the app will not read UE4SS.log to avoid file access conflicts.",
-                "Close Remnant 2 and reopen diagnostics to run the full UE4SS log checks.",
-                "Skipped checks: UE4SS.log startup checks, AllowModsMod runtime patch check, CheatManager runtime check.",
-                false);
+                "Game is running — a few extra checks are paused",
+                "This is expected, not a problem",
+                "Remnant 2 is currently open, so the app skips reading UE4SS.log while the game has it open to avoid file conflicts. Everything above this has already been checked normally.",
+                "No action needed. If you also want the log-based checks (mod startup confirmation, CheatManager status), close Remnant 2 and click Run Checks again.",
+                "Skipped while the game is running: UE4SS.log startup-line checks, AllowModsMod runtime patch check, CheatManager runtime check.",
+                DiagnosticStatus.Info);
 
+            LogSummary(report);
             return report;
         }
 
         CheckLog(report, path);
 
+        LogSummary(report);
         return report;
+    }
+
+    private static void LogSummary(DiagnosticReport report)
+    {
+        report.Results = report.Results
+            .OrderBy(r => r.Status switch
+            {
+                DiagnosticStatus.Error => 0,
+                DiagnosticStatus.Info => 1,
+                _ => 2
+            })
+            .ToList();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Remnant 2 Unlocker — Setup Diagnostics");
+        sb.AppendLine($"Run at: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine(report.Summary);
+        sb.AppendLine();
+
+        foreach (var result in report.Results)
+        {
+            var level = result.Status switch
+            {
+                DiagnosticStatus.Error => "ERROR",
+                DiagnosticStatus.Info => "INFO",
+                _ => "PASS"
+            };
+
+            sb.AppendLine($"[{level}] {result.Title}");
+            sb.AppendLine($"    {result.Details}");
+
+            if (!string.IsNullOrWhiteSpace(result.Fix))
+                sb.AppendLine($"    Fix: {result.Fix}");
+
+            sb.AppendLine($"    Technical: {result.TechnicalDetails}");
+            sb.AppendLine();
+        }
+
+        AppLogService.WriteDiagnosticsReport(sb.ToString());
     }
 
     private static bool IsGameRunning()
@@ -174,8 +256,17 @@ public sealed class DiagnosticsService
         var steamExe = Path.Combine(path, "Remnant2-Win64-Shipping.exe");
         var gamePassExe = Path.Combine(path, "Remnant2-WinGDK-Shipping.exe");
 
-        if (File.Exists(steamExe) || File.Exists(gamePassExe))
+        if (File.Exists(steamExe))
+        {
+            AddPass(report, "Game executable", "Found the Steam/Epic executable.", steamExe);
             return;
+        }
+
+        if (File.Exists(gamePassExe))
+        {
+            AddPass(report, "Game executable", "Found the Game Pass executable.", gamePassExe);
+            return;
+        }
 
         AddIssue(
             report,
@@ -184,7 +275,7 @@ public sealed class DiagnosticsService
             "The selected folder does not contain a supported Remnant 2 executable.",
             "Select the exact executable folder. Steam/Epic uses Binaries\\Win64. Game Pass uses Binaries\\WinGDK.",
             $"Checked for:{Environment.NewLine}{steamExe}{Environment.NewLine}{gamePassExe}",
-            true);
+            DiagnosticStatus.Error);
     }
 
     private static void CheckAllowModsMod(DiagnosticReport report, string modsPath)
@@ -201,7 +292,7 @@ public sealed class DiagnosticsService
                 "AllowModsMod is required because it patches the game so UE4SS mods can run correctly.",
                 "Reinstall UE4SS or copy the AllowModsMod folder into Win64\\Mods.",
                 modPath,
-                true);
+                DiagnosticStatus.Error);
 
             return;
         }
@@ -215,8 +306,12 @@ public sealed class DiagnosticsService
                 "AllowModsMod exists, but dlls\\main.dll is missing.",
                 "Replace the full AllowModsMod folder from a clean UE4SS package.",
                 dllPath,
-                true);
+                DiagnosticStatus.Error);
+
+            return;
         }
+
+        AddPass(report, "AllowModsMod", "Mod folder and binary are present.", dllPath);
     }
 
     private static void CheckRequiredLuaMod(
@@ -234,7 +329,7 @@ public sealed class DiagnosticsService
 
         if (!Directory.Exists(modPath))
         {
-            AddIssue(report, title, hint, details, fix, modPath, true);
+            AddIssue(report, title, hint, details, fix, modPath, DiagnosticStatus.Error);
             return;
         }
 
@@ -247,8 +342,12 @@ public sealed class DiagnosticsService
                 $"{modName} exists, but the required script is missing.",
                 $"Replace the full {modName} folder from a clean release package.",
                 requiredFile,
-                true);
+                DiagnosticStatus.Error);
+
+            return;
         }
+
+        AddPass(report, modName, "Mod folder and required script are present.", requiredFile);
     }
 
     private static void CheckModEnabled(DiagnosticReport report, string win64Path, string modName)
@@ -273,7 +372,7 @@ public sealed class DiagnosticsService
                 "UE4SS needs a mod config file to know which mods are enabled.",
                 "Make sure Win64\\Mods\\mods.txt or Win64\\Mods\\enabled.txt exists.",
                 $"Checked: {modsTxt} and {enabledTxt}",
-                true);
+                DiagnosticStatus.Error);
 
             return;
         }
@@ -287,7 +386,56 @@ public sealed class DiagnosticsService
                 $"{modName} is missing or disabled in the UE4SS mod config.",
                 $"Add or change this line: {modName} : 1",
                 $"Checked mods.txt and enabled.txt for {modName} : 1",
-                true);
+                DiagnosticStatus.Error);
+
+            return;
+        }
+
+        AddPass(report, $"{modName} enabled", $"{modName} : 1 found in the UE4SS mod config.", $"{modsTxt} / {enabledTxt}");
+    }
+
+    private void CheckSummonableTraits(DiagnosticReport report)
+    {
+        if (_summonableTraitsService.IsInstalled())
+        {
+            AddPass(
+                report,
+                "Summonable Traits mod",
+                "Detected a main.lua registering SummonTrait/AddTrait console commands.",
+                "Checked all main.lua files under Mods\\.");
+
+            return;
+        }
+
+        AddIssue(
+            report,
+            "Summonable Traits mod not detected",
+            "Optional: trait spawning",
+            "Trait, Core Trait, and Archetype Trait items require a separate, optional \"Summonable Traits\" mod that registers the SummonTrait/AddTrait console commands. It was not found under Mods\\.",
+            "Install the Summonable Traits mod if you want to spawn Trait/Archetype Trait items. Everything else works without it.",
+            "Checked all main.lua files under Mods\\ for RegisterConsoleCommandHandler(\"SummonTrait\"/\"AddTrait\") and Material_AwardTrait_Base.",
+            DiagnosticStatus.Info);
+    }
+
+    private static void CheckJsonFile(
+        DiagnosticReport report,
+        string path,
+        string title,
+        string hint,
+        string details,
+        string fix)
+    {
+        if (!File.Exists(path))
+            return;
+
+        try
+        {
+            using var _ = JsonDocument.Parse(File.ReadAllText(path));
+            AddPass(report, $"{title} is valid JSON", "Parsed successfully.", path);
+        }
+        catch (Exception ex)
+        {
+            AddIssue(report, $"{title} is corrupted", hint, details, fix, ex.Message, DiagnosticStatus.Error);
         }
     }
 
@@ -304,7 +452,7 @@ public sealed class DiagnosticsService
                 "The app could not find a UE4SS log file.",
                 "Start the game once with UE4SS installed, then reopen the app.",
                 win64Path,
-                false);
+                DiagnosticStatus.Info);
 
             return;
         }
@@ -324,7 +472,7 @@ public sealed class DiagnosticsService
                 "The app could not read UE4SS.log. The file may still be locked by the running game.",
                 "Close Remnant 2 and run diagnostics again.",
                 ex.Message,
-                false);
+                DiagnosticStatus.Info);
 
             return;
         }
@@ -333,6 +481,7 @@ public sealed class DiagnosticsService
             report,
             log,
             "Starting C++ mod 'AllowModsMod'",
+            "AllowModsMod started",
             "AllowModsMod did not start",
             "AllowModsMod not loaded",
             "UE4SS did not start AllowModsMod.",
@@ -343,6 +492,7 @@ public sealed class DiagnosticsService
             report,
             log,
             "[AllowModsMod]: Init.",
+            "AllowModsMod initialized",
             "AllowModsMod did not initialize",
             "AllowModsMod init missing",
             "AllowModsMod started, but the init log line was not found.",
@@ -353,6 +503,7 @@ public sealed class DiagnosticsService
             report,
             log,
             "[AllowModsMod]: Delegate found and patched.",
+            "AllowModsMod patch applied",
             "AllowModsMod patch was not applied",
             "AllowModsMod patch missing",
             "AllowModsMod did not report that the game delegate was patched.",
@@ -363,6 +514,7 @@ public sealed class DiagnosticsService
             report,
             log,
             "Starting Lua mod 'Remnant2Unlocker'",
+            "Remnant2Unlocker started",
             "Remnant2Unlocker did not start",
             "Unlocker not loaded",
             "UE4SS did not start the Remnant2Unlocker Lua mod.",
@@ -373,6 +525,7 @@ public sealed class DiagnosticsService
             report,
             log,
             "Starting Lua mod 'ConsoleCommandsMod'",
+            "ConsoleCommandsMod started",
             "ConsoleCommandsMod did not start",
             "ConsoleCommandsMod not loaded",
             "UE4SS did not start ConsoleCommandsMod.",
@@ -383,13 +536,18 @@ public sealed class DiagnosticsService
             report,
             log,
             "Starting Lua mod 'CheatManagerEnablerMod'",
+            "CheatManagerEnablerMod started",
             "CheatManagerEnablerMod did not start",
             "CheatManager not loaded",
             "UE4SS did not start CheatManagerEnablerMod.",
             "Enable CheatManagerEnablerMod and verify that scripts\\main.lua exists.",
             logPath);
 
-        if (!log.Contains("[CheatManager Creator] Enabled CheatManager", StringComparison.OrdinalIgnoreCase))
+        if (log.Contains("[CheatManager Creator] Enabled CheatManager", StringComparison.OrdinalIgnoreCase))
+        {
+            AddPass(report, "CheatManager enabled", "Found 'Enabled CheatManager' in the UE4SS log.", logPath);
+        }
+        else
         {
             AddIssue(
                 report,
@@ -398,7 +556,7 @@ public sealed class DiagnosticsService
                 "The log does not show that the CheatManager was created. Summon commands may load assets but spawn nothing.",
                 "Load into a world, then check if CheatManagerEnablerMod logs 'Enabled CheatManager'. If not, replace CheatManagerEnablerMod with the fixed fallback version.",
                 logPath,
-                true);
+                DiagnosticStatus.Error);
         }
     }
 
@@ -406,6 +564,7 @@ public sealed class DiagnosticsService
         DiagnosticReport report,
         string log,
         string expected,
+        string passTitle,
         string title,
         string hint,
         string details,
@@ -413,9 +572,12 @@ public sealed class DiagnosticsService
         string logPath)
     {
         if (log.Contains(expected, StringComparison.OrdinalIgnoreCase))
+        {
+            AddPass(report, passTitle, $"Found \"{expected}\" in the UE4SS log.", logPath);
             return;
+        }
 
-        AddIssue(report, title, hint, details, fix, logPath, true);
+        AddIssue(report, title, hint, details, fix, logPath, DiagnosticStatus.Error);
     }
 
     private static string? FindLatestLog(string win64Path)
@@ -440,10 +602,13 @@ public sealed class DiagnosticsService
         string fix,
         bool isError)
     {
-        if (File.Exists(path))
+        if (!File.Exists(path))
+        {
+            AddIssue(report, $"{title} missing", hint, details, fix, path, isError ? DiagnosticStatus.Error : DiagnosticStatus.Info);
             return;
+        }
 
-        AddIssue(report, title, hint, details, fix, path, isError);
+        AddPass(report, title, "File is present.", path);
     }
 
     private static void CheckDirectory(
@@ -455,10 +620,13 @@ public sealed class DiagnosticsService
         string fix,
         bool isError)
     {
-        if (Directory.Exists(path))
+        if (!Directory.Exists(path))
+        {
+            AddIssue(report, $"{title} missing", hint, details, fix, path, isError ? DiagnosticStatus.Error : DiagnosticStatus.Info);
             return;
+        }
 
-        AddIssue(report, title, hint, details, fix, path, isError);
+        AddPass(report, title, "Folder is present.", path);
     }
 
     private static void AddIssue(
@@ -468,16 +636,29 @@ public sealed class DiagnosticsService
         string details,
         string fix,
         string technicalDetails,
-        bool isError)
+        DiagnosticStatus status)
     {
-        report.Issues.Add(new DiagnosticIssue
+        report.Results.Add(new DiagnosticCheckResult
         {
             Title = title,
             Hint = hint,
             Details = details,
             Fix = fix,
             TechnicalDetails = technicalDetails,
-            IsError = isError
+            Status = status
+        });
+    }
+
+    private static void AddPass(DiagnosticReport report, string title, string details, string technicalDetails)
+    {
+        report.Results.Add(new DiagnosticCheckResult
+        {
+            Title = title,
+            Hint = "Passed",
+            Details = details,
+            Fix = "",
+            TechnicalDetails = technicalDetails,
+            Status = DiagnosticStatus.Passed
         });
     }
 }

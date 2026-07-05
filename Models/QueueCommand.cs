@@ -21,4 +21,6 @@ public sealed class QueueCommand
     public int StackSize { get; set; } = 1;
 
     public int ItemLevel { get; set; }
+
+    public string? Command { get; set; }
 }

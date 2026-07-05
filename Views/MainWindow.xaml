@@ -5,7 +5,11 @@
         Height="760"
         Width="1320"
         WindowStartupLocation="CenterScreen"
-        Background="#101116" MinHeight="760" MinWidth="1320" AutomationProperties.HelpText="Test" ResizeMode="CanMinimize" Topmost="{Binding AlwaysOnTop}">
+        Background="#101116"
+        MinHeight="760"
+        MinWidth="1320"
+        ResizeMode="CanMinimize"
+        Topmost="{Binding AlwaysOnTop}">
 
     <Window.Resources>
         <Style x:Key="BaseButtonStyle" TargetType="Button">
@@ -40,6 +44,9 @@
                                     </Setter.Value>
                                 </Setter>
                             </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ButtonRoot" Property="Opacity" Value="0.45"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -47,54 +54,6 @@
         </Style>
 
         <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}"/>
-
-        <Style x:Key="QuantityArrowButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-            <Setter Property="Width" Value="28"/>
-            <Setter Property="Height" Value="19"/>
-            <Setter Property="Background" Value="#202637"/>
-            <Setter Property="Foreground" Value="#D8DCE5"/>
-            <Setter Property="FontSize" Value="10"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Padding" Value="0"/>
-        </Style>
-
-        <Style x:Key="QuantityTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Width" Value="58"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="#252936"/>
-            <Setter Property="Foreground" Value="#F2F2F2"/>
-            <Setter Property="BorderBrush" Value="#33405F"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="6,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="Root"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="9,0,0,9">
-                            <ScrollViewer x:Name="PART_ContentHost"
-                                          VerticalAlignment="Center"
-                                          HorizontalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Root" Property="BorderBrush" Value="#3B82F6"/>
-                                <Setter TargetName="Root" Property="Background" Value="#1F2D4A"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="BorderBrush" Value="#3B82F6"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
         <Style x:Key="AllCategoryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
             <Setter Property="Height" Value="42"/>
@@ -250,6 +209,11 @@
                     <Setter Property="Background" Value="#202637"/>
                     <Setter Property="BorderBrush" Value="#33405F"/>
                 </DataTrigger>
+
+                <DataTrigger Binding="{Binding IsTraitLocked}" Value="True">
+                    <Setter Property="Opacity" Value="0.48"/>
+                    <Setter Property="BorderBrush" Value="#3B2F13"/>
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -260,6 +224,13 @@
             <Setter Property="Foreground" Value="#D8DCE5"/>
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HasDropShadow" Value="True"/>
         </Style>
     </Window.Resources>
 
@@ -279,41 +250,40 @@
 
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="REMNANT 2"
-                           Foreground="#F1F1F1"
-                           FontSize="24"
-                           FontWeight="Bold"
-                           Margin="0,0,0,4"/>
+                                   Foreground="#F1F1F1"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,4"/>
 
                         <TextBlock Text="Unlocker Bridge"
-                           Foreground="#8F95A3"
-                           FontSize="13"/>
+                                   Foreground="#8F95A3"
+                                   FontSize="13"/>
                     </StackPanel>
 
                     <Button Grid.Column="1"
-                        Content="⚙"
-                        Click="OpenSettings_Click"
-                        Style="{StaticResource IconButtonStyle}"/>
+                            Content="⚙"
+                            Click="OpenSettings_Click"
+                            Style="{StaticResource IconButtonStyle}"/>
                 </Grid>
 
                 <ScrollViewer VerticalScrollBarVisibility="Hidden"
-                    HorizontalScrollBarVisibility="Disabled">
+                              HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-
                         <TextBox Text="{Binding CategorySearchText, UpdateSourceTrigger=PropertyChanged}"
-                             Height="38"
-                             FontSize="13"
-                             Padding="12,8"
-                             Margin="0,0,0,10"
-                             Background="#1A1D27"
-                             Foreground="#F2F2F2"
-                             BorderBrush="#303645"
-                             BorderThickness="1"
-                             ToolTip="Search subcategories"/>
+                                 Height="38"
+                                 FontSize="13"
+                                 Padding="12,8"
+                                 Margin="0,0,0,10"
+                                 Background="#1A1D27"
+                                 Foreground="#F2F2F2"
+                                 BorderBrush="#303645"
+                                 BorderThickness="1"
+                                 ToolTip="Search subcategories"/>
 
                         <Button Content="All"
-                            Command="{Binding SelectTypeCommand}"
-                            CommandParameter="All"
-                            Style="{StaticResource AllCategoryButtonStyle}"/>
+                                Command="{Binding SelectTypeCommand}"
+                                CommandParameter="All"
+                                Style="{StaticResource AllCategoryButtonStyle}"/>
 
                         <ItemsControl ItemsSource="{Binding CategoryGroups}">
                             <ItemsControl.ItemTemplate>
@@ -369,8 +339,7 @@
                         Height="42"
                         Margin="12,0,0,0"
                         Background="#252936"/>
-
-                </Grid>
+            </Grid>
 
             <ListView Grid.Row="1"
                       ItemsSource="{Binding Items}"
@@ -476,11 +445,36 @@
                                 <StackPanel Grid.Column="1"
                                             VerticalAlignment="Center"
                                             Margin="8,0,16,0">
-                                    <TextBlock Text="{Binding Name}"
-                                               Foreground="#F2F2F2"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}"
+                                                   Foreground="#F2F2F2"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <Border Background="#3B2F13"
+                                                BorderBrush="#FACC15"
+                                                BorderThickness="1"
+                                                CornerRadius="8"
+                                                Padding="7,2"
+                                                Margin="8,0,0,0">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsTraitLocked}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+
+                                            <TextBlock Text="Requires Summonable Traits"
+                                                       Foreground="#FACC15"
+                                                       FontSize="10"
+                                                       FontWeight="Bold"/>
+                                        </Border>
+                                    </StackPanel>
 
                                     <TextBlock Text="{Binding Type}"
                                                Foreground="#8F95A3"
@@ -500,8 +494,8 @@
                                 </Border>
 
                                 <Grid Grid.Column="3"
-                                  HorizontalAlignment="Right"
-                                  VerticalAlignment="Center">
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="24"/>
@@ -510,37 +504,109 @@
 
                                     <StackPanel Grid.Column="0" Orientation="Horizontal">
                                         <Button Content="Spawn"
-                                            Height="40"
-                                            Width="92"
-                                            Background="#2563EB"
-                                            Click="SpawnItem_Click"/>
+                                                Height="40"
+                                                Width="92"
+                                                Background="#2563EB"
+                                                Click="SpawnItem_Click">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CanUseNormalSpawn}" Value="False">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+
                                         <Button Content="Force"
-                                            Height="40"
-                                            Width="92"
-                                            Margin="10,0,0,0"
-                                            Background="#7C2D12"
-                                            Click="ForceConsoleSpawnItem_Click"/>
+                                                Height="40"
+                                                Width="92"
+                                                Margin="10,0,0,0"
+                                                Background="#7C2D12"
+                                                Click="ForceConsoleSpawnItem_Click">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding CanUseNormalSpawn}" Value="False">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+
+                                        <Button Content="Spawn"
+                                                Height="40"
+                                                Width="92"
+                                                Background="#2563EB"
+                                                Click="SummonTrait_Click"
+                                                ToolTip="Uses SummonTrait. Spawn one trait, pick it up, then spawn the next one.">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Setter Property="IsEnabled" Value="True"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding NeedsSummonableTraitsMod}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding CanUseTraitCommands}" Value="False">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                            <Setter Property="Opacity" Value="0.45"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+
+                                        <Button Content="Add"
+                                                Height="40"
+                                                Width="92"
+                                                Margin="10,0,0,0"
+                                                Background="#16A34A"
+                                                Click="AddTrait_Click"
+                                                ToolTip="Uses AddTrait. Adds the trait directly through the Summonable Traits mod.">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Setter Property="IsEnabled" Value="True"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding NeedsSummonableTraitsMod}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding CanUseTraitCommands}" Value="False">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                            <Setter Property="Opacity" Value="0.45"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+
                                         <Button Content="Copy"
-                                            Height="40"
-                                            Width="92"
-                                            Margin="10,0,0,0"
-                                            Background="#3A3F51"
-                                            Click="CopyCommand_Click"/>
+                                                Height="40"
+                                                Width="92"
+                                                Margin="10,0,0,0"
+                                                Background="#3A3F51"
+                                                Click="CopyCommand_Click"/>
                                     </StackPanel>
 
                                     <Border Grid.Column="1"
-                                        Width="1"
-                                        Height="34"
-                                        Background="#303645"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"/>
+                                            Width="1"
+                                            Height="34"
+                                            Background="#303645"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+
                                     <Button Grid.Column="2"
-                                        Content="Wiki"
-                                        Height="40"
-                                        Width="82"
-                                        Background="#252936"
-                                        Foreground="#D8DCE5"
-                                        Click="OpenWiki_Click"/>
+                                            Content="Wiki"
+                                            Height="40"
+                                            Width="82"
+                                            Background="#252936"
+                                            Foreground="#D8DCE5"
+                                            Click="OpenWiki_Click"/>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -557,17 +623,17 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
-               Text="{Binding StatusText}"
-               Foreground="#B8BFCC"
-               VerticalAlignment="Center"
-               FontSize="14"/>
+                           Text="{Binding StatusText}"
+                           Foreground="#B8BFCC"
+                           VerticalAlignment="Center"
+                           FontSize="14"/>
 
                 <Button Grid.Column="1"
-            Click="OpenDiagnostics_Click"
-            Height="36"
-            Margin="8,0,0,0"
-            Background="#252936"
-            Foreground="#FACC15">
+                        Click="OpenDiagnostics_Click"
+                        Height="36"
+                        Margin="8,0,0,0"
+                        Background="#252936"
+                        Foreground="#FACC15">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -580,28 +646,28 @@
                     </Button.Style>
 
                     <StackPanel Orientation="Horizontal"
-                    HorizontalAlignment="Center">
+                                HorizontalAlignment="Center">
                         <TextBlock Text="ⓘ"
-                       FontSize="15"
-                       FontWeight="Bold"
-                       Margin="0,0,6,0"/>
+                                   FontSize="15"
+                                   FontWeight="Bold"
+                                   Margin="0,0,6,0"/>
 
                         <TextBlock Text="{Binding DiagnosticHint}"
-                       FontSize="12"
-                       FontWeight="SemiBold"
-                       TextTrimming="CharacterEllipsis"
-                       MaxWidth="140"/>
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="140"/>
                     </StackPanel>
                 </Button>
 
                 <Border Grid.Column="2"
-            Background="#1A1D27"
-            BorderBrush="#273044"
-            BorderThickness="1"
-            CornerRadius="10"
-            Height="44"
-            Margin="8,0,0,0"
-            Padding="12,0">
+                        Background="#1A1D27"
+                        BorderBrush="#273044"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Height="44"
+                        Margin="8,0,0,0"
+                        Padding="12,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="12"/>
@@ -610,9 +676,9 @@
                         </Grid.ColumnDefinitions>
 
                         <Ellipse Grid.Column="0"
-                     Width="8"
-                     Height="8"
-                     VerticalAlignment="Center">
+                                 Width="8"
+                                 Height="8"
+                                 VerticalAlignment="Center">
                             <Ellipse.Style>
                                 <Style TargetType="Ellipse">
                                     <Setter Property="Fill" Value="#DC2626"/>
@@ -626,35 +692,144 @@
                         </Ellipse>
 
                         <StackPanel Grid.Column="1"
-                        VerticalAlignment="Center"
-                        Margin="8,0,8,0">
+                                    VerticalAlignment="Center"
+                                    Margin="8,0,8,0">
                             <TextBlock Text="{Binding GamePathStatus}"
-                           Foreground="#F2F2F2"
-                           FontSize="12"
-                           FontWeight="SemiBold"/>
+                                       Foreground="#F2F2F2"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"/>
 
                             <TextBlock Text="{Binding GamePathDisplay}"
-                           Foreground="#8F95A3"
-                           FontSize="11"
-                           TextTrimming="CharacterEllipsis"/>
+                                       Foreground="#8F95A3"
+                                       FontSize="11"
+                                       TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
 
                         <Button Grid.Column="2"
-                    Content="Browse"
-                    Command="{Binding SelectGamePathCommand}"
-                    Height="30"
-                    Background="#252936"
-                    Foreground="#D8DCE5"/>
+                                Content="Browse"
+                                Command="{Binding SelectGamePathCommand}"
+                                Height="30"
+                                Background="#252936"
+                                Foreground="#D8DCE5"/>
                     </Grid>
                 </Border>
 
                 <Button Grid.Column="3"
-            Content="Spawn Group"
-            Command="{Binding UnlockGroupCommand}"
-            Height="44"
-            Margin="8,0,0,0"
-            Background="#3A3F51"/>
+                        Content="Spawn Group"
+                        Command="{Binding UnlockGroupCommand}"
+                        Height="44"
+                        Margin="8,0,0,0"
+                        Background="#3A3F51"/>
             </Grid>
         </Grid>
+
+        <ItemsControl Grid.Column="0"
+                      Grid.ColumnSpan="2"
+                      ItemsSource="{Binding Toasts}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Bottom"
+                      Margin="0,0,20,20"
+                      Focusable="False">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border x:Name="ToastCard"
+                            Width="300"
+                            Background="#1A1D27"
+                            BorderBrush="#33405F"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14,12"
+                            Margin="0,10,0,0">
+                        <Border.RenderTransform>
+                            <TranslateTransform X="60"/>
+                        </Border.RenderTransform>
+                        <Border.Triggers>
+                            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="0" To="1"
+                                                         Duration="0:0:0.25"/>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                         To="0"
+                                                         Duration="0:0:0.25">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Border.Triggers>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border x:Name="AccentBar"
+                                    Grid.Column="0"
+                                    Background="#2563EB"
+                                    CornerRadius="2"
+                                    Margin="0,0,10,0"/>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding Title}"
+                                           Foreground="#F2F2F2"
+                                           FontSize="13"
+                                           FontWeight="Bold"
+                                           TextWrapping="Wrap"/>
+
+                                <TextBlock Text="{Binding Message}"
+                                           Foreground="#B7BBC7"
+                                           FontSize="12"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap"/>
+
+                                <TextBlock x:Name="ActionLink"
+                                           Text="{Binding ActionText}"
+                                           Foreground="#60A5FA"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Margin="0,8,0,0"
+                                           Cursor="Hand"
+                                           MouseLeftButtonUp="ToastAction_Click"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="2"
+                                       Text="&#10005;"
+                                       Foreground="#6B7280"
+                                       FontSize="11"
+                                       Cursor="Hand"
+                                       VerticalAlignment="Top"
+                                       Margin="8,0,0,0"
+                                       MouseLeftButtonUp="ToastClose_Click"/>
+                        </Grid>
+                    </Border>
+
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Type}" Value="Success">
+                            <Setter TargetName="AccentBar" Property="Background" Value="#16A34A"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Type}" Value="Warning">
+                            <Setter TargetName="AccentBar" Property="Background" Value="#D97706"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Type}" Value="Error">
+                            <Setter TargetName="AccentBar" Property="Background" Value="#DC2626"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding ActionText}" Value="{x:Null}">
+                            <Setter TargetName="ActionLink" Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </Window>

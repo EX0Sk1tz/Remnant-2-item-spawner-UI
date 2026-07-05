@@ -1,0 +1,11 @@
+{
+  "alwaysOnTop": false,
+  "consoleKey": "F10",
+  "teleport": "V",
+  "destroyTarget": "F4",
+  "wiki": "wiki.gg",
+  "movementSpeedMultiplier": 1,
+  "infiniteHealth": false,
+  "infiniteStamina": false,
+  "stackSize": 1
+}

@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Windows;
+using System.Windows.Input;
 using Remnant2UnlockerApp.Models;
+using Remnant2UnlockerApp.Services;
 using Remnant2UnlockerApp.ViewModels;
 
 namespace Remnant2UnlockerApp.Views;
@@ -16,7 +18,61 @@ public partial class MainWindow : Window
 
         _viewModel.GroupSpawnQueued += (_, title) => OpenSpawnProgressWindow(title);
 
-        Loaded += async (_, _) => await _viewModel.LoadAsync();
+        Loaded += async (_, _) => await OnLoadedAsync();
+    }
+
+    private async Task OnLoadedAsync()
+    {
+        if (!_viewModel.IsGamePathValid)
+        {
+            var wizard = new SetupWizardWindow(_viewModel)
+            {
+                Owner = this
+            };
+
+            wizard.ShowDialog();
+        }
+
+        await _viewModel.LoadAsync();
+
+        _ = CheckForUpdatesAsync();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        var result = await UpdateCheckService.CheckForUpdateAsync();
+
+        if (!result.IsUpdateAvailable || string.IsNullOrWhiteSpace(result.ReleaseUrl))
+            return;
+
+        var releaseUrl = result.ReleaseUrl;
+
+        ToastService.Show(
+            "Update available",
+            $"Version {result.LatestVersion} is out (you have {result.CurrentVersion}).",
+            ToastType.Info,
+            durationMs: 12000,
+            actionText: "View Release",
+            onAction: () => Process.Start(new ProcessStartInfo
+            {
+                FileName = releaseUrl,
+                UseShellExecute = true
+            }));
+    }
+
+    private void ToastClose_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is ToastMessage toast)
+            ToastService.Dismiss(toast);
+    }
+
+    private void ToastAction_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.DataContext is not ToastMessage toast)
+            return;
+
+        toast.OnAction?.Invoke();
+        ToastService.Dismiss(toast);
     }
 
     private RemnantItem? GetItemFromSender(object sender)
@@ -97,9 +153,7 @@ public partial class MainWindow : Window
 
     private void OpenDiagnostics_Click(object sender, RoutedEventArgs e)
     {
-        _viewModel.RefreshDiagnostics();
-
-        var window = new DiagnosticsWindow(_viewModel.DiagnosticReport)
+        var window = new DiagnosticsWindow(_viewModel)
         {
             Owner = this
         };
@@ -125,6 +179,32 @@ public partial class MainWindow : Window
         };
 
         window.Show();
+    }
+
+    private async void SummonTrait_Click(object sender, RoutedEventArgs e)
+    {
+        var item = GetItemFromSender(sender);
+
+        if (item == null)
+        {
+            _viewModel.StatusText = "SummonTrait failed: item context missing";
+            return;
+        }
+
+        await _viewModel.SummonTraitAsync(item);
+    }
+
+    private async void AddTrait_Click(object sender, RoutedEventArgs e)
+    {
+        var item = GetItemFromSender(sender);
+
+        if (item == null)
+        {
+            _viewModel.StatusText = "AddTrait failed: item context missing";
+            return;
+        }
+
+        await _viewModel.AddTraitAsync(item);
     }
 
 }

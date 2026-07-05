@@ -74,4 +74,38 @@ public sealed class RemnantItem : INotifyPropertyChanged
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+
+    private bool _isSummonableTraitsInstalled;
+
+    public bool IsTraitEntry =>
+        Type.Equals("Trait", StringComparison.OrdinalIgnoreCase)
+        || Type.Equals("Core Trait", StringComparison.OrdinalIgnoreCase)
+        || Type.Equals("Archetype Trait", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsTraitPoint =>
+        Type.Equals("Trait Point", StringComparison.OrdinalIgnoreCase);
+
+    public bool NeedsSummonableTraitsMod => IsTraitEntry && !IsTraitPoint;
+
+    public bool IsSummonableTraitsInstalled
+    {
+        get => _isSummonableTraitsInstalled;
+        set
+        {
+            if (_isSummonableTraitsInstalled == value)
+                return;
+
+            _isSummonableTraitsInstalled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTraitLocked));
+            OnPropertyChanged(nameof(CanUseTraitCommands));
+            OnPropertyChanged(nameof(CanUseNormalSpawn));
+        }
+    }
+
+    public bool IsTraitLocked => NeedsSummonableTraitsMod && !IsSummonableTraitsInstalled;
+
+    public bool CanUseTraitCommands => NeedsSummonableTraitsMod && IsSummonableTraitsInstalled;
+
+    public bool CanUseNormalSpawn => !NeedsSummonableTraitsMod;
 }

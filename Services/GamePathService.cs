@@ -157,8 +157,9 @@ public sealed class GamePathService
 
             return JsonSerializer.Deserialize<UserSettings>(json) ?? new UserSettings();
         }
-        catch
+        catch (Exception ex)
         {
+            AppLogService.Error($"Failed to load settings.json from {_settingsPath}", ex);
             return new UserSettings();
         }
     }

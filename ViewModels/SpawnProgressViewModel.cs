@@ -14,6 +14,7 @@ public sealed class SpawnProgressViewModel : INotifyPropertyChanged
 
     private BridgeStatus _status = new();
     private string _title = "Safe Group Spawn";
+    private string? _lastLoggedMessage;
 
     public SpawnProgressViewModel(
         BridgeStatusService statusService,
@@ -107,6 +108,8 @@ public sealed class SpawnProgressViewModel : INotifyPropertyChanged
 
     public async Task CancelAsync()
     {
+        AppLogService.Info($"{Title}: cancel requested");
+
         await _queueWriter.CancelCurrentActionAsync();
         Refresh();
     }
@@ -114,6 +117,16 @@ public sealed class SpawnProgressViewModel : INotifyPropertyChanged
     private void Refresh()
     {
         Status = _statusService.Read();
+
+        if (Status.LastMessage == _lastLoggedMessage)
+            return;
+
+        _lastLoggedMessage = Status.LastMessage;
+
+        if (HasError)
+            AppLogService.Warn($"{Title}: {Status.LastMessage} (bridge error: {Status.Error})");
+        else
+            AppLogService.Info($"{Title}: {Status.LastMessage}");
     }
 
     private static string FormatDuration(TimeSpan duration)
