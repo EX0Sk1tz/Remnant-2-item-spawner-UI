@@ -60,6 +60,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _infiniteHealth;
     private bool _infiniteStamina;
     private int _stackSize = 1;
+    private string _languageCode = "en";
+
+    private bool _isUpdateAvailable;
+    private string? _latestVersionText;
+    private string? _updateDownloadUrl;
+    private bool _isUpdating;
 
     public MainViewModel()
     {
@@ -89,6 +95,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _selectedWiki = string.IsNullOrWhiteSpace(settings.Wiki) ? "wiki.gg" : settings.Wiki;
         _movementSpeedMultiplier = settings.MovementSpeedMultiplier <= 0 ? 1.0 : settings.MovementSpeedMultiplier;
         _stackSize = settings.StackSize <= 0 ? 1 : settings.StackSize;
+        _languageCode = string.IsNullOrWhiteSpace(settings.Language) ? "en" : settings.Language;
+
+        Loc = new LocalizationService(_languageCode);
 
         _allCategoryGroups = new List<CategoryGroup>
         {
@@ -112,6 +121,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StartTeleportHotkeyCaptureCommand = new RelayCommand(StartTeleportHotkeyCapture);
         StartConsoleKeyCaptureCommand = new RelayCommand(StartConsoleKeyCapture);
         StartDestroyTargetHotkeyCaptureCommand = new RelayCommand(StartDestroyTargetHotkeyCapture);
+        UpdateNowCommand = new RelayCommand(async () => await ApplyUpdateAsync(), () => !IsUpdating);
 
         RefreshPathState();
     }
@@ -138,6 +148,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public RelayCommand StartDestroyTargetHotkeyCaptureCommand { get; }
 
+    public RelayCommand UpdateNowCommand { get; }
+
     public List<string> WikiOptions { get; } = new()
     {
         "wiki.gg",
@@ -149,6 +161,45 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public BridgeStatusService BridgeStatusService => _bridgeStatusService;
 
     public QueueWriter QueueWriter => _queueWriter;
+
+    public string VersionText { get; } = $"v{UpdateCheckService.GetCurrentVersion()}";
+
+    public bool IsUpdateAvailable
+    {
+        get => _isUpdateAvailable;
+        private set
+        {
+            _isUpdateAvailable = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string? LatestVersionText
+    {
+        get => _latestVersionText;
+        private set
+        {
+            _latestVersionText = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UpdateBadgeText));
+        }
+    }
+
+    public bool IsUpdating
+    {
+        get => _isUpdating;
+        private set
+        {
+            _isUpdating = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UpdateBadgeText));
+            UpdateNowCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    public string UpdateBadgeText => IsUpdating
+        ? Loc["Main.Updating"]
+        : $"{VersionText} → {LatestVersionText}";
 
     public bool HasDiagnosticIssue => _diagnosticReport.HasIssues;
 
@@ -404,6 +455,29 @@ public sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             SaveHotkeySettings();
             StatusText = AlwaysOnTop ? "Always on top enabled" : "Always on top disabled";
+        }
+    }
+
+    public LocalizationService Loc { get; }
+
+    public List<LanguageOption> AvailableLanguages { get; } = new()
+    {
+        new LanguageOption("en", "English"),
+        new LanguageOption("de", "Deutsch")
+    };
+
+    public string LanguageCode
+    {
+        get => _languageCode;
+        set
+        {
+            if (_languageCode == value)
+                return;
+
+            _languageCode = value;
+            OnPropertyChanged();
+            Loc.SetLanguage(value);
+            SaveHotkeySettings();
         }
     }
 
@@ -944,6 +1018,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         RefreshPathState();
         RefreshDiagnostics();
+        RefreshSummonableTraitsState();
 
         if (!IsGamePathValid)
         {
@@ -967,6 +1042,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (groupItems.Count == 0)
         {
             StatusText = $"No spawnable items found for {SelectedType}";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        var isTraitGroup = groupItems.All(x => x.IsTraitEntry && !x.IsTraitPoint);
+
+        if (isTraitGroup && !IsSummonableTraitsInstalled)
+        {
+            StatusText = "Group spawn blocked: Summonable Traits mod is not installed";
             ShowBlockedToast(StatusText);
             return;
         }
@@ -1048,8 +1132,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
             DestroyTarget = DestroyTargetHotkey,
             Wiki = SelectedWiki,
             MovementSpeedMultiplier = MovementSpeedMultiplier,
-            StackSize = StackSize
+            StackSize = StackSize,
+            Language = LanguageCode
         });
+    }
+
+    public void SetUpdateAvailable(string latestVersion, string? downloadUrl)
+    {
+        if (string.IsNullOrWhiteSpace(downloadUrl))
+            return;
+
+        _updateDownloadUrl = downloadUrl;
+        LatestVersionText = latestVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? latestVersion : $"v{latestVersion}";
+        IsUpdateAvailable = true;
+    }
+
+    private async Task ApplyUpdateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_updateDownloadUrl) || IsUpdating)
+            return;
+
+        IsUpdating = true;
+
+        try
+        {
+            await AppUpdateService.DownloadAndApplyUpdateAsync(_updateDownloadUrl);
+        }
+        finally
+        {
+            IsUpdating = false;
+        }
     }
 
     private void RefreshPathState()
@@ -1088,6 +1200,8 @@ public sealed class RelayCommand : System.Windows.Input.ICommand
     public event EventHandler? CanExecuteChanged;
 
     public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
+
+    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
     public async void Execute(object? parameter)
     {

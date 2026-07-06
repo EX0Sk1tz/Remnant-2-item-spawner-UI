@@ -15,4 +15,6 @@ public sealed class HotkeySettings
     public double MovementSpeedMultiplier { get; set; } = 1.0;
 
     public int StackSize { get; set; } = 1;
+
+    public string Language { get; set; } = "en";
 }

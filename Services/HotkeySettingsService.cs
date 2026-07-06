@@ -61,6 +61,7 @@ public sealed class HotkeySettingsService
                 wiki = settings.Wiki,
                 movementSpeedMultiplier = settings.MovementSpeedMultiplier,
                 stackSize = settings.StackSize,
+                language = settings.Language,
             },
             new JsonSerializerOptions
             {

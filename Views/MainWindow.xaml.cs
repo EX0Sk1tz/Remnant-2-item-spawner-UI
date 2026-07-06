@@ -42,7 +42,13 @@ public partial class MainWindow : Window
     {
         var result = await UpdateCheckService.CheckForUpdateAsync();
 
-        if (!result.IsUpdateAvailable || string.IsNullOrWhiteSpace(result.ReleaseUrl))
+        if (!result.IsUpdateAvailable)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(result.LatestVersion))
+            _viewModel.SetUpdateAvailable(result.LatestVersion!, result.DownloadUrl);
+
+        if (string.IsNullOrWhiteSpace(result.ReleaseUrl))
             return;
 
         var releaseUrl = result.ReleaseUrl;
@@ -153,6 +159,8 @@ public partial class MainWindow : Window
 
     private void OpenDiagnostics_Click(object sender, RoutedEventArgs e)
     {
+        _viewModel.RefreshDiagnostics();
+
         var window = new DiagnosticsWindow(_viewModel)
         {
             Owner = this

@@ -245,7 +245,7 @@
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="46"/>
+                        <ColumnDefinition Width="45"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
@@ -255,9 +255,38 @@
                                    FontWeight="Bold"
                                    Margin="0,0,0,4"/>
 
-                        <TextBlock Text="Unlocker Bridge"
-                                   Foreground="#8F95A3"
-                                   FontSize="13"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Unlocker Bridge"
+                                       Foreground="#8F95A3"
+                                       FontSize="13"
+                                       VerticalAlignment="Center"/>
+
+                            <TextBlock Text="{Binding VersionText}"
+                                       Foreground="#5B6272"
+                                       FontSize="11"
+                                       Margin="6,0,0,0"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <Button Content="{Binding UpdateBadgeText}"
+                                Command="{Binding UpdateNowCommand}"
+                                Foreground="#93C5FD"
+                                FontSize="11"
+                                Padding="8,3"
+                                HorizontalAlignment="Left"
+                                Margin="0,8,0,0"
+                                ToolTip="{Binding Loc[Main.UpdateTooltip]}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource ChipButtonStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsUpdateAvailable}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </StackPanel>
 
                     <Button Grid.Column="1"
@@ -278,9 +307,9 @@
                                  Foreground="#F2F2F2"
                                  BorderBrush="#303645"
                                  BorderThickness="1"
-                                 ToolTip="Search subcategories"/>
+                                 ToolTip="{Binding Loc[Main.SearchSubcategoriesTooltip]}"/>
 
-                        <Button Content="All"
+                        <Button Content="{Binding Loc[Main.All]}"
                                 Command="{Binding SelectTypeCommand}"
                                 CommandParameter="All"
                                 Style="{StaticResource AllCategoryButtonStyle}"/>
@@ -334,7 +363,7 @@
                          BorderThickness="1"/>
 
                 <Button Grid.Column="1"
-                        Content="Reload"
+                        Content="{Binding Loc[Main.Reload]}"
                         Command="{Binding ReloadCommand}"
                         Height="42"
                         Margin="12,0,0,0"
@@ -349,7 +378,60 @@
                       BorderThickness="1"
                       Foreground="#F2F2F2"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                      ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                      ScrollViewer.VerticalScrollBarVisibility="Auto">
+
+                <ListView.Resources>
+                    <Style x:Key="ItemsListThumbStyle" TargetType="Thumb">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border x:Name="ThumbBorder"
+                                            Background="#33405F"
+                                            CornerRadius="4"
+                                            Margin="2,0"/>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ThumbBorder" Property="Background" Value="#3B82F6"/>
+                                        </Trigger>
+                                        <Trigger Property="IsDragging" Value="True">
+                                            <Setter TargetName="ThumbBorder" Property="Background" Value="#3B82F6"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+
+                    <Style TargetType="ScrollBar">
+                        <Setter Property="Width" Value="10"/>
+                        <Setter Property="MinWidth" Value="10"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ScrollBar">
+                                    <Grid Background="Transparent">
+                                        <Track x:Name="PART_Track"
+                                               IsDirectionReversed="True">
+                                            <Track.DecreaseRepeatButton>
+                                                <RepeatButton Command="ScrollBar.PageUpCommand"
+                                                              Opacity="0"
+                                                              Focusable="False"/>
+                                            </Track.DecreaseRepeatButton>
+                                            <Track.IncreaseRepeatButton>
+                                                <RepeatButton Command="ScrollBar.PageDownCommand"
+                                                              Opacity="0"
+                                                              Focusable="False"/>
+                                            </Track.IncreaseRepeatButton>
+                                            <Track.Thumb>
+                                                <Thumb Style="{StaticResource ItemsListThumbStyle}"/>
+                                            </Track.Thumb>
+                                        </Track>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.Resources>
 
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
@@ -503,7 +585,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                        <Button Content="Spawn"
+                                        <Button Content="{Binding DataContext.Loc[Main.Spawn], RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Height="40"
                                                 Width="92"
                                                 Background="#2563EB"
@@ -520,7 +602,7 @@
                                             </Button.Style>
                                         </Button>
 
-                                        <Button Content="Force"
+                                        <Button Content="{Binding DataContext.Loc[Main.Force], RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Height="40"
                                                 Width="92"
                                                 Margin="10,0,0,0"
@@ -538,12 +620,12 @@
                                             </Button.Style>
                                         </Button>
 
-                                        <Button Content="Spawn"
+                                        <Button Content="{Binding DataContext.Loc[Main.Spawn], RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Height="40"
                                                 Width="92"
                                                 Background="#2563EB"
                                                 Click="SummonTrait_Click"
-                                                ToolTip="Uses SummonTrait. Spawn one trait, pick it up, then spawn the next one.">
+                                                ToolTip="{Binding DataContext.Loc[Main.SummonTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -561,13 +643,13 @@
                                             </Button.Style>
                                         </Button>
 
-                                        <Button Content="Add"
+                                        <Button Content="{Binding DataContext.Loc[Main.Add], RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Height="40"
                                                 Width="92"
                                                 Margin="10,0,0,0"
                                                 Background="#16A34A"
                                                 Click="AddTrait_Click"
-                                                ToolTip="Uses AddTrait. Adds the trait directly through the Summonable Traits mod.">
+                                                ToolTip="{Binding DataContext.Loc[Main.AddTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -585,7 +667,7 @@
                                             </Button.Style>
                                         </Button>
 
-                                        <Button Content="Copy"
+                                        <Button Content="{Binding DataContext.Loc[Main.Copy], RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Height="40"
                                                 Width="92"
                                                 Margin="10,0,0,0"
@@ -601,7 +683,7 @@
                                             VerticalAlignment="Center"/>
 
                                     <Button Grid.Column="2"
-                                            Content="Wiki"
+                                            Content="{Binding DataContext.Loc[Main.Wiki], RelativeSource={RelativeSource AncestorType=Window}}"
                                             Height="40"
                                             Width="82"
                                             Background="#252936"
@@ -633,13 +715,13 @@
                         Height="36"
                         Margin="8,0,0,0"
                         Background="#252936"
-                        Foreground="#FACC15">
+                        Foreground="#D8DCE5"
+                        ToolTip="{Binding Loc[Main.DiagnosticsTooltip]}">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                            <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Setter Property="Foreground" Value="#FACC15"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -650,13 +732,50 @@
                         <TextBlock Text="ⓘ"
                                    FontSize="15"
                                    FontWeight="Bold"
-                                   Margin="0,0,6,0"/>
+                                   Margin="0,0,6,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Text="{Binding Loc[Main.Diagnostics]}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
                         <TextBlock Text="{Binding DiagnosticHint}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    TextTrimming="CharacterEllipsis"
-                                   MaxWidth="140"/>
+                                   MaxWidth="140">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Button>
 
@@ -706,7 +825,7 @@
                         </StackPanel>
 
                         <Button Grid.Column="2"
-                                Content="Browse"
+                                Content="{Binding Loc[Main.Browse]}"
                                 Command="{Binding SelectGamePathCommand}"
                                 Height="30"
                                 Background="#252936"
@@ -715,7 +834,7 @@
                 </Border>
 
                 <Button Grid.Column="3"
-                        Content="Spawn Group"
+                        Content="{Binding Loc[Main.SpawnGroup]}"
                         Command="{Binding UnlockGroupCommand}"
                         Height="44"
                         Margin="8,0,0,0"
@@ -728,7 +847,7 @@
                       ItemsSource="{Binding Toasts}"
                       HorizontalAlignment="Right"
                       VerticalAlignment="Bottom"
-                      Margin="0,0,20,20"
+                      Margin="0,0,20,92"
                       Focusable="False">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -738,13 +857,13 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border x:Name="ToastCard"
-                            Width="300"
+                            Width="240"
                             Background="#1A1D27"
                             BorderBrush="#33405F"
                             BorderThickness="1"
-                            CornerRadius="10"
-                            Padding="14,12"
-                            Margin="0,10,0,0">
+                            CornerRadius="8"
+                            Padding="10,8"
+                            Margin="0,8,0,0">
                         <Border.RenderTransform>
                             <TranslateTransform X="60"/>
                         </Border.RenderTransform>
@@ -769,7 +888,7 @@
 
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="4"/>
+                                <ColumnDefinition Width="3"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
@@ -778,27 +897,27 @@
                                     Grid.Column="0"
                                     Background="#2563EB"
                                     CornerRadius="2"
-                                    Margin="0,0,10,0"/>
+                                    Margin="0,0,8,0"/>
 
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="{Binding Title}"
                                            Foreground="#F2F2F2"
-                                           FontSize="13"
+                                           FontSize="12"
                                            FontWeight="Bold"
                                            TextWrapping="Wrap"/>
 
                                 <TextBlock Text="{Binding Message}"
                                            Foreground="#B7BBC7"
-                                           FontSize="12"
-                                           Margin="0,4,0,0"
+                                           FontSize="11"
+                                           Margin="0,3,0,0"
                                            TextWrapping="Wrap"/>
 
                                 <TextBlock x:Name="ActionLink"
                                            Text="{Binding ActionText}"
                                            Foreground="#60A5FA"
-                                           FontSize="12"
+                                           FontSize="11"
                                            FontWeight="SemiBold"
-                                           Margin="0,8,0,0"
+                                           Margin="0,6,0,0"
                                            Cursor="Hand"
                                            MouseLeftButtonUp="ToastAction_Click"/>
                             </StackPanel>
@@ -806,10 +925,10 @@
                             <TextBlock Grid.Column="2"
                                        Text="&#10005;"
                                        Foreground="#6B7280"
-                                       FontSize="11"
+                                       FontSize="10"
                                        Cursor="Hand"
                                        VerticalAlignment="Top"
-                                       Margin="8,0,0,0"
+                                       Margin="6,0,0,0"
                                        MouseLeftButtonUp="ToastClose_Click"/>
                         </Grid>
                     </Border>

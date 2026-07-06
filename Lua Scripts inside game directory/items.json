@@ -4257,201 +4257,201 @@
   {
     "name": "Ammo Reserves",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/AmmoReserves/Trait_AmmoReserves.Trait_AmmoReserves_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/AmmoReserves/Trait_AmmoReserves.Trait_AmmoReserves_C"
   },
   {
     "name": "Flash Caster",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/FlashCaster/Trait_FlashCaster.Trait_FlashCaster_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/FlashCaster/Trait_FlashCaster.Trait_FlashCaster_C"
   },
   {
     "name": "Fortify",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Fortify/Trait_Fortify.Trait_Fortify_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Fortify/Trait_Fortify.Trait_Fortify_C"
   },
   {
     "name": "Kinship",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Kinship/Trait_Kinship.Trait_Kinship_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Kinship/Trait_Kinship.Trait_Kinship_C"
   },
   {
     "name": "Longshot",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Longshot/Trait_Longshot.Trait_Longshot_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Longshot/Trait_Longshot.Trait_Longshot_C"
   },
   {
     "name": "Potency",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Potency/Trait_Potency.Trait_Potency_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Potency/Trait_Potency.Trait_Potency_C"
   },
   {
     "name": "Regrowth",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Regrowth/Trait_Regrowth.Trait_Regrowth_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Regrowth/Trait_Regrowth.Trait_Regrowth_C"
   },
   {
     "name": "Strong Back",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/StrongBack/Trait_StrongBack.Trait_StrongBack_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/StrongBack/Trait_StrongBack.Trait_StrongBack_C"
   },
   {
     "name": "Swiftness",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Swiftness/Trait_Swiftness.Trait_Swiftness_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Swiftness/Trait_Swiftness.Trait_Swiftness_C"
   },
   {
     "name": "Triage",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Triage/Trait_Triage.Trait_Triage_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Triage/Trait_Triage.Trait_Triage_C"
   },
   {
     "name": "Untouchable",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Untouchable/Trait_Untouchable.Trait_Untouchable_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Untouchable/Trait_Untouchable.Trait_Untouchable_C"
   },
   {
     "name": "Affliction",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_DLC1/Items/Traits/Affliction/Trait_Affliction.Trait_Affliction_C"
+    "path": "/Game/World_DLC1/Items/Traits/Affliction/Trait_Affliction.Trait_Affliction_C"
   },
   {
     "name": "Gifted",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_DLC2/Items/Archetypes/Invoker/PerksAndTraits/Trait_Gifted.Trait_Gifted_C"
+    "path": "/Game/World_DLC2/Items/Archetypes/Invoker/PerksAndTraits/Trait_Gifted.Trait_Gifted_C"
   },
   {
     "name": "Barrier",
     "type": "Archetype Trait",
-    "path": "AddTrait /Game/World_DLC3/Items/Archetypes/Warden/Traits/Trait_Barrier.Trait_Barrier_C"
+    "path": "/Game/World_DLC3/Items/Archetypes/Warden/Traits/Trait_Barrier.Trait_Barrier_C"
   },
   {
     "name": "Endurance",
     "type": "Core Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Endurance/Trait_Endurance.Trait_Endurance_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Endurance/Trait_Endurance.Trait_Endurance_C"
   },
   {
     "name": "Expertise",
     "type": "Core Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Expertise/Trait_Expertise.Trait_Expertise_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Expertise/Trait_Expertise.Trait_Expertise_C"
   },
   {
     "name": "Spirit",
     "type": "Core Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Spirit/Trait_Spirit.Trait_Spirit_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Spirit/Trait_Spirit.Trait_Spirit_C"
   },
   {
     "name": "Vigor",
     "type": "Core Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Vigor/Trait_Vigor.Trait_Vigor_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Vigor/Trait_Vigor.Trait_Vigor_C"
   },
   {
     "name": "Amplitude",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Archetype/Amplitude/Trait_Amplitude.Trait_Amplitude_C"
+    "path": "/Game/World_Base/Items/Traits/Archetype/Amplitude/Trait_Amplitude.Trait_Amplitude_C"
   },
   {
     "name": "Arcane Strike",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/ArcaneStrike/Trait_ArcaneStrike.Trait_ArcaneStrike_C"
+    "path": "/Game/World_Base/Items/Traits/Core/ArcaneStrike/Trait_ArcaneStrike.Trait_ArcaneStrike_C"
   },
   {
     "name": "Barkskin",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Barkskin/Trait_Barkskin.Trait_Barkskin_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Barkskin/Trait_Barkskin.Trait_Barkskin_C"
   },
   {
     "name": "Blood Bond",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/BloodBond/Trait_BloodBond.Trait_BloodBond_C"
+    "path": "/Game/World_Base/Items/Traits/Core/BloodBond/Trait_BloodBond.Trait_BloodBond_C"
   },
   {
     "name": "Bloodstream",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Bloodstream/Trait_Bloodstream.Trait_Bloodstream_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Bloodstream/Trait_Bloodstream.Trait_Bloodstream_C"
   },
   {
     "name": "Fitness",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Fitness/Trait_Fitness.Trait_Fitness_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Fitness/Trait_Fitness.Trait_Fitness_C"
   },
   {
     "name": "Footwork",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Footwork/Trait_Footwork.Trait_Footwork_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Footwork/Trait_Footwork.Trait_Footwork_C"
   },
   {
     "name": "Glutton",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Glutton/Trait_Glutton.Trait_Glutton_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Glutton/Trait_Glutton.Trait_Glutton_C"
   },
   {
     "name": "Handling",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Handling/Trait_Handling.Trait_Handling_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Handling/Trait_Handling.Trait_Handling_C"
   },
   {
     "name": "Recovery",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Recovery/Trait_Recovery.Trait_Recovery_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Recovery/Trait_Recovery.Trait_Recovery_C"
   },
   {
     "name": "Revivalist",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Revivalist/Trait_Revivalist.Trait_Revivalist_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Revivalist/Trait_Revivalist.Trait_Revivalist_C"
   },
   {
     "name": "Rugged",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Rugged/Trait_Rugged.Trait_Rugged_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Rugged/Trait_Rugged.Trait_Rugged_C"
   },
   {
     "name": "Scholar",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Scholar/Trait_Scholar.Trait_Scholar_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Scholar/Trait_Scholar.Trait_Scholar_C"
   },
   {
     "name": "Shadeskin",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Shadeskin/Trait_Shadeskin.Trait_Shadeskin_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Shadeskin/Trait_Shadeskin.Trait_Shadeskin_C"
   },
   {
     "name": "Siphoner",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Siphoner/Trait_Siphoner.Trait_Siphoner_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Siphoner/Trait_Siphoner.Trait_Siphoner_C"
   },
   {
     "name": "Dark Pact",
     "type": "Trait",
-    "path": "AddTrait /Game/World_DLC1/Items/Traits/DarkPact/Trait_DarkPact.Trait_DarkPact_C"
+    "path": "/Game/World_DLC1/Items/Traits/DarkPact/Trait_DarkPact.Trait_DarkPact_C"
   },
   {
     "name": "Resolute",
     "type": "Trait",
-    "path": "AddTrait /Game/World_DLC2/Items/Traits/Resolute/Trait_Resolute.Trait_Resolute_C"
+    "path": "/Game/World_DLC2/Items/Traits/Resolute/Trait_Resolute.Trait_Resolute_C"
   },
   {
     "name": "Chakra",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Chakra/Trait_Chakra.Trait_Chakra_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Chakra/Trait_Chakra.Trait_Chakra_C"
   },
   {
     "name": "Leech",
     "type": "Trait",
-    "path": "AddTrait /Game/World_Base/Items/Traits/Core/Leech/Trait_Leech.Trait_Leech_C"
+    "path": "/Game/World_Base/Items/Traits/Core/Leech/Trait_Leech.Trait_Leech_C"
   },
   {
     "name": "Insight",
     "type": "Trait",
-    "path": "AddTrait /Game/World_DLC3/Items/Traits/Insight/Trait_Insight.Trait_Insight_C"
+    "path": "/Game/World_DLC3/Items/Traits/Insight/Trait_Insight.Trait_Insight_C"
   },
   {
     "name": "Perception",
     "type": "Trait",
-    "path": "AddTrait /Game/World_DLC3/Items/Traits/Perception/Trait_Perception.Trait_Perception_C"
+    "path": "/Game/World_DLC3/Items/Traits/Perception/Trait_Perception.Trait_Perception_C"
   },
   {
     "name": "Preservation",
     "type": "Trait",
-    "path": "AddTrait /Game/World_DLC3/Items/Traits/Preservation/Trait_Preservation.Trait_Preservation_C"
+    "path": "/Game/World_DLC3/Items/Traits/Preservation/Trait_Preservation.Trait_Preservation_C"
   }
 ]
