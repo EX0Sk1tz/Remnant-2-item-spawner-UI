@@ -111,6 +111,20 @@ local function SetStatus(message, errorMessage)
     end
 end
 
+local function IsValidObject(obj)
+    if not obj then return false end
+
+    local ok, valid = pcall(function()
+        if obj.IsValid then
+            return obj:IsValid()
+        end
+
+        return true
+    end)
+
+    return ok and valid == true
+end
+
 local function ExecuteConsoleCommand(command)
     if not command or tostring(command) == "" then
         SetStatus("Console command blocked", "Empty console command")
@@ -123,6 +137,14 @@ local function ExecuteConsoleCommand(command)
             local ksl = UEHelpers.GetKismetSystemLibrary(true)
             local context = UEHelpers.GetWorldContextObject()
             local player = UEHelpers.GetPlayerController()
+
+            -- ksl:ExecuteConsoleCommand is a native UFunction call; an invalid context/player
+            -- (e.g. no active world yet, loading screen, death/respawn) makes UE4SS jump through
+            -- a null function pointer and crash the whole game. pcall cannot catch that, so the
+            -- validity check has to happen before the call, not around it.
+            if not IsValidObject(ksl) or not IsValidObject(context) or not IsValidObject(player) then
+                error("world/player context not ready")
+            end
 
             print("[Remnant2Unlocker] ExecuteConsoleCommand: " .. tostring(command))
 
@@ -244,6 +266,18 @@ local function GetEntryPath(entry)
     return entry.path or entry.Path
 end
 
+-- Trait entries aren't summonable with a plain "summon" console command -- they only work
+-- through the external Summonable Traits mod's "AddTrait"/"SummonTrait" handlers, same as
+-- the single-item Add/Spawn Trait buttons. Group spawn must route them the same way or the
+-- per-item "summon" call silently does nothing.
+local function IsTraitType(entry)
+    if type(entry) ~= "table" then return false end
+
+    local itemType = tostring(entry.type or entry.Type or ""):lower()
+
+    return itemType == "trait" or itemType == "core trait" or itemType == "archetype trait"
+end
+
 local function GetDropQuantity(command)
     return ClampNumber(GetCommandValue(command, "dropQuantity", "DropQuantity"), 1, 1, 999)
 end
@@ -329,11 +363,18 @@ local function ProcessNextSafeItem()
     local entry = safeQueue[safeIndex]
     local path = GetEntryPath(entry)
 
-    local ok, result = Spawner.SpawnPath(
-        path,
-        1,
-        safeStackSize or 1,
-        IsRelicFragment(entry) and 31 or 0)
+    local ok, result
+
+    if IsTraitType(entry) then
+        ExecuteConsoleCommand("AddTrait " .. tostring(path))
+        ok, result = true, "AddTrait " .. tostring(path)
+    else
+        ok, result = Spawner.SpawnPath(
+            path,
+            1,
+            safeStackSize or 1,
+            IsRelicFragment(entry) and 31 or 0)
+    end
 
     if ok then
         status.lastSpawned = result

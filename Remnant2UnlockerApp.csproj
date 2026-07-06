@@ -7,11 +7,26 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
-    <Version>4.0.0</Version>
+    <Version>4.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="Cache\Images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Lua Scripts inside game directory\**" />
+    <Compile Remove="Summonable Traits Lua\**" />
+    <EmbeddedResource Remove="Lua Scripts inside game directory\**" />
+    <EmbeddedResource Remove="Summonable Traits Lua\**" />
+    <None Remove="Lua Scripts inside game directory\**" />
+    <None Remove="Summonable Traits Lua\**" />
+    <Page Remove="Lua Scripts inside game directory\**" />
+    <Page Remove="Summonable Traits Lua\**" />
   </ItemGroup>
 
 </Project>

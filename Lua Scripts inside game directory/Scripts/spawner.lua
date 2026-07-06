@@ -46,12 +46,35 @@ local function BuildSummonCommand(path, dropQuantity, stackSize, itemLevel)
     return string.format("summon %s %d %d", normalizedPath, drop, stack), nil
 end
 
+local function IsValidObject(obj)
+    if not obj then return false end
+
+    local ok, valid = pcall(function()
+        if obj.IsValid then
+            return obj:IsValid()
+        end
+
+        return true
+    end)
+
+    return ok and valid == true
+end
+
 local function ExecuteConsoleCommand(command)
     ExecuteInGameThread(function()
         local ok, err = pcall(function()
             local ksl = UEHelpers.GetKismetSystemLibrary(true)
             local context = UEHelpers.GetWorldContextObject()
             local player = UEHelpers.GetPlayerController()
+
+            -- ksl:ExecuteConsoleCommand is a native UFunction call; an invalid context/player
+            -- (e.g. no active world yet, loading screen, death/respawn) makes UE4SS jump through
+            -- a null function pointer and crash the whole game. pcall cannot catch that, so the
+            -- validity check has to happen before the call, not around it.
+            if not IsValidObject(ksl) or not IsValidObject(context) or not IsValidObject(player) then
+                print("[Remnant2Unlocker] ExecuteConsoleCommand skipped: world/player context not ready")
+                return
+            end
 
             print("[Remnant2Unlocker] ExecuteConsoleCommand: " .. command)
 

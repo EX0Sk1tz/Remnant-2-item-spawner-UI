@@ -16,18 +16,6 @@ public partial class SettingsWindow : Window
         DataContext = _viewModel;
     }
 
-    private void OpenDiagnostics_Click(object sender, RoutedEventArgs e)
-    {
-        _viewModel.RefreshDiagnostics();
-
-        var window = new DiagnosticsWindow(_viewModel)
-        {
-            Owner = this
-        };
-
-        window.ShowDialog();
-    }
-
     private void ConsoleKeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (!_viewModel.IsCapturingConsoleKey)
