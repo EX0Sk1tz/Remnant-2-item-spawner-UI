@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+Summonable Traits Lua/
+Lua Scripts inside game directory/
+.claude/
