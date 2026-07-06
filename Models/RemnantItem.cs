@@ -11,6 +11,7 @@ public sealed class RemnantItem : INotifyPropertyChanged
     private string? _imagePath;
     private ImageSource? _image;
     private bool _isImageLoading;
+    private bool _isFavorite;
 
     public string Name { get; set; } = "";
     public string Type { get; set; } = "";
@@ -42,6 +43,16 @@ public sealed class RemnantItem : INotifyPropertyChanged
     }
 
     public bool HasImage => Image != null;
+
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set
+        {
+            _isFavorite = value;
+            OnPropertyChanged();
+        }
+    }
 
     public bool IsImageLoading
     {
