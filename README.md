@@ -96,20 +96,10 @@ Win64
 
 Only needed if you want to spawn or directly add Trait / Core Trait / Archetype Trait items. Everything else works without it.
 
-Copy the included:
+Download from Nexusmods:
+[Summonable Traits](https://www.nexusmods.com/remnant2/mods/122)
 
-```text
-Summonable Traits Lua
-```
-
-folder into its own mod folder under:
-
-```text
-...\Remnant2\Remnant2\Binaries\Win64\Mods
-```
-
-as a separate mod alongside `Remnant2Unlocker` (it just needs to contain a `main.lua`, any folder name works). The app's Diagnostics window will report whether it detects this mod as installed.
-
+The app's Diagnostics window will report whether it detects this mod as installed.
 ---
 
 ## 4. Start the Game
