@@ -38,6 +38,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _categorySearchText = "";
     private readonly List<CategoryGroup> _allCategoryGroups = new();
     private readonly SummonableTraitsService _summonableTraitsService;
+    private readonly FavoritesService _favoritesService;
     private bool _isSummonableTraitsInstalled;
 
 
@@ -65,6 +66,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _isUpdateAvailable;
     private string? _latestVersionText;
     private string? _updateDownloadUrl;
+    private string? _updateReleaseNotes;
     private bool _isUpdating;
 
     public MainViewModel()
@@ -79,6 +81,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _hotkeySettingsService = new HotkeySettingsService(_pathService);
         _cheatSettingsService = new CheatSettingsService(_pathService);
         _summonableTraitsService = new SummonableTraitsService(_pathService);
+        _favoritesService = new FavoritesService();
         _diagnosticsService = new DiagnosticsService(_pathService, _summonableTraitsService);
         RefreshDiagnostics();
 
@@ -115,6 +118,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ApplyCategoryFilter();
 
         SelectTypeCommand = new RelayCommand<string>(SelectType);
+        ToggleFavoriteCommand = new RelayCommand<RemnantItem>(ToggleFavorite);
         UnlockGroupCommand = new RelayCommand(async () => await UnlockGroupAsync());
         ReloadCommand = new RelayCommand(async () => await LoadAsync());
         SelectGamePathCommand = new RelayCommand(async () => await SelectGamePathAsync());
@@ -122,6 +126,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StartConsoleKeyCaptureCommand = new RelayCommand(StartConsoleKeyCapture);
         StartDestroyTargetHotkeyCaptureCommand = new RelayCommand(StartDestroyTargetHotkeyCapture);
         UpdateNowCommand = new RelayCommand(async () => await ApplyUpdateAsync(), () => !IsUpdating);
+        ShowUpdatePreviewCommand = new RelayCommand(() => UpdatePreviewRequested?.Invoke(this, EventArgs.Empty), () => !IsUpdating);
 
         RefreshPathState();
     }
@@ -130,11 +135,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public event EventHandler<string>? GroupSpawnQueued;
 
+    public event EventHandler? UpdatePreviewRequested;
+
     public ObservableCollection<RemnantItem> Items { get; } = new();
 
     public ObservableCollection<CategoryGroup> CategoryGroups { get; }
 
     public RelayCommand<string> SelectTypeCommand { get; }
+
+    public RelayCommand<RemnantItem> ToggleFavoriteCommand { get; }
 
     public RelayCommand UnlockGroupCommand { get; }
 
@@ -149,6 +158,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand StartDestroyTargetHotkeyCaptureCommand { get; }
 
     public RelayCommand UpdateNowCommand { get; }
+
+    public RelayCommand ShowUpdatePreviewCommand { get; }
 
     public List<string> WikiOptions { get; } = new()
     {
@@ -185,6 +196,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public string? ReleaseNotes => _updateReleaseNotes;
+
     public bool IsUpdating
     {
         get => _isUpdating;
@@ -194,6 +207,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged();
             OnPropertyChanged(nameof(UpdateBadgeText));
             UpdateNowCommand.RaiseCanExecuteChanged();
+            ShowUpdatePreviewCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -673,6 +687,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             StatusText = "Loading items...";
 
             _allItems = await _itemRepository.LoadItemsAsync();
+
+            foreach (var item in _allItems)
+                item.IsFavorite = _favoritesService.IsFavorite(item.Path);
+
             RefreshSummonableTraitsState();
 
             ApplyFilter();
@@ -750,9 +768,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         SelectedType = type;
 
-        if (type == "All")
+        if (type == "All" || type == "Favorites")
         {
-            SelectedGroup = "All";
+            SelectedGroup = type;
             return;
         }
 
@@ -762,13 +780,32 @@ public sealed class MainViewModel : INotifyPropertyChanged
             SelectedGroup = group.Name;
     }
 
+    private void ToggleFavorite(RemnantItem? item)
+    {
+        if (item == null)
+            return;
+
+        item.IsFavorite = !item.IsFavorite;
+        _favoritesService.SetFavorite(item.Path, item.IsFavorite);
+
+        if (SelectedType == "Favorites" && !item.IsFavorite)
+        {
+            Items.Remove(item);
+            StatusText = $"{Items.Count} items shown";
+        }
+    }
+
     private void ApplyFilter()
     {
         Items.Clear();
 
         IEnumerable<RemnantItem> query = _allItems;
 
-        if (!string.IsNullOrWhiteSpace(SelectedType) && SelectedType != "All")
+        if (SelectedType == "Favorites")
+        {
+            query = query.Where(x => x.IsFavorite);
+        }
+        else if (!string.IsNullOrWhiteSpace(SelectedType) && SelectedType != "All")
         {
             query = query.Where(x => string.Equals(x.Type, SelectedType, StringComparison.OrdinalIgnoreCase));
         }
@@ -1027,7 +1064,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (SelectedType == "All")
+        if (SelectedType == "All" || SelectedType == "Favorites")
         {
             StatusText = "Select a subcategory before spawning a group";
             ShowBlockedToast(StatusText);
@@ -1137,12 +1174,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         });
     }
 
-    public void SetUpdateAvailable(string latestVersion, string? downloadUrl)
+    public void SetUpdateAvailable(string latestVersion, string? downloadUrl, string? releaseNotes)
     {
         if (string.IsNullOrWhiteSpace(downloadUrl))
             return;
 
         _updateDownloadUrl = downloadUrl;
+        _updateReleaseNotes = releaseNotes;
         LatestVersionText = latestVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? latestVersion : $"v{latestVersion}";
         IsUpdateAvailable = true;
     }

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Remnant2UnlockerApp.Services;
 
-public sealed record UpdateCheckResult(bool IsUpdateAvailable, string CurrentVersion, string? LatestVersion, string? ReleaseUrl, string? DownloadUrl);
+public sealed record UpdateCheckResult(bool IsUpdateAvailable, string CurrentVersion, string? LatestVersion, string? ReleaseUrl, string? DownloadUrl, string? ReleaseNotes);
 
 public static class UpdateCheckService
 {
@@ -61,7 +61,7 @@ public static class UpdateCheckService
             using var response = await LazyClient.Value.GetAsync(ApiUrl);
 
             if (!response.IsSuccessStatusCode)
-                return new UpdateCheckResult(false, current, null, null, null);
+                return new UpdateCheckResult(false, current, null, null, null, null);
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
@@ -69,20 +69,21 @@ public static class UpdateCheckService
             var tagName = doc.RootElement.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? "" : "";
             var releaseUrl = doc.RootElement.TryGetProperty("html_url", out var urlProp) ? urlProp.GetString() : null;
             var downloadUrl = GetZipAssetUrl(doc.RootElement);
+            var releaseNotes = doc.RootElement.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() : null;
 
             var latestVersionText = tagName.TrimStart('v', 'V');
 
             if (!Version.TryParse(latestVersionText, out var latestVersion) || !Version.TryParse(current, out var currentVersion))
-                return new UpdateCheckResult(false, current, tagName, releaseUrl, downloadUrl);
+                return new UpdateCheckResult(false, current, tagName, releaseUrl, downloadUrl, releaseNotes);
 
             var isNewer = latestVersion > currentVersion;
 
-            return new UpdateCheckResult(isNewer, current, tagName, releaseUrl, downloadUrl);
+            return new UpdateCheckResult(isNewer, current, tagName, releaseUrl, downloadUrl, releaseNotes);
         }
         catch (Exception ex)
         {
             AppLogService.Warn("Update check failed", ex);
-            return new UpdateCheckResult(false, current, null, null, null);
+            return new UpdateCheckResult(false, current, null, null, null, null);
         }
     }
 }

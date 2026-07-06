@@ -15,6 +15,8 @@
 
   "Main.SearchSubcategoriesTooltip": "Unterkategorien durchsuchen",
   "Main.All": "Alle",
+  "Main.Favorites": "★ Favoriten",
+  "Main.ToggleFavoriteTooltip": "Favorit umschalten",
   "Main.Reload": "Neu laden",
   "Main.Diagnostics": "Diagnose",
   "Main.DiagnosticsTooltip": "Diagnose einrichten / Hilfe",

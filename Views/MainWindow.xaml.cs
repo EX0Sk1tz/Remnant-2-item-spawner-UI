@@ -17,6 +17,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         _viewModel.GroupSpawnQueued += (_, title) => OpenSpawnProgressWindow(title);
+        _viewModel.UpdatePreviewRequested += (_, _) => OpenUpdatePreviewWindow();
 
         Loaded += async (_, _) => await OnLoadedAsync();
     }
@@ -46,7 +47,7 @@ public partial class MainWindow : Window
             return;
 
         if (!string.IsNullOrWhiteSpace(result.LatestVersion))
-            _viewModel.SetUpdateAvailable(result.LatestVersion!, result.DownloadUrl);
+            _viewModel.SetUpdateAvailable(result.LatestVersion!, result.DownloadUrl, result.ReleaseNotes);
 
         if (string.IsNullOrWhiteSpace(result.ReleaseUrl))
             return;
@@ -167,6 +168,20 @@ public partial class MainWindow : Window
         };
 
         window.ShowDialog();
+    }
+
+    private void OpenUpdatePreviewWindow()
+    {
+        var window = new UpdateAvailableWindow(
+            _viewModel.VersionText,
+            _viewModel.LatestVersionText ?? "",
+            _viewModel.ReleaseNotes)
+        {
+            Owner = this
+        };
+
+        if (window.ShowDialog() == true)
+            _viewModel.UpdateNowCommand.Execute(null);
     }
 
     private void OpenGroupProgress_Click(object sender, RoutedEventArgs e)
