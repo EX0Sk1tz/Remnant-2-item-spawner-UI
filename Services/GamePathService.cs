@@ -87,6 +87,11 @@ public sealed class GamePathService
         return Path.Combine(GetModRootPath(), "status.json");
     }
 
+    public string GetInventoryItemsPath()
+    {
+        return Path.Combine(GetModRootPath(), "inventory_items.json");
+    }
+
     public string GetScriptsPath()
     {
         return Path.Combine(GetModRootPath(), "scripts");

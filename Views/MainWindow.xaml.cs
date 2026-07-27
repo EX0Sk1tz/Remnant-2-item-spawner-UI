@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using Point = System.Windows.Point;
 using Remnant2UnlockerApp.Models;
 using Remnant2UnlockerApp.Services;
 using Remnant2UnlockerApp.ViewModels;
@@ -90,6 +93,52 @@ public partial class MainWindow : Window
         return element.DataContext as RemnantItem;
     }
 
+    // Keeps the list feeling continuous during rapid clicking: if the row a user just acted on was
+    // the last one fully visible, nudge the view down just far enough to reveal the next row instead
+    // of making them scroll manually every time they reach the bottom of the viewport.
+    private void ScrollNextItemIntoViewIfNeeded(RemnantItem item)
+    {
+        var items = _viewModel.Items;
+        var index = items.IndexOf(item);
+
+        if (index < 0 || index + 1 >= items.Count)
+            return;
+
+        var scrollViewer = FindScrollViewer(ItemsListView);
+        if (scrollViewer == null)
+            return;
+
+        var nextItem = items[index + 1];
+        var nextContainer = ItemsListView.ItemContainerGenerator.ContainerFromItem(nextItem) as FrameworkElement;
+
+        if (nextContainer == null || !IsFullyVisible(scrollViewer, nextContainer))
+            ItemsListView.ScrollIntoView(nextItem);
+    }
+
+    private static bool IsFullyVisible(ScrollViewer scrollViewer, FrameworkElement container)
+    {
+        var transform = container.TransformToAncestor(scrollViewer);
+        var top = transform.Transform(new Point(0, 0)).Y;
+        var bottom = transform.Transform(new Point(0, container.ActualHeight)).Y;
+
+        return top >= 0 && bottom <= scrollViewer.ViewportHeight;
+    }
+
+    private static ScrollViewer? FindScrollViewer(DependencyObject root)
+    {
+        if (root is ScrollViewer scrollViewer)
+            return scrollViewer;
+
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var found = FindScrollViewer(VisualTreeHelper.GetChild(root, i));
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
     private async void SpawnItem_Click(object sender, RoutedEventArgs e)
     {
         var item = GetItemFromSender(sender);
@@ -101,6 +150,8 @@ public partial class MainWindow : Window
         }
 
         await _viewModel.SpawnItemAsync(item);
+
+        ScrollNextItemIntoViewIfNeeded(item);
     }
 
     private async void ForceConsoleSpawnItem_Click(object sender, RoutedEventArgs e)
@@ -114,6 +165,8 @@ public partial class MainWindow : Window
         }
 
         await _viewModel.ForceConsoleSpawnItemAsync(item);
+
+        ScrollNextItemIntoViewIfNeeded(item);
     }
 
     private void CopyCommand_Click(object sender, RoutedEventArgs e)
@@ -215,6 +268,8 @@ public partial class MainWindow : Window
         }
 
         await _viewModel.SummonTraitAsync(item);
+
+        ScrollNextItemIntoViewIfNeeded(item);
     }
 
     private async void AddTrait_Click(object sender, RoutedEventArgs e)
@@ -228,6 +283,8 @@ public partial class MainWindow : Window
         }
 
         await _viewModel.AddTraitAsync(item);
+
+        ScrollNextItemIntoViewIfNeeded(item);
     }
 
 }

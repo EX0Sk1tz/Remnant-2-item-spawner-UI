@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 
 namespace Remnant2UnlockerApp.Services;
 
 public static class AppUpdateService
 {
-    public static async Task DownloadAndApplyUpdateAsync(string downloadUrl)
+    public static async Task DownloadAndApplyUpdateAsync(string downloadUrl, GamePathService pathService)
     {
         var tempRoot = Path.Combine(Path.GetTempPath(), "Remnant2UnlockerUpdate");
         Directory.CreateDirectory(tempRoot);
@@ -34,10 +35,18 @@ public static class AppUpdateService
 
         ZipFile.ExtractToDirectory(zipPath, extractPath, overwriteFiles: true);
 
+        // The release zip also carries the "Remnant2Unlocker" lua mod folder (see
+        // Instructions.txt) alongside the app payload. Update it in-place in the game's
+        // Mods folder before the app payload is touched, and exclude it from the robocopy
+        // below so a stray copy doesn't end up sitting next to the exe.
+        CopyModScriptsIfPresent(extractPath, pathService);
+
         // Some archives wrap the payload in a single top-level folder -- unwrap it so the
         // copy below lands the exe and its content files directly in the install directory.
         var sourceDir = extractPath;
-        var extractedEntries = Directory.GetFileSystemEntries(extractPath);
+        var extractedEntries = Directory.GetFileSystemEntries(extractPath)
+            .Where(entry => !Path.GetFileName(entry).Equals("Remnant2Unlocker", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
 
         if (extractedEntries.Length == 1 && Directory.Exists(extractedEntries[0]))
             sourceDir = extractedEntries[0];
@@ -53,7 +62,7 @@ public static class AppUpdateService
         var script =
 $@"try {{ Wait-Process -Id {Environment.ProcessId} -ErrorAction SilentlyContinue }} catch {{}}
 Start-Sleep -Seconds 1
-robocopy '{sourceDir}' '{installDir}' /E /IS /IT /R:3 /W:1 | Out-Null
+robocopy '{sourceDir}' '{installDir}' /E /IS /IT /XD 'Remnant2Unlocker' /R:3 /W:1 | Out-Null
 Start-Process -FilePath '{exePath}'
 Remove-Item -LiteralPath '{zipPath}' -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath '{extractPath}' -Recurse -Force -ErrorAction SilentlyContinue
@@ -71,5 +80,56 @@ Remove-Item -LiteralPath '{extractPath}' -Recurse -Force -ErrorAction SilentlyCo
         });
 
         System.Windows.Application.Current.Dispatcher.Invoke(() => System.Windows.Application.Current.Shutdown());
+    }
+
+    // Only refreshes the lua scripts themselves -- user-editable files in the mod folder
+    // (items.json, hotkeys.json, etc.) are left alone.
+    private static void CopyModScriptsIfPresent(string extractRoot, GamePathService pathService)
+    {
+        if (!pathService.IsConfigured)
+        {
+            AppLogService.Warn("Skipping mod script update: game path is not configured.");
+            return;
+        }
+
+        var modFolder = Directory.EnumerateDirectories(extractRoot, "Remnant2Unlocker", SearchOption.AllDirectories)
+            .FirstOrDefault();
+
+        if (modFolder is null)
+            return;
+
+        var sourceScripts = Directory.EnumerateDirectories(modFolder)
+            .FirstOrDefault(dir => Path.GetFileName(dir).Equals("Scripts", StringComparison.OrdinalIgnoreCase));
+
+        if (sourceScripts is null)
+            return;
+
+        var destScripts = pathService.GetScriptsPath();
+
+        if (!Directory.Exists(destScripts))
+        {
+            AppLogService.Warn($"Skipping mod script update: destination folder not found: {destScripts}");
+            return;
+        }
+
+        try
+        {
+            CopyDirectoryContents(sourceScripts, destScripts);
+        }
+        catch (Exception ex)
+        {
+            AppLogService.Warn("Failed to update mod lua scripts.", ex);
+        }
+    }
+
+    private static void CopyDirectoryContents(string sourceDir, string destDir)
+    {
+        Directory.CreateDirectory(destDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+            File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)), overwrite: true);
+
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+            CopyDirectoryContents(dir, Path.Combine(destDir, Path.GetFileName(dir)));
     }
 }

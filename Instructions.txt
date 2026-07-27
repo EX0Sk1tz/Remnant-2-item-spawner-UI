@@ -1,0 +1,206 @@
+Remnant 2 Unlocker - Setup Instructions
+========================================
+
+This guide assumes you have never set up a UE4SS/Lua mod for Remnant 2 before.
+
+
+0. What you need first
+-----------------------
+
+- Remnant 2 installed via Steam (Epic/Game Pass generally works too, paths below
+  are written for Steam).
+- Know where your game is installed, typically:
+
+    ...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
+
+  This is the ONLY folder you'll need for everything below - remember it.
+
+
+1. Install UE4SS + the mod-loading patch ("Allow Asset Mods")
+--------------------------------------------------------------
+
+Remnant 2 blocks mods by default. UE4SS is the scripting framework that runs
+Lua mods in the first place, and "Allow Asset Mods" is an extra patch that
+lets Remnant 2 actually load them. The "Allow Asset Mods" package on Nexus
+Mods bundles both (a matching UE4SS build + the unlock patch) in one zip.
+
+1. Download the zip from Nexus Mods ("Allow Asset Mods", Remnant 2 Nexus).
+2. Extract the FULL contents of the zip directly into:
+
+    ...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
+
+3. Afterwards, check that the Win64 folder contains at least this:
+
+    Win64
+    |- Remnant2-Win64-Shipping.exe
+    |- Mods
+    `- ue4ss
+
+   If "Mods" or "ue4ss" are missing, you likely extracted into the wrong
+   folder (e.g. one level too high or too low).
+
+
+2. Install the Cheat Mod (ConsoleCommandsMod, ConsoleEnablerMod, CheatManagerEnablerMod)
+------------------------------------------------------------------------------------------
+
+This app additionally needs three small Lua mods that unlock the in-game
+console and the CheatManager. All three come together in the "Cheat Mod"
+package on Nexus Mods.
+
+1. Download the zip.
+2. Extract it so each of the three mod folders ends up directly under
+   Win64\Mods\:
+
+    Win64
+    `- Mods
+       |- ConsoleCommandsMod
+       |- ConsoleEnablerMod
+       `- CheatManagerEnablerMod
+
+   If the zip already ships that structure, just extract its contents into
+   Win64 (allow overwrite).
+
+
+3. Install the Remnant2Unlocker mod (this tool)
+--------------------------------------------------
+
+1. Download the latest release zip from the GitHub Releases page:
+   https://github.com/EX0Sk1tz/Remnant-2-item-spawner-UI/releases
+
+2. The zip contains a folder called "Remnant2Unlocker" - copy ONLY that
+   folder into:
+
+    ...\Remnant2\Remnant2\Binaries\Win64\Mods
+
+3. Final structure:
+
+    Win64
+    `- Mods
+       `- Remnant2Unlocker
+          |- Scripts
+          |  |- hotkeys.lua
+          |  |- json.lua
+          |  |- main.lua
+          |  |- movement_speed.lua
+          |  |- queue.lua
+          |  `- spawner.lua
+          |- command_queue.json
+          |- enabled.txt
+          |- hotkeys.json
+          |- items.json
+          `- status.json
+
+4. The .exe from the same zip (Remnant2UnlockerApp.exe) can live anywhere on
+   your PC (e.g. Desktop) - it does NOT need to be inside the game folder.
+
+
+4. (Optional) Install Summonable Traits
+------------------------------------------
+
+Only needed if you want to spawn or add Trait / Core Trait / Archetype Trait
+items directly to your inventory.
+
+1. Download Summonable Traits from Nexus Mods:
+   https://www.nexusmods.com/remnant2/mods/122
+
+2. Extract the mod folder into Win64\Mods as well.
+
+Everything else works fine without this mod.
+
+
+5. Enable all the mods
+--------------------------
+
+UE4SS needs a list of which mods are active. Open with a text editor
+(Notepad is fine):
+
+    Win64\Mods\mods.txt
+
+(Some UE4SS versions use Win64\Mods\enabled.txt instead - if mods.txt
+doesn't exist, use that one.)
+
+Make sure there is a line ending in " : 1" for EACH of the following mods
+(just append any missing lines at the bottom):
+
+    AllowModsMod : 1
+    ConsoleCommandsMod : 1
+    ConsoleEnablerMod : 1
+    CheatManagerEnablerMod : 1
+    Remnant2Unlocker : 1
+
+0 = disabled, 1 = enabled. Don't forget to save the file.
+
+
+6. Start the game
+---------------------
+
+Launch Remnant 2 normally through Steam. Let it fully load into the main
+menu/world at least once - this is when UE4SS writes the log file the app
+uses later for diagnostics.
+
+
+7. Start the app and set the game path
+------------------------------------------
+
+1. Run Remnant2UnlockerApp.exe.
+2. Click "Browse" and select exactly this folder:
+
+    ...\Remnant2\Remnant2\Binaries\Win64
+
+   NOT the Steam folder, NOT the Remnant2 root folder, NOT the Mods folder -
+   exactly the Win64 folder.
+
+3. The path is saved automatically.
+
+
+8. Run Diagnostics
+----------------------
+
+Click the Diagnostics icon in the app. It automatically checks:
+
+- whether the game path is correct
+- whether all required mod folders are present
+- whether all mods are enabled in mods.txt/enabled.txt
+- (if the game is currently running) whether UE4SS's log confirms everything
+  started correctly
+
+Every reported issue comes with a suggested fix - this is the fastest way to
+find out what's still missing.
+
+
+Troubleshooting
+===============
+
+Spawn does nothing:
+  Check the UE4SS installation, make sure all mods are enabled in
+  mods.txt/enabled.txt, and make sure you selected the correct Win64 folder.
+
+"Game path not configured":
+  Select the exact Win64 folder again - not the Steam folder, not the game
+  root folder, not the Mods folder.
+
+Some items crash or fail to spawn:
+  Use "Force" or "Copy" instead - some assets are unstable through direct
+  spawning.
+
+Traits won't spawn or Add is blocked:
+  The Summonable Traits mod is missing or not enabled - check with
+  Diagnostics.
+
+
+Notice
+======
+
+Teleport will kill you if the vertical distance downwards would be lethal
+through falling. Upwards has no restriction - best used against a surface.
+Pressing Shift (Sprint) while trying to Teleport will not work. Any
+environment blocking your character's path to the target location will
+result in a shorter teleport. Think of it as a very fast fly mod - line of
+sight must be clear.
+
+
+Disclaimer
+==========
+
+This project is intended for offline and personal use only. Use at your own
+risk.

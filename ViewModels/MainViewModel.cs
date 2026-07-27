@@ -33,6 +33,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly ConsoleSpawnService _consoleSpawnService;
     private readonly HotkeySettingsService _hotkeySettingsService;
     private readonly CheatSettingsService _cheatSettingsService;
+    private readonly InventoryItemsService _inventoryItemsService;
+    private readonly WeaponModBoostSettingsService _weaponModBoostSettingsService;
     private readonly DiagnosticsService _diagnosticsService;
     private DiagnosticReport _diagnosticReport = DiagnosticReport.Empty;
     private string _categorySearchText = "";
@@ -54,14 +56,31 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _isCapturingTeleportHotkey;
     private bool _isCapturingConsoleKey;
     private bool _isCapturingDestroyTargetHotkey;
+    private bool _isCapturingDestroyLastSpawnedHotkey;
+    private bool _isCapturingDestroyNearbySpawnedHotkey;
+    private bool _isCapturingReplenishCooldownsHotkey;
+    private bool _isCapturingFastPlayerActionsHotkey;
     private string _teleportHotkey = "F6";
     private string _consoleKey = "F10";
     private string _destroyTargetHotkey = "None";
+    private string _destroyLastSpawnedHotkey = "None";
+    private string _destroyNearbySpawnedHotkey = "None";
+    private string _replenishCooldownsHotkey = "F1";
+    private string _fastPlayerActionsHotkey = "F2";
     private double _movementSpeedMultiplier = 1.0;
+    private double _fovValue = 90.0;
     private bool _infiniteHealth;
     private bool _infiniteStamina;
+    private bool _infiniteAmmo;
+    private bool _noFallDamage;
+    private bool _enemyEsp;
     private int _stackSize = 1;
     private string _languageCode = "en";
+    private int _levelUpCount = 1;
+    private int _setWeaponLevelValue = 10;
+    private string _inventoryItemName = "";
+    private int _inventoryItemQuantity = 1;
+    private bool _logAllInventoryItems;
 
     private bool _isUpdateAvailable;
     private string? _latestVersionText;
@@ -80,6 +99,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _consoleSpawnService = new ConsoleSpawnService();
         _hotkeySettingsService = new HotkeySettingsService(_pathService);
         _cheatSettingsService = new CheatSettingsService(_pathService);
+        _inventoryItemsService = new InventoryItemsService(_pathService);
+        _weaponModBoostSettingsService = new WeaponModBoostSettingsService(_pathService);
         _summonableTraitsService = new SummonableTraitsService(_pathService);
         _favoritesService = new FavoritesService();
         _diagnosticsService = new DiagnosticsService(_pathService, _summonableTraitsService);
@@ -88,6 +109,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var cheatSettings = _cheatSettingsService.Load();
         _infiniteHealth = cheatSettings.InfiniteHealth;
         _infiniteStamina = cheatSettings.InfiniteStamina;
+        _infiniteAmmo = cheatSettings.InfiniteAmmo;
+        _noFallDamage = cheatSettings.NoFallDamage;
+        _enemyEsp = cheatSettings.EnemyEsp;
 
         var settings = _hotkeySettingsService.Load();
 
@@ -95,8 +119,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _teleportHotkey = string.IsNullOrWhiteSpace(settings.Teleport) ? "F6" : settings.Teleport;
         _consoleKey = string.IsNullOrWhiteSpace(settings.ConsoleKey) ? "F10" : settings.ConsoleKey;
         _destroyTargetHotkey = string.IsNullOrWhiteSpace(settings.DestroyTarget) ? "None" : settings.DestroyTarget;
+        _destroyLastSpawnedHotkey = string.IsNullOrWhiteSpace(settings.DestroyLastSpawned) ? "None" : settings.DestroyLastSpawned;
+        _destroyNearbySpawnedHotkey = string.IsNullOrWhiteSpace(settings.DestroyNearbySpawned) ? "None" : settings.DestroyNearbySpawned;
+        _replenishCooldownsHotkey = string.IsNullOrWhiteSpace(settings.ReplenishCooldowns) ? "F1" : settings.ReplenishCooldowns;
+        _fastPlayerActionsHotkey = string.IsNullOrWhiteSpace(settings.FastPlayerActions) ? "F2" : settings.FastPlayerActions;
         _selectedWiki = string.IsNullOrWhiteSpace(settings.Wiki) ? "wiki.gg" : settings.Wiki;
         _movementSpeedMultiplier = settings.MovementSpeedMultiplier <= 0 ? 1.0 : settings.MovementSpeedMultiplier;
+        _fovValue = settings.FovValue <= 0 ? 90.0 : settings.FovValue;
         _stackSize = settings.StackSize <= 0 ? 1 : settings.StackSize;
         _languageCode = string.IsNullOrWhiteSpace(settings.Language) ? "en" : settings.Language;
 
@@ -125,8 +154,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StartTeleportHotkeyCaptureCommand = new RelayCommand(StartTeleportHotkeyCapture);
         StartConsoleKeyCaptureCommand = new RelayCommand(StartConsoleKeyCapture);
         StartDestroyTargetHotkeyCaptureCommand = new RelayCommand(StartDestroyTargetHotkeyCapture);
+        StartDestroyLastSpawnedHotkeyCaptureCommand = new RelayCommand(StartDestroyLastSpawnedHotkeyCapture);
+        StartDestroyNearbySpawnedHotkeyCaptureCommand = new RelayCommand(StartDestroyNearbySpawnedHotkeyCapture);
+        StartReplenishCooldownsHotkeyCaptureCommand = new RelayCommand(StartReplenishCooldownsHotkeyCapture);
+        StartFastPlayerActionsHotkeyCaptureCommand = new RelayCommand(StartFastPlayerActionsHotkeyCapture);
+        LevelUpCommand = new RelayCommand(async () => await LevelUpAsync());
+        SetAllWeaponLevelCommand = new RelayCommand(async () => await SetAllWeaponLevelAsync());
+        SetInventoryItemQuantityCommand = new RelayCommand(async () => await SetInventoryItemQuantityAsync());
+        LogInventoryItemsCommand = new RelayCommand(async () => await LogInventoryItemsAsync());
+        ApplyAllWeaponModBoostsCommand = new RelayCommand(async () => await ApplyAllWeaponModBoostsAsync());
         UpdateNowCommand = new RelayCommand(async () => await ApplyUpdateAsync(), () => !IsUpdating);
         ShowUpdatePreviewCommand = new RelayCommand(() => UpdatePreviewRequested?.Invoke(this, EventArgs.Empty), () => !IsUpdating);
+
+        InitializeWeaponModBoostGroups();
 
         RefreshPathState();
     }
@@ -138,6 +178,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public event EventHandler? UpdatePreviewRequested;
 
     public ObservableCollection<RemnantItem> Items { get; } = new();
+
+    public ObservableCollection<InventoryItemEntry> InventoryItems { get; } = new();
+
+    public ObservableCollection<WeaponModBoostGroup> WeaponModBoostGroups { get; } = new();
 
     public ObservableCollection<CategoryGroup> CategoryGroups { get; }
 
@@ -156,6 +200,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand StartConsoleKeyCaptureCommand { get; }
 
     public RelayCommand StartDestroyTargetHotkeyCaptureCommand { get; }
+
+    public RelayCommand StartDestroyLastSpawnedHotkeyCaptureCommand { get; }
+
+    public RelayCommand StartDestroyNearbySpawnedHotkeyCaptureCommand { get; }
+
+    public RelayCommand StartReplenishCooldownsHotkeyCaptureCommand { get; }
+
+    public RelayCommand StartFastPlayerActionsHotkeyCaptureCommand { get; }
+
+    public RelayCommand LevelUpCommand { get; }
+
+    public RelayCommand SetAllWeaponLevelCommand { get; }
+
+    public RelayCommand SetInventoryItemQuantityCommand { get; }
+
+    public RelayCommand LogInventoryItemsCommand { get; }
+
+    public RelayCommand ApplyAllWeaponModBoostsCommand { get; }
 
     public RelayCommand UpdateNowCommand { get; }
 
@@ -357,10 +419,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _cheatSettingsService.Save(new CheatSettings
             {
                 InfiniteHealth = InfiniteHealth,
-                InfiniteStamina = InfiniteStamina
+                InfiniteStamina = InfiniteStamina,
+                InfiniteAmmo = InfiniteAmmo,
+                NoFallDamage = NoFallDamage,
+                EnemyEsp = EnemyEsp
             });
 
-            StatusText = $"Cheat settings saved. Health={InfiniteHealth}, Stamina={InfiniteStamina}";
+            StatusText = $"Cheat settings saved. Health={InfiniteHealth}, Stamina={InfiniteStamina}, Ammo={InfiniteAmmo}, NoFallDamage={NoFallDamage}, EnemyEsp={EnemyEsp}";
         }
         catch (Exception ex)
         {
@@ -381,6 +446,66 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StatusText = DestroyTargetHotkey == "None"
             ? "DestroyTarget hotkey cleared"
             : $"DestroyTarget hotkey saved: {DestroyTargetHotkey}";
+    }
+
+    public void SetDestroyLastSpawnedHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        DestroyLastSpawnedHotkey = key;
+        IsCapturingDestroyLastSpawnedHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = DestroyLastSpawnedHotkey == "None"
+            ? "DestroyLastSpawned hotkey cleared"
+            : $"DestroyLastSpawned hotkey saved: {DestroyLastSpawnedHotkey}";
+    }
+
+    public void SetDestroyNearbySpawnedHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        DestroyNearbySpawnedHotkey = key;
+        IsCapturingDestroyNearbySpawnedHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = DestroyNearbySpawnedHotkey == "None"
+            ? "DestroyNearbySpawned hotkey cleared"
+            : $"DestroyNearbySpawned hotkey saved: {DestroyNearbySpawnedHotkey}";
+    }
+
+    public void SetReplenishCooldownsHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        ReplenishCooldownsHotkey = key;
+        IsCapturingReplenishCooldownsHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = ReplenishCooldownsHotkey == "None"
+            ? "Replenish Cooldowns hotkey cleared"
+            : $"Replenish Cooldowns hotkey saved: {ReplenishCooldownsHotkey}";
+    }
+
+    public void SetFastPlayerActionsHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        FastPlayerActionsHotkey = key;
+        IsCapturingFastPlayerActionsHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = FastPlayerActionsHotkey == "None"
+            ? "Fast Player Actions hotkey cleared"
+            : $"Fast Player Actions hotkey saved: {FastPlayerActionsHotkey}";
     }
 
     public bool InfiniteHealth
@@ -416,6 +541,63 @@ public sealed class MainViewModel : INotifyPropertyChanged
             StatusText = InfiniteStamina
                 ? "Infinite Stamina enabled"
                 : "Infinite Stamina disabled";
+
+            SaveCheatSettings();
+        }
+    }
+
+    public bool InfiniteAmmo
+    {
+        get => _infiniteAmmo;
+        set
+        {
+            if (_infiniteAmmo == value)
+                return;
+
+            _infiniteAmmo = value;
+            OnPropertyChanged();
+
+            StatusText = InfiniteAmmo
+                ? "Infinite Ammo enabled"
+                : "Infinite Ammo disabled";
+
+            SaveCheatSettings();
+        }
+    }
+
+    public bool NoFallDamage
+    {
+        get => _noFallDamage;
+        set
+        {
+            if (_noFallDamage == value)
+                return;
+
+            _noFallDamage = value;
+            OnPropertyChanged();
+
+            StatusText = NoFallDamage
+                ? "No Fall Damage enabled"
+                : "No Fall Damage disabled";
+
+            SaveCheatSettings();
+        }
+    }
+
+    public bool EnemyEsp
+    {
+        get => _enemyEsp;
+        set
+        {
+            if (_enemyEsp == value)
+                return;
+
+            _enemyEsp = value;
+            OnPropertyChanged();
+
+            StatusText = EnemyEsp
+                ? "Enemy ESP enabled"
+                : "Enemy ESP disabled";
 
             SaveCheatSettings();
         }
@@ -528,11 +710,91 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private void StartDestroyTargetHotkeyCapture()
+    public bool IsCapturingDestroyLastSpawnedHotkey
+    {
+        get => _isCapturingDestroyLastSpawnedHotkey;
+        set
+        {
+            _isCapturingDestroyLastSpawnedHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DestroyLastSpawnedHotkeyDisplay));
+        }
+    }
+
+    public bool IsCapturingDestroyNearbySpawnedHotkey
+    {
+        get => _isCapturingDestroyNearbySpawnedHotkey;
+        set
+        {
+            _isCapturingDestroyNearbySpawnedHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DestroyNearbySpawnedHotkeyDisplay));
+        }
+    }
+
+    public bool IsCapturingReplenishCooldownsHotkey
+    {
+        get => _isCapturingReplenishCooldownsHotkey;
+        set
+        {
+            _isCapturingReplenishCooldownsHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ReplenishCooldownsHotkeyDisplay));
+        }
+    }
+
+    public bool IsCapturingFastPlayerActionsHotkey
+    {
+        get => _isCapturingFastPlayerActionsHotkey;
+        set
+        {
+            _isCapturingFastPlayerActionsHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(FastPlayerActionsHotkeyDisplay));
+        }
+    }
+
+    // All 7 hotkey capture buttons share one active-capture slot -- starting a new capture
+    // must clear every other one, or two buttons could show "Press key..." at once.
+    private void ResetHotkeyCaptureFlags()
     {
         IsCapturingTeleportHotkey = false;
         IsCapturingConsoleKey = false;
+        IsCapturingDestroyTargetHotkey = false;
+        IsCapturingDestroyLastSpawnedHotkey = false;
+        IsCapturingDestroyNearbySpawnedHotkey = false;
+        IsCapturingReplenishCooldownsHotkey = false;
+        IsCapturingFastPlayerActionsHotkey = false;
+    }
+
+    private void StartDestroyTargetHotkeyCapture()
+    {
+        ResetHotkeyCaptureFlags();
         IsCapturingDestroyTargetHotkey = true;
+    }
+
+    private void StartDestroyLastSpawnedHotkeyCapture()
+    {
+        ResetHotkeyCaptureFlags();
+        IsCapturingDestroyLastSpawnedHotkey = true;
+    }
+
+    private void StartDestroyNearbySpawnedHotkeyCapture()
+    {
+        ResetHotkeyCaptureFlags();
+        IsCapturingDestroyNearbySpawnedHotkey = true;
+    }
+
+    private void StartReplenishCooldownsHotkeyCapture()
+    {
+        ResetHotkeyCaptureFlags();
+        IsCapturingReplenishCooldownsHotkey = true;
+    }
+
+    private void StartFastPlayerActionsHotkeyCapture()
+    {
+        ResetHotkeyCaptureFlags();
+        IsCapturingFastPlayerActionsHotkey = true;
     }
 
     public string TeleportHotkey
@@ -568,6 +830,50 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public string DestroyLastSpawnedHotkey
+    {
+        get => _destroyLastSpawnedHotkey;
+        set
+        {
+            _destroyLastSpawnedHotkey = string.IsNullOrWhiteSpace(value) ? "None" : value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DestroyLastSpawnedHotkeyDisplay));
+        }
+    }
+
+    public string DestroyNearbySpawnedHotkey
+    {
+        get => _destroyNearbySpawnedHotkey;
+        set
+        {
+            _destroyNearbySpawnedHotkey = string.IsNullOrWhiteSpace(value) ? "None" : value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DestroyNearbySpawnedHotkeyDisplay));
+        }
+    }
+
+    public string ReplenishCooldownsHotkey
+    {
+        get => _replenishCooldownsHotkey;
+        set
+        {
+            _replenishCooldownsHotkey = string.IsNullOrWhiteSpace(value) ? "None" : value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ReplenishCooldownsHotkeyDisplay));
+        }
+    }
+
+    public string FastPlayerActionsHotkey
+    {
+        get => _fastPlayerActionsHotkey;
+        set
+        {
+            _fastPlayerActionsHotkey = string.IsNullOrWhiteSpace(value) ? "None" : value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(FastPlayerActionsHotkeyDisplay));
+        }
+    }
+
     public string TeleportHotkeyDisplay => IsCapturingTeleportHotkey
         ? "Press key..."
         : TeleportHotkey;
@@ -579,6 +885,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string DestroyTargetHotkeyDisplay => IsCapturingDestroyTargetHotkey
     ? "Press key..."
     : DestroyTargetHotkey;
+
+    public string DestroyLastSpawnedHotkeyDisplay => IsCapturingDestroyLastSpawnedHotkey
+        ? "Press key..."
+        : DestroyLastSpawnedHotkey;
+
+    public string DestroyNearbySpawnedHotkeyDisplay => IsCapturingDestroyNearbySpawnedHotkey
+        ? "Press key..."
+        : DestroyNearbySpawnedHotkey;
+
+    public string ReplenishCooldownsHotkeyDisplay => IsCapturingReplenishCooldownsHotkey
+        ? "Press key..."
+        : ReplenishCooldownsHotkey;
+
+    public string FastPlayerActionsHotkeyDisplay => IsCapturingFastPlayerActionsHotkey
+        ? "Press key..."
+        : FastPlayerActionsHotkey;
 
     public double MovementSpeedMultiplier
     {
@@ -605,6 +927,97 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public string MovementSpeedDisplay => $"{MovementSpeedMultiplier:0.0}x";
+
+    public double FovValue
+    {
+        get => _fovValue;
+        set
+        {
+            var rounded = Math.Round(value, 0);
+
+            if (rounded < 60.0)
+                rounded = 60.0;
+
+            if (rounded > 120.0)
+                rounded = 120.0;
+
+            _fovValue = rounded;
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(FovDisplay));
+
+            SaveHotkeySettings();
+
+            StatusText = $"FOV saved: {FovDisplay}";
+        }
+    }
+
+    public string FovDisplay => $"{FovValue:0}°";
+
+    public int LevelUpCount
+    {
+        get => _levelUpCount;
+        set
+        {
+            var clamped = value < 1 ? 1 : value;
+
+            if (_levelUpCount == clamped)
+                return;
+
+            _levelUpCount = clamped;
+            OnPropertyChanged();
+        }
+    }
+
+    public int SetWeaponLevelValue
+    {
+        get => _setWeaponLevelValue;
+        set
+        {
+            var clamped = value < 1 ? 1 : value;
+
+            if (_setWeaponLevelValue == clamped)
+                return;
+
+            _setWeaponLevelValue = clamped;
+            OnPropertyChanged();
+        }
+    }
+
+    public string InventoryItemName
+    {
+        get => _inventoryItemName;
+        set
+        {
+            _inventoryItemName = value ?? "";
+            OnPropertyChanged();
+        }
+    }
+
+    public int InventoryItemQuantity
+    {
+        get => _inventoryItemQuantity;
+        set
+        {
+            var clamped = value < 0 ? 0 : value;
+
+            if (_inventoryItemQuantity == clamped)
+                return;
+
+            _inventoryItemQuantity = clamped;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool LogAllInventoryItems
+    {
+        get => _logAllInventoryItems;
+        set
+        {
+            _logAllInventoryItems = value;
+            OnPropertyChanged();
+        }
+    }
 
     public ObservableCollection<ToastMessage> Toasts => ToastService.Toasts;
 
@@ -1029,6 +1442,233 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _ = LogBridgeOutcomeAsync($"AddTrait '{item.Name}'");
     }
 
+    public async Task LevelUpAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Level Up blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"Level Up requested: {LevelUpCount}x");
+
+        await _queueWriter.SendConsoleCommandAsync($"levelup {LevelUpCount}");
+
+        StatusText = $"Level Up sent: {LevelUpCount}x";
+        ShowSpawnedToast("Level Up sent", $"{LevelUpCount}x");
+
+        _ = LogBridgeOutcomeAsync($"Level Up {LevelUpCount}x");
+    }
+
+    public async Task SetAllWeaponLevelAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Set All Weapon Level blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"Set All Weapon Level requested: {SetWeaponLevelValue}");
+
+        await _queueWriter.SendConsoleCommandAsync($"set_all_weapon_level {SetWeaponLevelValue}");
+
+        StatusText = $"Set All Weapon Level sent: {SetWeaponLevelValue}";
+        ShowSpawnedToast("Set All Weapon Level sent", $"{SetWeaponLevelValue}");
+
+        _ = LogBridgeOutcomeAsync($"Set All Weapon Level {SetWeaponLevelValue}");
+    }
+
+    public async Task SetInventoryItemQuantityAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Set Inventory Item Quantity blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(InventoryItemName))
+        {
+            StatusText = "Set Inventory Item Quantity blocked: item name is empty";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"Set Inventory Item Quantity requested: {InventoryItemName}={InventoryItemQuantity}");
+
+        await _queueWriter.SendConsoleCommandAsync($"set_inventory_item_quantity {InventoryItemName} {InventoryItemQuantity}");
+
+        StatusText = $"Set Inventory Item Quantity sent: {InventoryItemName}={InventoryItemQuantity}";
+        ShowSpawnedToast("Set Inventory Item Quantity sent", $"{InventoryItemName}={InventoryItemQuantity}");
+
+        _ = LogBridgeOutcomeAsync($"Set Inventory Item Quantity {InventoryItemName}={InventoryItemQuantity}");
+    }
+
+    public async Task LogInventoryItemsAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Log Inventory Items blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"Log Inventory Items requested (allItems={LogAllInventoryItems})");
+
+        await _queueWriter.SendConsoleCommandAsync($"log_inventory_items {(LogAllInventoryItems ? "true" : "false")}");
+
+        StatusText = "Log Inventory Items sent - check UE4SS.log";
+        ShowSpawnedToast("Log Inventory Items sent", LogAllInventoryItems ? "all items" : "materials/consumables");
+
+        await LogBridgeOutcomeAsync("Log Inventory Items");
+
+        // The Lua handler also rescans inventory_items.json (see inventory_cheats.lua), so refresh
+        // the picker now instead of making the user reopen Settings to see newly-found items.
+        RefreshInventoryItems();
+    }
+
+    // Field lists mirror exactly what each mod's "boosted:" log line prints (see WeaponMods/mod_*.lua) --
+    // NumChargesConsumedOnUse is deliberately left out even where it appears in a log line, since every
+    // mod hardcodes it to 0 ("free to cast") by design rather than as a tunable value.
+    private void InitializeWeaponModBoostGroups()
+    {
+        var saved = _weaponModBoostSettingsService.Load();
+
+        WeaponModBoostGroup AddGroup(string key, string consoleCommand, params (string Field, double Default)[] fields)
+        {
+            var group = new WeaponModBoostGroup(key, key, consoleCommand);
+            saved.TryGetValue(key, out var savedFields);
+
+            foreach (var (field, defaultValue) in fields)
+            {
+                var value = savedFields != null && savedFields.TryGetValue(field, out var savedValue)
+                    ? savedValue
+                    : defaultValue;
+
+                group.Fields.Add(new WeaponModBoostField(field, value));
+            }
+
+            group.ApplyCommand = new RelayCommand(async () => await ApplyWeaponModBoostAsync(group));
+
+            WeaponModBoostGroups.Add(group);
+            return group;
+        }
+
+        AddGroup("HotShot", "boost_hotshot",
+            ("FireDuration", 10), ("FireBaseDamage", 100), ("ModDuration", 10));
+
+        AddGroup("Sandstorm", "boost_sandstorm",
+            ("CycloneDuration", 10), ("CycloneBaseRadius", 10), ("CycloneHomingRadius", 10),
+            ("CycloneDPS", 10), ("CycloneDamageFrequency", 10));
+
+        AddGroup("ConcussiveShot", "boost_concussiveshot",
+            ("BlastDamage", 10), ("MaxRange", 10), ("BaseKnockbackDistance", 10), ("AOERadius", 10), ("MaxCharges", 10));
+
+        AddGroup("Helix", "boost_helix",
+            ("MaxCharges", 10), ("ImpactDamage", 10), ("SideWinderDamage", 10), ("SideWinderCount", 10));
+
+        AddGroup("StatisBeam", "boost_statisbeam",
+            ("Damage", 10), ("Duration", 10), ("RequiredHitDuration", 10));
+
+        AddGroup("VoltaicRondure", "boost_voltaicrondure",
+            ("PulseDelay", 0.01), ("OrbDamage", 10), ("ProjectileLifetime", 1), ("EffectRadius", 3),
+            ("ShockDamage", 10), ("ShockDuration", 2));
+
+        AddGroup("Scrapshot", "boost_scrapshot",
+            ("MaxCharges", 10), ("BlastRadius", 10), ("DOTDamage", 10), ("CaltropDuration", 10),
+            ("BleedDamage", 10), ("BleedDuration", 10));
+
+        AddGroup("RottedArrow", "boost_rottedarrow",
+            ("MaxCharges", 10), ("WeakSpotMod", 10), ("ImpactDamage", 10), ("DOTDamage", 10),
+            ("CloudDuration", 10), ("BlastRadius", 10), ("CloudDamagePerSecond", 10));
+    }
+
+    private void SaveWeaponModBoostSettings()
+    {
+        var settings = new Dictionary<string, Dictionary<string, double>>();
+
+        foreach (var group in WeaponModBoostGroups)
+        {
+            var fields = new Dictionary<string, double>();
+
+            foreach (var field in group.Fields)
+                fields[field.Key] = field.Value;
+
+            settings[group.Key] = fields;
+        }
+
+        _weaponModBoostSettingsService.Save(settings);
+    }
+
+    private async Task ApplyWeaponModBoostAsync(WeaponModBoostGroup group)
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = $"{group.DisplayName} boost blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        SaveWeaponModBoostSettings();
+
+        AppLogService.Info($"{group.DisplayName} boost requested");
+
+        await _queueWriter.SendConsoleCommandAsync(group.ConsoleCommand);
+
+        StatusText = $"{group.DisplayName} boost sent - check UE4SS.log";
+        ShowSpawnedToast($"{group.DisplayName} boost sent", "check UE4SS.log");
+
+        _ = LogBridgeOutcomeAsync($"{group.DisplayName} boost");
+    }
+
+    public async Task ApplyAllWeaponModBoostsAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Boost All Weapon Mods blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        SaveWeaponModBoostSettings();
+
+        AppLogService.Info("Boost All Weapon Mods requested");
+
+        await _queueWriter.SendConsoleCommandAsync("boost_weapon_mods");
+
+        StatusText = "Boost All Weapon Mods sent - check UE4SS.log";
+        ShowSpawnedToast("Boost All Weapon Mods sent", "check UE4SS.log");
+
+        _ = LogBridgeOutcomeAsync("Boost All Weapon Mods");
+    }
+
+    // The Lua side (inventory_cheats.lua) writes inventory_items.json on a loop while a real
+    // gameplay character exists, so this just re-reads whatever snapshot is currently on disk --
+    // call it whenever the Settings window opens rather than polling continuously from here.
+    public void RefreshInventoryItems()
+    {
+        var items = _inventoryItemsService.Load();
+
+        InventoryItems.Clear();
+
+        foreach (var item in items)
+            InventoryItems.Add(item);
+    }
+
     private static void ShowBlockedToast(string message)
     {
         ToastService.Show("Blocked", message, ToastType.Warning, 3500);
@@ -1121,15 +1761,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void StartTeleportHotkeyCapture()
     {
-        IsCapturingConsoleKey = false;
-        IsCapturingDestroyTargetHotkey = false;
+        ResetHotkeyCaptureFlags();
         IsCapturingTeleportHotkey = true;
     }
 
     private void StartConsoleKeyCapture()
     {
-        IsCapturingTeleportHotkey = false;
-        IsCapturingDestroyTargetHotkey = false;
+        ResetHotkeyCaptureFlags();
         IsCapturingConsoleKey = true;
     }
 
@@ -1167,8 +1805,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             ConsoleKey = ConsoleKey,
             Teleport = TeleportHotkey,
             DestroyTarget = DestroyTargetHotkey,
+            DestroyLastSpawned = DestroyLastSpawnedHotkey,
+            DestroyNearbySpawned = DestroyNearbySpawnedHotkey,
+            ReplenishCooldowns = ReplenishCooldownsHotkey,
+            FastPlayerActions = FastPlayerActionsHotkey,
             Wiki = SelectedWiki,
             MovementSpeedMultiplier = MovementSpeedMultiplier,
+            FovValue = FovValue,
             StackSize = StackSize,
             Language = LanguageCode
         });
@@ -1194,7 +1837,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            await AppUpdateService.DownloadAndApplyUpdateAsync(_updateDownloadUrl);
+            await AppUpdateService.DownloadAndApplyUpdateAsync(_updateDownloadUrl, _pathService);
         }
         finally
         {

@@ -55,7 +55,10 @@ public sealed class CheatSettingsService
             new
             {
                 infiniteHealth = settings.InfiniteHealth,
-                infiniteStamina = settings.InfiniteStamina
+                infiniteStamina = settings.InfiniteStamina,
+                infiniteAmmo = settings.InfiniteAmmo,
+                noFallDamage = settings.NoFallDamage,
+                enemyEsp = settings.EnemyEsp
             },
             new JsonSerializerOptions
             {

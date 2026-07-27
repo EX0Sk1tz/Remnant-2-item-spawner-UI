@@ -375,7 +375,8 @@
                         Background="#252936"/>
             </Grid>
 
-            <ListView Grid.Row="1"
+            <ListView x:Name="ItemsListView"
+                      Grid.Row="1"
                       ItemsSource="{Binding Items}"
                       SelectedItem="{Binding SelectedItem}"
                       Background="#151821"
