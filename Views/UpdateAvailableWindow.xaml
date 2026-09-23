@@ -76,12 +76,10 @@
                     BorderThickness="1"
                     CornerRadius="10"
                     Padding="14">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <TextBlock x:Name="ReleaseNotesText"
-                               Foreground="#D8DCE5"
-                               FontSize="13"
-                               TextWrapping="Wrap"/>
-                </ScrollViewer>
+                <FlowDocumentScrollViewer x:Name="ReleaseNotesViewer"
+                                          VerticalScrollBarVisibility="Auto"
+                                          IsToolBarVisible="False"
+                                          Background="Transparent"/>
             </Border>
 
             <StackPanel Grid.Row="3"

@@ -383,3 +383,6 @@ Cache/
 
 # Backup files
 *.bak
+
+# Personal notes file for pasting into the Nexus Mods description editor, not part of the app
+NexusMods_Description.txt
