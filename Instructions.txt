@@ -1,0 +1,279 @@
+Remnant 2 Unlocker - Setup Instructions
+========================================
+
+This guide assumes you have never set up a UE4SS/Lua mod for Remnant 2 before.
+
+
+0. What you need first
+-----------------------
+
+- Remnant 2 installed via Steam, Epic, or Game Pass. Steps 1-8 below are
+  written for Steam/Epic. If you're on Game Pass (Xbox/Windows Store), read
+  those steps for the general idea, then see section 9 ("Game Pass / Windows
+  Store differences") for the folder layout you'll actually need - it's
+  different enough to trip you up otherwise.
+- Know where your game is installed, typically:
+
+    Steam/Epic: ...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
+    Game Pass:  ...\XboxGames\Remnant 2\Content\Remnant2\Binaries\WinGDK
+
+  This is the ONLY folder you'll need for everything below - remember it.
+
+
+1. Install UE4SS + the mod-loading patch ("Allow Asset Mods")
+--------------------------------------------------------------
+
+Remnant 2 blocks mods by default. UE4SS is the scripting framework that runs
+Lua mods in the first place, and "Allow Asset Mods" is an extra patch that
+lets Remnant 2 actually load them. The "Allow Asset Mods" package on Nexus
+Mods bundles both (a matching UE4SS build + the unlock patch) in one zip.
+
+1. Download the zip from Nexus Mods ("Allow Asset Mods", Remnant 2 Nexus).
+2. Extract the FULL contents of the zip directly into:
+
+    ...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
+
+3. Afterwards, check that the Win64 folder contains at least this:
+
+    Win64
+    |- Remnant2-Win64-Shipping.exe
+    |- Mods
+    `- ue4ss
+
+   If "Mods" or "ue4ss" are missing, you likely extracted into the wrong
+   folder (e.g. one level too high or too low).
+
+4. IMPORTANT: antivirus / Windows Defender false positives.
+   UE4SS.dll and AllowModsMod's main.dll work by hooking into the game
+   process - this is exactly what a virus scanner looks for, so it's common
+   for antivirus software (including Windows Defender) to quarantine or
+   silently delete them right after extraction. If things seem to disappear
+   or stop working with no clear cause, check your antivirus's quarantine/
+   history first and restore or allow-list the UE4SS folder before doing
+   anything else.
+
+5. How do you know UE4SS actually loaded? When you start the game, a
+   separate black console window titled "UE4SS" should pop up alongside it.
+   If that window never appears, UE4SS itself failed to load - that's an
+   antivirus or installation problem, not a mod configuration problem, so
+   fix that before troubleshooting anything else in this guide.
+
+
+2. Install the Cheat Mod (ConsoleCommandsMod, ConsoleEnablerMod, CheatManagerEnablerMod)
+------------------------------------------------------------------------------------------
+
+This app additionally needs three small Lua mods that unlock the in-game
+console and the CheatManager. All three come together in the "Cheat Mod"
+package on Nexus Mods.
+
+1. Download the zip.
+2. Extract it so each of the three mod folders ends up directly under
+   Win64\Mods\:
+
+    Win64
+    `- Mods
+       |- ConsoleCommandsMod
+       |- ConsoleEnablerMod
+       `- CheatManagerEnablerMod
+
+   If the zip already ships that structure, just extract its contents into
+   Win64 (allow overwrite).
+
+
+3. Install the Remnant2Unlocker mod (this tool)
+--------------------------------------------------
+
+1. Download the latest release zip from the GitHub Releases page:
+   https://github.com/EX0Sk1tz/Remnant-2-item-spawner-UI/releases
+
+2. The zip contains a folder called "Remnant2Unlocker" - copy ONLY that
+   folder into:
+
+    ...\Remnant2\Remnant2\Binaries\Win64\Mods
+
+3. Final structure:
+
+    Win64
+    `- Mods
+       `- Remnant2Unlocker
+          |- Scripts    (all .lua files from the zip - leave the folder as-is)
+          |- command_queue.json
+          |- enabled.txt
+          |- hotkeys.json
+          |- items.json
+          `- status.json
+
+   Don't second-guess the exact file list inside Scripts\ - it changes
+   between releases as features get added. As long as the whole
+   Remnant2Unlocker folder you copied is intact and unmodified, you're set.
+
+4. The .exe from the same zip (Remnant2UnlockerApp.exe) can live anywhere on
+   your PC (e.g. Desktop) - it does NOT need to be inside the game folder.
+
+
+4. (Optional) Install Summonable Traits
+------------------------------------------
+
+Only needed if you want to spawn or add Trait / Core Trait / Archetype Trait
+items directly to your inventory.
+
+1. Download Summonable Traits from Nexus Mods:
+   https://www.nexusmods.com/remnant2/mods/122
+
+2. Extract the mod folder into Win64\Mods as well.
+
+Everything else works fine without this mod.
+
+
+5. Enable all the mods
+--------------------------
+
+UE4SS needs a list of which mods are active. Open with a text editor
+(Notepad is fine):
+
+    Win64\Mods\mods.txt
+
+(Some UE4SS versions use Win64\Mods\enabled.txt instead - if mods.txt
+doesn't exist, use that one.)
+
+Make sure there is a line ending in " : 1" for EACH of the following mods
+(just append any missing lines at the bottom):
+
+    AllowModsMod : 1
+    ConsoleCommandsMod : 1
+    ConsoleEnablerMod : 1
+    CheatManagerEnablerMod : 1
+    Remnant2Unlocker : 1
+
+0 = disabled, 1 = enabled. Don't forget to save the file.
+
+
+6. Start the game
+---------------------
+
+Launch Remnant 2 normally through Steam. Let it fully load into the main
+menu/world at least once - this is when UE4SS writes the log file the app
+uses later for diagnostics.
+
+
+7. Start the app and set the game path
+------------------------------------------
+
+1. Run Remnant2UnlockerApp.exe.
+2. Click "Browse" and select exactly this folder:
+
+    ...\Remnant2\Remnant2\Binaries\Win64
+
+   NOT the Steam folder, NOT the Remnant2 root folder, NOT the Mods folder -
+   exactly the Win64 folder.
+
+3. The path is saved automatically.
+
+
+8. Run Diagnostics
+----------------------
+
+Click the Diagnostics icon in the app. It automatically checks:
+
+- whether the game path is correct
+- whether UE4SS itself is installed (UE4SS.dll, UE4SS-settings.ini, and on
+  Game Pass, dwmapi.dll)
+- whether all required mod folders are present
+- whether all mods are enabled in mods.txt/enabled.txt
+- (if the game is currently running) whether UE4SS's log confirms everything
+  started correctly
+
+Every reported issue comes with a suggested fix - this is the fastest way to
+find out what's still missing. If you need to ask for help, click "Copy
+Report" in the Diagnostics window and paste it into Discord - it's the
+fastest way for someone else to see exactly what's wrong on your setup.
+
+
+9. Game Pass / Windows Store differences
+--------------------------------------------
+
+The Xbox/Microsoft Store (WinGDK) build of Remnant 2 can't load UE4SS the
+normal way. It needs to be hooked through a dwmapi.dll proxy instead of the
+usual method. Use UE4SS v3.0.1:
+
+    https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1
+
+(the repo's rolling "experimental" build hasn't been updated since December
+2024, so 3.0.1 is the version to grab). This changes where things end up on
+disk:
+
+    WinGDK
+    |- Remnant2-WinGDK-Shipping.exe
+    |- dwmapi.dll             (proxy dll, loads UE4SS on game start)
+    `- ue4ss
+       |- UE4SS.dll
+       `- mods                (note: nested here, NOT WinGDK\Mods)
+          |- Remnant2Unlocker
+          |- AllowModsMod
+          |- ConsoleCommandsMod
+          |- ConsoleEnablerMod
+          |- CheatManagerEnablerMod
+          `- mods.txt / enabled.txt
+
+So wherever steps 1-5 above say to copy a mod folder into "Win64\Mods", copy
+it into "WinGDK\ue4ss\mods" instead. Likewise, mods.txt/enabled.txt (step 5)
+lives at "WinGDK\ue4ss\mods\mods.txt" (or enabled.txt).
+
+When you get to step 7 (setting the game path in the app), still point
+Browse at the WinGDK folder itself - the app checks both "Mods\" and
+"ue4ss\mods\" automatically and will find your mods either way.
+
+Known issues on Game Pass:
+- This setup is inherently janky and depends on which UE4SS build you're
+  using - expect more friction than Steam/Epic.
+- AllowModsMod has occasionally been reported to crash the game on the
+  Windows Store version. If the game crashes right after launch, make sure
+  you're on UE4SS v3.0.1 (link above) and not an older or mismatched build.
+
+
+Troubleshooting
+===============
+
+Spawn does nothing:
+  Check the UE4SS installation, make sure all mods are enabled in
+  mods.txt/enabled.txt, and make sure you selected the correct Win64 folder.
+  Run Diagnostics first - it will usually name the exact missing piece.
+
+No UE4SS console window appears when the game starts:
+  UE4SS itself never loaded - this is almost always antivirus/Windows
+  Defender quarantining UE4SS.dll (or dwmapi.dll on Game Pass) right after
+  you extract it, since it's a DLL that hooks the game process. Check your
+  antivirus quarantine/history, restore the file, and add the UE4SS folder
+  to its exclusions so it doesn't happen again on every update.
+
+"Game path not configured":
+  Select the exact Win64 (or WinGDK on Game Pass) folder again - not the
+  Steam/Xbox folder, not the game root folder, not the Mods folder. On Game
+  Pass, also double check your mods actually ended up under
+  WinGDK\ue4ss\mods - see section 9.
+
+Some items crash or fail to spawn:
+  Use "Force" or "Copy" instead - some assets are unstable through direct
+  spawning.
+
+Traits won't spawn or Add is blocked:
+  The Summonable Traits mod is missing or not enabled - check with
+  Diagnostics.
+
+
+Notice
+======
+
+Teleport will kill you if the vertical distance downwards would be lethal
+through falling. Upwards has no restriction - best used against a surface.
+Pressing Shift (Sprint) while trying to Teleport will not work. Any
+environment blocking your character's path to the target location will
+result in a shorter teleport. Think of it as a very fast fly mod - line of
+sight must be clear.
+
+
+Disclaimer
+==========
+
+This project is intended for offline and personal use only. Use at your own
+risk.

@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+	<UseWindowsForms>true</UseWindowsForms>
+    <Version>4.4.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Cache\Images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Lua Scripts inside game directory\**" />
+    <Compile Remove="Summonable Traits Lua\**" />
+    <EmbeddedResource Remove="Lua Scripts inside game directory\**" />
+    <EmbeddedResource Remove="Summonable Traits Lua\**" />
+    <None Remove="Lua Scripts inside game directory\**" />
+    <None Remove="Summonable Traits Lua\**" />
+    <Page Remove="Lua Scripts inside game directory\**" />
+    <Page Remove="Summonable Traits Lua\**" />
+  </ItemGroup>
+
+</Project>

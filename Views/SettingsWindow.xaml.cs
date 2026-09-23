@@ -1,0 +1,258 @@
+﻿using System.Windows;
+using System.Windows.Input;
+using Remnant2UnlockerApp.ViewModels;
+
+namespace Remnant2UnlockerApp.Views;
+
+public partial class SettingsWindow : Window
+{
+    private readonly MainViewModel _viewModel;
+
+    public SettingsWindow(MainViewModel viewModel)
+    {
+        InitializeComponent();
+
+        _viewModel = viewModel;
+        DataContext = _viewModel;
+
+        _viewModel.RefreshInventoryItems();
+    }
+
+    private void ConsoleKeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (!_viewModel.IsCapturingConsoleKey)
+            return;
+
+        e.Handled = true;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Escape)
+        {
+            _viewModel.IsCapturingConsoleKey = false;
+            return;
+        }
+
+        _viewModel.SetConsoleKey(key.ToString());
+    }
+
+    private void TeleportHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (!_viewModel.IsCapturingTeleportHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Escape)
+        {
+            _viewModel.IsCapturingTeleportHotkey = false;
+            return;
+        }
+
+        _viewModel.SetTeleportHotkey(key.ToString());
+    }
+
+    private void TeleportHotkeyButton_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!_viewModel.IsCapturingTeleportHotkey)
+            return;
+
+        e.Handled = true;
+
+        var keyName = e.ChangedButton switch
+        {
+            MouseButton.Left => "LeftMouseButton",
+            MouseButton.Right => "RightMouseButton",
+            MouseButton.Middle => "MiddleMouseButton",
+            // Must match the "MouseButton4"/"MouseButton5" naming that Scripts/hotkeys.lua's
+            // GetKeyEnum recognizes (see DestroyTargetHotkeyButton_PreviewMouseDown below) --
+            // any other name silently fails to bind in-game.
+            MouseButton.XButton1 => "MouseButton4",
+            MouseButton.XButton2 => "MouseButton5",
+            _ => ""
+        };
+
+        if (string.IsNullOrWhiteSpace(keyName))
+            return;
+
+        _viewModel.SetTeleportHotkey(keyName);
+    }
+
+    private void DestroyTargetHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel)
+            return;
+
+        if (!viewModel.IsCapturingDestroyTargetHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            viewModel.SetDestroyTargetHotkey("None");
+            return;
+        }
+
+        var key = e.Key == System.Windows.Input.Key.System
+            ? e.SystemKey
+            : e.Key;
+
+        viewModel.SetDestroyTargetHotkey(key.ToString());
+    }
+
+    private void DestroyTargetHotkeyButton_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel)
+            return;
+
+        if (!viewModel.IsCapturingDestroyTargetHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = e.ChangedButton switch
+        {
+            System.Windows.Input.MouseButton.XButton1 => "MouseButton4",
+            System.Windows.Input.MouseButton.XButton2 => "MouseButton5",
+            System.Windows.Input.MouseButton.Middle => "MiddleMouseButton",
+            _ => ""
+        };
+
+        if (!string.IsNullOrWhiteSpace(key))
+            viewModel.SetDestroyTargetHotkey(key);
+    }
+
+    private static string? MouseButtonToKeyName(MouseButton button) => button switch
+    {
+        MouseButton.Left => "LeftMouseButton",
+        MouseButton.Right => "RightMouseButton",
+        MouseButton.Middle => "MiddleMouseButton",
+        MouseButton.XButton1 => "MouseButton4",
+        MouseButton.XButton2 => "MouseButton5",
+        _ => null
+    };
+
+    private void DestroyLastSpawnedHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingDestroyLastSpawnedHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            viewModel.SetDestroyLastSpawnedHotkey("None");
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        viewModel.SetDestroyLastSpawnedHotkey(key.ToString());
+    }
+
+    private void DestroyLastSpawnedHotkeyButton_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingDestroyLastSpawnedHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = MouseButtonToKeyName(e.ChangedButton);
+
+        if (key != null)
+            viewModel.SetDestroyLastSpawnedHotkey(key);
+    }
+
+    private void DestroyNearbySpawnedHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingDestroyNearbySpawnedHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            viewModel.SetDestroyNearbySpawnedHotkey("None");
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        viewModel.SetDestroyNearbySpawnedHotkey(key.ToString());
+    }
+
+    private void DestroyNearbySpawnedHotkeyButton_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingDestroyNearbySpawnedHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = MouseButtonToKeyName(e.ChangedButton);
+
+        if (key != null)
+            viewModel.SetDestroyNearbySpawnedHotkey(key);
+    }
+
+    private void ReplenishCooldownsHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingReplenishCooldownsHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            viewModel.SetReplenishCooldownsHotkey("None");
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        viewModel.SetReplenishCooldownsHotkey(key.ToString());
+    }
+
+    private void ReplenishCooldownsHotkeyButton_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingReplenishCooldownsHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = MouseButtonToKeyName(e.ChangedButton);
+
+        if (key != null)
+            viewModel.SetReplenishCooldownsHotkey(key);
+    }
+
+    private void FastPlayerActionsHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingFastPlayerActionsHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            viewModel.SetFastPlayerActionsHotkey("None");
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        viewModel.SetFastPlayerActionsHotkey(key.ToString());
+    }
+
+    private void FastPlayerActionsHotkeyButton_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingFastPlayerActionsHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = MouseButtonToKeyName(e.ChangedButton);
+
+        if (key != null)
+            viewModel.SetFastPlayerActionsHotkey(key);
+    }
+
+}
