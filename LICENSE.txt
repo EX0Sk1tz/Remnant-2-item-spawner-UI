@@ -1,69 +1,34 @@
-Remnant 2 Item Spawner UI — Personal Use License
+MIT License
+
 Copyright (c) 2026 EX0Sk1tz
 
-This is fan-made, unofficial software for personal use with the video game
-Remnant 2. It is not affiliated with, endorsed by, or sponsored by Gunfire
-Games, Arc Games, Perfect World Entertainment, or any other rights holder of
-Remnant 2. All trademarks, game assets, and game content referenced by this
-project belong to their respective owners.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Grant of rights
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Subject to the restrictions below, you are granted a free, non-exclusive
-license to:
-
-  a) download, install, and use this software (compiled releases and/or
-     source code) for your own personal, non-commercial purposes; and
-
-  b) view and modify the source code for your own personal use; and
-
-  c) fork the source repository solely to prepare and submit changes back
-     to the official project (e.g. via a pull request).
-
-2. Restrictions
-
-Unless you have obtained prior written permission from the copyright
-holder, you may NOT:
-
-  a) sell this software, any modified version of it, or access to it, in
-     whole or in part, for money or any other form of payment;
-
-  b) monetize this software or any modified version of it in any way,
-     including but not limited to advertising, subscriptions, paywalls,
-     "donation-gated" downloads, or bundling it with any paid product or
-     service;
-
-  c) redistribute this software or any modified version of it — publish,
-     upload, mirror, re-host, or re-release it on any website, storefront,
-     mod repository, file host, or other platform (including but not
-     limited to Nexus Mods, GitHub, Discord, or similar) — other than
-     linking to the official repository;
-
-  d) present a modified version of this software as official, or remove
-     or alter the copyright notice, this license, or attribution to the
-     original author.
-
-3. Termination
-
-Any use of this software that violates Section 2 automatically and
-immediately terminates the rights granted to you under Section 1, for you
-specifically. The copyright holder may also grant exceptions to Section 2
-on a case-by-case basis, in writing.
-
-4. No warranty
-
-THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
-THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
-FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE. THIS SOFTWARE INTERACTS WITH A THIRD-PARTY GAME
-AND THIRD-PARTY MODDING TOOLS THAT ARE OUTSIDE THE AUTHOR'S CONTROL; USE IT
-AT YOUR OWN RISK.
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-5. Questions / permission requests
+---
 
-For permission requests beyond the scope of this license, contact the
-copyright holder via the official GitHub repository or the Discord contact
-listed in the repository's documentation.
+Notice (not part of the license terms above):
+
+This is fan-made, unofficial software for use with the video game Remnant 2.
+It is not affiliated with, endorsed by, or sponsored by Gunfire Games,
+THQ Nordic, Embracer Group, Arc Games (formerly Gearbox Publishing), or any
+other rights holder of Remnant 2. All trademarks, game assets, and game
+content referenced by this project belong to their respective owners. The
+MIT License above covers only this project's own source code, not any game
+content. Your use of Remnant 2 remains subject to the game's own EULA and
+terms of service.
