@@ -21,6 +21,10 @@
   <ItemGroup>
     <Compile Remove="Lua Scripts inside game directory\**" />
     <Compile Remove="Summonable Traits Lua\**" />
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+    <Page Remove="Tests\**" />
     <EmbeddedResource Remove="Lua Scripts inside game directory\**" />
     <EmbeddedResource Remove="Summonable Traits Lua\**" />
     <None Remove="Lua Scripts inside game directory\**" />

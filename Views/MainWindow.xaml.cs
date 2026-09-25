@@ -19,7 +19,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _viewModel;
 
-        _viewModel.GroupSpawnQueued += (_, title) => OpenSpawnProgressWindow(title);
+        _viewModel.GroupSpawnQueued += (_, e) => OpenSpawnProgressWindow(e.Title, e.DelayMsPerItem);
         _viewModel.UpdatePreviewRequested += (_, _) => OpenUpdatePreviewWindow();
 
         Loaded += async (_, _) => await OnLoadedAsync();
@@ -242,12 +242,13 @@ public partial class MainWindow : Window
         OpenSpawnProgressWindow("Safe Group Spawn");
     }
 
-    private void OpenSpawnProgressWindow(string title)
+    private void OpenSpawnProgressWindow(string title, int delayMsPerItem = 500)
     {
         var viewModel = new SpawnProgressViewModel(
             _viewModel.BridgeStatusService,
             _viewModel.QueueWriter,
-            title);
+            title,
+            delayMsPerItem);
 
         var window = new SpawnProgressWindow(viewModel)
         {

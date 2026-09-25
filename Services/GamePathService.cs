@@ -99,6 +99,11 @@ public sealed class GamePathService
         return Path.Combine(GetModRootPath(), "inventory_items.json");
     }
 
+    public string GetOwnedItemsPath()
+    {
+        return Path.Combine(GetModRootPath(), "owned_items.json");
+    }
+
     public string GetScriptsPath()
     {
         return Path.Combine(GetModRootPath(), "scripts");

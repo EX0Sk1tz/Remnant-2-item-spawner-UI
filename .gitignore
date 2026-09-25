@@ -363,8 +363,15 @@ MigrationBackup/
 FodyWeavers.xsd
 
 Summonable Traits Lua/
-Lua Scripts inside game directory/
 .claude/
+
+# The in-game mod: app-owned files are tracked (they ship with the app, and the tests load
+# them); local sample/runtime files like cheats.json and hotkeys.json stay ignored.
+Lua Scripts inside game directory/*
+!Lua Scripts inside game directory/Scripts/
+!Lua Scripts inside game directory/items.json
+!Lua Scripts inside game directory/enabled.txt
+!Lua Scripts inside game directory/ConsoleCommandsMod/
 
 # VS Code workspace files (launch.json/settings.json often contain local paths)
 .vscode/

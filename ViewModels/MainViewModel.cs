@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 
 namespace Remnant2UnlockerApp.ViewModels;
@@ -42,7 +43,28 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly List<CategoryGroup> _allCategoryGroups = new();
     private readonly SummonableTraitsService _summonableTraitsService;
     private readonly FavoritesService _favoritesService;
+    private readonly OwnedItemsService _ownedItemsService;
+    private readonly Dictionary<string, CategoryTypeEntry> _typeEntries = new(StringComparer.OrdinalIgnoreCase);
+    private readonly DispatcherTimer _ownedItemsPollTimer;
     private bool _isSummonableTraitsInstalled;
+
+    // The inventory snapshot the item list currently reflects, and its per-type counts.
+    private OwnedItemsSnapshot? _appliedOwnedSnapshot;
+    private Dictionary<string, CollectionProgress> _collectionProgress = new(StringComparer.OrdinalIgnoreCase);
+    private bool _showMissingOnly;
+    private string _contentFilter = DlcCatalog.AllContent;
+    private IReadOnlyList<ContentFilterOption> _contentFilterOptions = Array.Empty<ContentFilterOption>();
+
+    // inventory_cheats.lua rescans every 5s; a snapshot much older than that means the game is
+    // closed or sitting in a menu, so the view is showing the last known state rather than live data.
+    private static readonly TimeSpan OwnedItemsStaleAfter = TimeSpan.FromSeconds(30);
+
+    // Gap between items for "Spawn Missing" -- the same 500 ms "Spawn Group" has always used.
+    // Faster batches (100 ms, and ~270 ms paced by completion) crashed the game inside UE4SS after
+    // 1-10 items, so don't lower this without testing in-game. queue.lua also skips a round if the
+    // previous summon hasn't run yet, hence a little over 500 ms per item.
+    private const int SpawnMissingDelayMs = 500;
+    private const int SpawnMissingEstimatedMsPerItem = 550;
 
 
     private List<RemnantItem> _allItems = new();
@@ -107,6 +129,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _weaponModBoostSettingsService = new WeaponModBoostSettingsService(_pathService);
         _summonableTraitsService = new SummonableTraitsService(_pathService);
         _favoritesService = new FavoritesService();
+        _ownedItemsService = new OwnedItemsService(_pathService);
         _diagnosticsService = new DiagnosticsService(_pathService, _summonableTraitsService);
 
         // Fire-and-forget: constructors can't await, and this does real disk I/O (potentially a
@@ -154,6 +177,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _hotkeySettingsService.Save(settings);
 
         Loc = new LocalizationService(_languageCode);
+        _contentFilterOptions = BuildContentFilterOptions();
 
         ThemeManager.ThemeChanged += (_, _) =>
         {
@@ -171,6 +195,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             new() { Name = "Materials", Types = new List<string> { "Crafting Material", "Currency", "Engram Material", "Upgrade Material" } },
             new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special" } }
         };
+
+        foreach (var type in _allCategoryGroups.SelectMany(x => x.Types))
+            _typeEntries[type] = new CategoryTypeEntry(type);
 
         CategoryGroups = new ObservableCollection<CategoryGroup>();
 
@@ -197,15 +224,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ShowUpdatePreviewCommand = new RelayCommand(() => UpdatePreviewRequested?.Invoke(this, EventArgs.Empty), () => !IsUpdating);
         SaveSettingsProfileCommand = new RelayCommand(SaveSettingsProfile);
         LoadSettingsProfileCommand = new RelayCommand(LoadSettingsProfile);
+        ScanInventoryCommand = new RelayCommand(async () => await ScanInventoryAsync());
+        SpawnMissingCommand = new RelayCommand(async () => await SpawnMissingAsync());
 
         InitializeWeaponModBoostGroups(_weaponModBoostSettingsService.Load());
 
         RefreshPathState();
+
+        // Only stats one small file per tick and parses it only when its write time changes.
+        _ownedItemsPollTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _ownedItemsPollTimer.Tick += (_, _) => PollOwnedItems();
+        _ownedItemsPollTimer.Start();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public event EventHandler<string>? GroupSpawnQueued;
+    public event EventHandler<GroupSpawnQueuedEventArgs>? GroupSpawnQueued;
 
     public event EventHandler? UpdatePreviewRequested;
 
@@ -258,6 +292,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public RelayCommand SaveSettingsProfileCommand { get; }
 
     public RelayCommand LoadSettingsProfileCommand { get; }
+
+    public RelayCommand ScanInventoryCommand { get; }
+
+    public RelayCommand SpawnMissingCommand { get; }
 
     public List<string> WikiOptions { get; } = new()
     {
@@ -460,7 +498,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             CategoryGroups.Add(new CategoryGroup
             {
                 Name = group.Name,
-                Types = types
+                Types = types,
+                Entries = types.Select(x => _typeEntries[x]).ToList()
             });
         }
     }
@@ -839,6 +878,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _languageCode = value;
             OnPropertyChanged();
             Loc.SetLanguage(value);
+            _contentFilterOptions = BuildContentFilterOptions();
+            OnPropertyChanged(nameof(ContentFilterOptions));
+            OnPropertyChanged(nameof(CollectionSummaryText));
+            OnPropertyChanged(nameof(LastScanText));
             SaveHotkeySettings();
         }
     }
@@ -1202,6 +1245,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             _selectedType = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CollectionSummaryText));
             ApplyFilter();
         }
     }
@@ -1246,6 +1290,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             foreach (var item in _allItems)
                 item.IsFavorite = _favoritesService.IsFavorite(item.Path);
+
+            // New RemnantItem instances start with IsOwned=false, so re-apply the current scan to them.
+            _ownedItemsService.Refresh();
+            ApplyOwnership(_ownedItemsService.Current);
 
             await RefreshSummonableTraitsStateAsync();
 
@@ -1373,7 +1421,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         Items.Clear();
 
-        IEnumerable<RemnantItem> query = _allItems;
+        IEnumerable<RemnantItem> query = ContentScopedItems;
 
         if (SelectedType == "Favorites")
         {
@@ -1390,7 +1438,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             query = query.Where(x =>
                 x.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ||
-                x.Type.Contains(text, StringComparison.OrdinalIgnoreCase));
+                x.Type.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                (x.Dlc?.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        var missingOnly = ShowMissingOnly && _appliedOwnedSnapshot != null;
+
+        if (missingOnly)
+        {
+            var owned = _appliedOwnedSnapshot!.ClassKeys;
+            query = query.Where(x => CollectionTracker.IsMissing(x, owned));
         }
 
         foreach (var item in query.OrderBy(x => x.Type).ThenBy(x => x.Name))
@@ -1399,7 +1456,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
             Items.Add(item);
         }
 
-        StatusText = $"{Items.Count} items shown";
+        StatusText = missingOnly
+            ? $"{Items.Count} missing items shown"
+            : $"{Items.Count} items shown";
     }
 
     public string BuildWikiUrl(RemnantItem item)
@@ -1835,6 +1894,336 @@ public sealed class MainViewModel : INotifyPropertyChanged
             InventoryItems.Add(item);
     }
 
+    public IReadOnlyList<ContentFilterOption> ContentFilterOptions => _contentFilterOptions;
+
+    // All content / base game / one DLC (a DlcCatalog filter key). Applies to the item list, the
+    // collection counts and Spawn Missing alike, so they always describe the same set of items.
+    public string ContentFilter
+    {
+        get => _contentFilter;
+        set
+        {
+            var key = string.IsNullOrEmpty(value) ? DlcCatalog.AllContent : value;
+
+            if (_contentFilter == key)
+                return;
+
+            _contentFilter = key;
+            OnPropertyChanged();
+
+            ApplyOwnership(_appliedOwnedSnapshot);
+            ApplyFilter();
+        }
+    }
+
+    private bool IsContentFiltered => _contentFilter != DlcCatalog.AllContent;
+
+    private string ContentFilterName =>
+        DlcCatalog.DisplayName(_contentFilter, Loc["Main.ContentAll"], Loc["Main.ContentBase"]);
+
+    private IEnumerable<RemnantItem> ContentScopedItems =>
+        _allItems.Where(x => DlcCatalog.Matches(x, _contentFilter));
+
+    private List<ContentFilterOption> BuildContentFilterOptions()
+    {
+        var options = new List<ContentFilterOption>
+        {
+            new(DlcCatalog.AllContent, Loc["Main.ContentAll"]),
+            new(DlcCatalog.BaseGame, Loc["Main.ContentBase"])
+        };
+
+        options.AddRange(DlcCatalog.Known.Select(x => new ContentFilterOption(x.Key, x.Name)));
+
+        return options;
+    }
+
+    public bool HasOwnedItemsScan => _appliedOwnedSnapshot != null;
+
+    public bool ShowMissingOnly
+    {
+        get => _showMissingOnly;
+        set
+        {
+            if (_showMissingOnly == value)
+                return;
+
+            if (value && _appliedOwnedSnapshot == null)
+            {
+                StatusText = "No inventory scan yet: load a character in-game with the mod running";
+                ShowBlockedToast(StatusText);
+
+                // The CheckBox has already ticked itself; this pushes the unchanged false back to it.
+                OnPropertyChanged();
+                return;
+            }
+
+            _showMissingOnly = value;
+            OnPropertyChanged();
+            ApplyFilter();
+        }
+    }
+
+    public string CollectionSummaryText
+    {
+        get
+        {
+            if (_appliedOwnedSnapshot == null)
+                return Loc["Main.CollectionNoScan"];
+
+            string summary;
+
+            if (CollectionTracker.IsTrackedType(SelectedType))
+            {
+                _collectionProgress.TryGetValue(SelectedType, out var progress);
+                summary = string.Format(Loc["Main.CollectionType"], SelectedType, progress.Owned, progress.Total, progress.Missing);
+            }
+            else if (SelectedType == "All" || SelectedType == "Favorites")
+            {
+                var total = CollectionTracker.Sum(_collectionProgress.Values);
+                summary = string.Format(Loc["Main.CollectionAll"], total.Owned, total.Total, total.Missing);
+            }
+            else
+            {
+                return string.Format(Loc["Main.CollectionUntracked"], SelectedType);
+            }
+
+            // The counts only cover the selected content, so say which.
+            return IsContentFiltered ? $"{summary} ({ContentFilterName})" : summary;
+        }
+    }
+
+    public string LastScanText
+    {
+        get
+        {
+            var snapshot = _appliedOwnedSnapshot;
+
+            if (snapshot == null)
+                return "";
+
+            var time = snapshot.ScannedAt.ToLocalTime().ToString("HH:mm:ss");
+
+            return snapshot.IsStale(DateTimeOffset.UtcNow, OwnedItemsStaleAfter)
+                ? string.Format(Loc["Main.LastScanStale"], time)
+                : string.Format(Loc["Main.LastScanLive"], time);
+        }
+    }
+
+    private void PollOwnedItems()
+    {
+        if (!IsGamePathValid)
+            return;
+
+        if (_ownedItemsService.Refresh())
+        {
+            var previous = _appliedOwnedSnapshot;
+            var current = _ownedItemsService.Current;
+
+            if (current == null || !current.HasSameItemsAs(previous))
+            {
+                ApplyOwnership(current);
+
+                if (current == null)
+                    ApplyFilter();
+                else if (ShowMissingOnly)
+                    UpdateMissingOnlyView(previous, current);
+
+                return;
+            }
+
+            // Same items, newer scan time: nothing to redraw except the "last scan" line below.
+            _appliedOwnedSnapshot = current;
+        }
+
+        // Re-evaluated every tick so the line switches to "not live" once scans stop arriving.
+        OnPropertyChanged(nameof(LastScanText));
+    }
+
+    private void ApplyOwnership(OwnedItemsSnapshot? snapshot)
+    {
+        _appliedOwnedSnapshot = snapshot;
+
+        var owned = snapshot?.ClassKeys ?? new HashSet<string>();
+
+        foreach (var item in _allItems)
+            item.IsOwned = snapshot != null && item.IsCollectible && owned.Contains(item.ClassKey);
+
+        _collectionProgress = snapshot == null
+            ? new Dictionary<string, CollectionProgress>(StringComparer.OrdinalIgnoreCase)
+            : CollectionTracker.ComputeProgress(ContentScopedItems, owned);
+
+        foreach (var entry in _typeEntries.Values)
+        {
+            entry.ProgressText = _collectionProgress.TryGetValue(entry.Type, out var progress)
+                ? $"{progress.Owned}/{progress.Total}"
+                : "";
+        }
+
+        // Without a scan there's nothing to filter against (e.g. after switching to another game folder).
+        if (snapshot == null && _showMissingOnly)
+        {
+            _showMissingOnly = false;
+            OnPropertyChanged(nameof(ShowMissingOnly));
+        }
+
+        OnPropertyChanged(nameof(HasOwnedItemsScan));
+        OnPropertyChanged(nameof(CollectionSummaryText));
+        OnPropertyChanged(nameof(LastScanText));
+    }
+
+    // Picking items up only ever removes rows from the missing list, so drop just those instead of
+    // rebuilding it -- a rebuild would throw the user back to the top of the list on every pickup.
+    private void UpdateMissingOnlyView(OwnedItemsSnapshot? previous, OwnedItemsSnapshot current)
+    {
+        if (previous == null || !previous.ClassKeys.IsSubsetOf(current.ClassKeys))
+        {
+            ApplyFilter();
+            return;
+        }
+
+        foreach (var item in Items.Where(x => x.IsOwned).ToList())
+            Items.Remove(item);
+
+        StatusText = $"{Items.Count} missing items shown";
+    }
+
+    public async Task ScanInventoryAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Inventory scan blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        var requestedAt = DateTimeOffset.UtcNow;
+
+        AppLogService.Info("Inventory scan requested");
+
+        await _queueWriter.SendConsoleCommandAsync("scan_inventory");
+
+        StatusText = "Inventory scan sent";
+
+        // Bridge poll (200ms) + game-thread console command; the file lands well within this.
+        await LogBridgeOutcomeAsync("Inventory scan", 1500);
+
+        PollOwnedItems();
+
+        var snapshot = _appliedOwnedSnapshot;
+
+        // os.time() has one-second resolution, hence the one-second allowance.
+        if (snapshot != null && snapshot.ScannedAt >= requestedAt.AddSeconds(-1))
+        {
+            var total = CollectionTracker.Sum(_collectionProgress.Values);
+
+            StatusText = $"Inventory scanned: {total.Owned} / {total.Total} tracked items collected";
+            ShowSpawnedToast("Inventory scanned", $"{total.Owned} / {total.Total} collected, {total.Missing} missing");
+            AppLogService.Info(StatusText);
+            return;
+        }
+
+        StatusText = "Inventory scan got no answer: load a character in-game with the mod running";
+        ToastService.Show("No inventory data", StatusText, ToastType.Warning, 5000);
+        AppLogService.Warn(StatusText);
+    }
+
+    private async Task SpawnMissingAsync()
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "Spawn missing blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        var snapshot = _appliedOwnedSnapshot;
+
+        if (snapshot == null)
+        {
+            StatusText = "Spawn missing blocked: no inventory scan yet";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        // All = every tracked type; Favorites = the tracked favorites; otherwise one subcategory.
+        IEnumerable<RemnantItem> scope;
+        string label;
+
+        if (SelectedType == "All")
+        {
+            scope = _allItems;
+            label = "tracked";
+        }
+        else if (SelectedType == "Favorites")
+        {
+            scope = _allItems.Where(x => x.IsFavorite);
+            label = "favorite";
+        }
+        else if (CollectionTracker.IsTrackedType(SelectedType))
+        {
+            scope = _allItems.Where(x => string.Equals(x.Type, SelectedType, StringComparison.OrdinalIgnoreCase));
+            label = SelectedType;
+        }
+        else
+        {
+            StatusText = "Select All or a weapon, armor, accessory, mutator or relic subcategory first";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        // Same content filter as the list, so this spawns exactly the missing items being shown.
+        if (IsContentFiltered)
+        {
+            scope = scope.Where(x => DlcCatalog.Matches(x, _contentFilter));
+            label = $"{label} ({ContentFilterName})";
+        }
+
+        var missing = scope
+            .Where(x => CollectionTracker.IsMissing(x, snapshot.ClassKeys))
+            .OrderBy(x => x.Type)
+            .ThenBy(x => x.Name)
+            .ToList();
+
+        if (missing.Count == 0)
+        {
+            StatusText = $"Nothing missing: {label} items";
+            ShowSpawnedToast("Collection complete", label);
+            return;
+        }
+
+        var staleNote = snapshot.IsStale(DateTimeOffset.UtcNow, OwnedItemsStaleAfter)
+            ? $"\n\nNote: the last inventory scan is from {snapshot.ScannedAt.ToLocalTime():HH:mm:ss}, so this list may be out of date."
+            : "";
+
+        var duration = TimeSpan.FromMilliseconds((double)missing.Count * SpawnMissingEstimatedMsPerItem);
+
+        var result = Forms.MessageBox.Show(
+            $"Spawn {missing.Count} missing {label} item(s)?\n\n" +
+            $"One of each is spawned, each one after the previous has finished (about {Math.Ceiling(duration.TotalSeconds)} s in total). " +
+            "You can cancel from the progress window." +
+            staleNote,
+            "Spawn Missing",
+            Forms.MessageBoxButtons.YesNo,
+            Forms.MessageBoxIcon.Question);
+
+        if (result != Forms.DialogResult.Yes)
+        {
+            StatusText = $"Spawn missing cancelled: {label} items";
+            return;
+        }
+
+        AppLogService.Info($"Spawn missing requested: {label} ({missing.Count} items, {SpawnMissingDelayMs} ms apart)");
+
+        await _queueWriter.SpawnManyAsync(missing.Select(x => x.Path), 1, SpawnMissingDelayMs);
+
+        StatusText = $"Spawning {missing.Count} missing {label} item(s)";
+        GroupSpawnQueued?.Invoke(this, new GroupSpawnQueuedEventArgs($"Spawn Missing: {label}", SpawnMissingEstimatedMsPerItem));
+    }
+
     private static void ShowBlockedToast(string message)
     {
         ToastService.Show("Blocked", message, ToastType.Warning, 3500);
@@ -1921,7 +2310,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         await _queueWriter.UnlockTypesAsync(new[] { SelectedType }, StackSize);
 
         StatusText = $"Safe group spawn queued: {SelectedType} ({groupItems.Count} items)";
-        GroupSpawnQueued?.Invoke(this, $"Safe Spawn: {SelectedType}");
+        GroupSpawnQueued?.Invoke(this, new GroupSpawnQueuedEventArgs($"Safe Spawn: {SelectedType}", 500));
     }
 
     private void StartTeleportHotkeyCapture()
@@ -2141,6 +2530,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
+}
+
+public sealed class GroupSpawnQueuedEventArgs : EventArgs
+{
+    public GroupSpawnQueuedEventArgs(string title, int delayMsPerItem)
+    {
+        Title = title;
+        DelayMsPerItem = delayMsPerItem;
+    }
+
+    public string Title { get; }
+
+    public int DelayMsPerItem { get; }
 }
 
 public sealed class RelayCommand : System.Windows.Input.ICommand

@@ -445,6 +445,18 @@
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
+    <Style x:Key="DlcBadgeTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="#C4B5FD"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+
+    <Style x:Key="OwnedBadgeTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="#86EFAC"/>
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+
     <Style x:Key="TypePillTextStyle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="#D8DCE5"/>
         <Setter Property="FontSize" Value="12"/>
@@ -588,6 +600,22 @@
     <Style x:Key="TraitBadgeStyle" TargetType="Border">
         <Setter Property="Background" Value="#3B2F13"/>
         <Setter Property="BorderBrush" Value="#FACC15"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="7,2"/>
+    </Style>
+
+    <Style x:Key="DlcBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="#261B3D"/>
+        <Setter Property="BorderBrush" Value="#8B5CF6"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="7,2"/>
+    </Style>
+
+    <Style x:Key="OwnedBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="#12301F"/>
+        <Setter Property="BorderBrush" Value="#22C55E"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="7,2"/>

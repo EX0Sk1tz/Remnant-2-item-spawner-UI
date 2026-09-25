@@ -15,15 +15,18 @@ public sealed class SpawnProgressViewModel : INotifyPropertyChanged
     private BridgeStatus _status = new();
     private string _title = "Safe Group Spawn";
     private string? _lastLoggedMessage;
+    private readonly int _delayMsPerItem;
 
     public SpawnProgressViewModel(
         BridgeStatusService statusService,
         QueueWriter queueWriter,
-        string title)
+        string title,
+        int delayMsPerItem = 500)
     {
         _statusService = statusService;
         _queueWriter = queueWriter;
         _title = title;
+        _delayMsPerItem = delayMsPerItem;
 
         _timer = new DispatcherTimer
         {
@@ -82,8 +85,7 @@ public sealed class SpawnProgressViewModel : INotifyPropertyChanged
 
             var remainingItems = Status.TotalCount - Status.ProcessedCount;
 
-            // Current group spawn setup uses one item every 500 ms.
-            var estimatedSeconds = Math.Ceiling(remainingItems * 0.5);
+            var estimatedSeconds = Math.Ceiling(remainingItems * _delayMsPerItem / 1000.0);
 
             return $"Estimated time left: {FormatDuration(TimeSpan.FromSeconds(estimatedSeconds))}";
         }

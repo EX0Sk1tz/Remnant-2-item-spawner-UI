@@ -107,13 +107,23 @@
                                     <Expander Header="{Binding Name}"
                                               Style="{DynamicResource ProfessionalExpanderStyle}"
                                               IsExpanded="True">
-                                        <ItemsControl ItemsSource="{Binding Types}">
+                                        <ItemsControl ItemsSource="{Binding Entries}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Button Content="{Binding}"
-                                                            Command="{Binding DataContext.SelectTypeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}"
-                                                            Style="{DynamicResource CategoryButtonStyle}"/>
+                                                    <Button Command="{Binding DataContext.SelectTypeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding Type}"
+                                                            Style="{DynamicResource CategoryButtonStyle}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Type}"/>
+                                                            <TextBlock Text="{Binding ProgressText}"
+                                                                       Foreground="{DynamicResource TextFaintBrush}"
+                                                                       FontSize="11"
+                                                                       FontWeight="Normal"
+                                                                       Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding HasProgress, Converter={StaticResource BoolVis}}"/>
+                                                        </StackPanel>
+                                                    </Button>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -129,13 +139,17 @@
         <Grid Grid.Column="1" Margin="26">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,18">
+            <Grid Grid.Row="0" Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="170"/>
                     <ColumnDefinition Width="150"/>
                 </Grid.ColumnDefinitions>
 
@@ -146,7 +160,35 @@
                          FontSize="15"
                          Padding="14,9"/>
 
-                <Button Grid.Column="1"
+                <ComboBox Grid.Column="1"
+                          ItemsSource="{Binding ContentFilterOptions}"
+                          SelectedValuePath="Key"
+                          DisplayMemberPath="DisplayName"
+                          SelectedValue="{Binding ContentFilter}"
+                          Style="{DynamicResource ModernComboBoxStyle}"
+                          Height="42"
+                          Margin="12,0,0,0"
+                          ToolTip="{Binding Loc[Main.ContentFilterTooltip]}"/>
+
+                <CheckBox Grid.Column="2"
+                          Content="{Binding Loc[Main.MissingOnly]}"
+                          IsChecked="{Binding ShowMissingOnly}"
+                          IsEnabled="{Binding HasOwnedItemsScan}"
+                          Style="{DynamicResource ModernCheckBoxStyle}"
+                          VerticalAlignment="Center"
+                          Margin="16,0,4,0"
+                          ToolTip="{Binding Loc[Main.MissingOnlyTooltip]}"
+                          ToolTipService.ShowOnDisabled="True"/>
+
+                <Button Grid.Column="3"
+                        Content="{Binding Loc[Main.ScanInventory]}"
+                        Command="{Binding ScanInventoryCommand}"
+                        Style="{DynamicResource ToolbarButtonStyle}"
+                        Height="42"
+                        Margin="12,0,0,0"
+                        ToolTip="{Binding Loc[Main.ScanInventoryTooltip]}"/>
+
+                <Button Grid.Column="4"
                         Content="{Binding Loc[Main.Reload]}"
                         Command="{Binding ReloadCommand}"
                         Style="{DynamicResource ToolbarButtonStyle}"
@@ -154,8 +196,54 @@
                         Margin="12,0,0,0"/>
             </Grid>
 
+            <!-- Collection bar: what the latest inventory scan says about the selected subcategory -->
+            <Grid Grid.Row="1" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Grid instead of a horizontal StackPanel so the scan time can trim with "…"
+                     rather than running under the Spawn Missing button on long summaries. -->
+                <Grid Grid.Column="0"
+                      VerticalAlignment="Center"
+                      Margin="0,0,12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding CollectionSummaryText}"
+                               Foreground="{DynamicResource TextBrush}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding LastScanText}"
+                               ToolTip="{Binding LastScanText}"
+                               Foreground="{DynamicResource TextFaintBrush}"
+                               FontSize="12"
+                               Margin="14,0,0,0"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <Button Grid.Column="1"
+                        Content="{Binding Loc[Main.SpawnMissing]}"
+                        Command="{Binding SpawnMissingCommand}"
+                        Style="{DynamicResource SecondaryActionButtonStyle}"
+                        Visibility="{Binding HasOwnedItemsScan, Converter={StaticResource BoolVis}}"
+                        Height="34"
+                        Padding="14,0"
+                        MinWidth="150"
+                        ToolTip="{Binding Loc[Main.SpawnMissingTooltip]}"/>
+            </Grid>
+
             <ListView x:Name="ItemsListView"
-                      Grid.Row="1"
+                      Grid.Row="2"
                       ItemsSource="{Binding Items}"
                       SelectedItem="{Binding SelectedItem}"
                       Style="{DynamicResource ItemsListStyle}"
@@ -169,7 +257,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="82"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="432"/>
                                 </Grid.ColumnDefinitions>
 
@@ -220,31 +308,56 @@
                                 <StackPanel Grid.Column="1"
                                             VerticalAlignment="Center"
                                             Margin="8,0,16,0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Name}"
-                                                   Foreground="{DynamicResource TextBrush}"
-                                                   FontSize="16"
-                                                   FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
+                                    <!-- Name, badges, category. Without badges the badge line is hidden, so the
+                                         category sits directly under the name; long names trim. -->
+                                    <TextBlock Text="{Binding Name}"
+                                               ToolTip="{Binding Name}"
+                                               Foreground="{DynamicResource TextBrush}"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"/>
 
+                                    <!-- WrapPanel only as a safety net: the badges fit on one line in practice -->
+                                    <WrapPanel Orientation="Horizontal"
+                                               Margin="0,3,0,0"
+                                               Visibility="{Binding HasBadges, Converter={StaticResource BoolVis}}">
                                         <Border Style="{DynamicResource TraitBadgeStyle}"
-                                                Margin="8,0,0,0"
+                                                Margin="0,2,8,2"
+                                                VerticalAlignment="Center"
                                                 Visibility="{Binding IsTraitLocked, Converter={StaticResource BoolVis}}">
                                             <TextBlock Text="Requires Summonable Traits"
                                                        Style="{DynamicResource TraitBadgeTextStyle}"/>
                                         </Border>
-                                    </StackPanel>
+
+                                        <Border Style="{DynamicResource DlcBadgeStyle}"
+                                                Margin="0,2,8,2"
+                                                VerticalAlignment="Center"
+                                                ToolTip="{Binding DlcTooltip}"
+                                                Visibility="{Binding IsDlc, Converter={StaticResource BoolVis}}">
+                                            <TextBlock Text="{Binding DlcBadgeText}"
+                                                       Style="{DynamicResource DlcBadgeTextStyle}"/>
+                                        </Border>
+
+                                        <Border Style="{DynamicResource OwnedBadgeStyle}"
+                                                Margin="0,2,8,2"
+                                                VerticalAlignment="Center"
+                                                Visibility="{Binding IsOwned, Converter={StaticResource BoolVis}}">
+                                            <TextBlock Text="{Binding DataContext.Loc[Main.Owned], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                       Style="{DynamicResource OwnedBadgeTextStyle}"/>
+                                        </Border>
+                                    </WrapPanel>
 
                                     <TextBlock Text="{Binding Type}"
                                                Foreground="{DynamicResource TextFaintBrush}"
                                                FontSize="13"
-                                               Margin="0,6,0,0"/>
+                                               Margin="0,3,0,0"/>
                                 </StackPanel>
 
                                 <Border Grid.Column="2"
                                         Style="{DynamicResource TypePillStyle}"
                                         HorizontalAlignment="Left"
-                                        VerticalAlignment="Center">
+                                        VerticalAlignment="Center"
+                                        Margin="0,0,20,0">
                                     <TextBlock Text="{Binding Type}"
                                                Style="{DynamicResource TypePillTextStyle}"/>
                                 </Border>
@@ -323,7 +436,7 @@
                 </ListView.ItemTemplate>
             </ListView>
 
-            <Grid Grid.Row="2" Margin="0,18,0,0">
+            <Grid Grid.Row="3" Margin="0,18,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="190"/>

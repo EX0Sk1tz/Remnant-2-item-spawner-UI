@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MoonSharp" Version="2.0.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Remnant2UnlockerApp.csproj" />
+  </ItemGroup>
+
+  <!-- The real item catalog, so tests can check the matching rules against every shipped path, and
+       the real mod scripts, which LuaInventoryScanTests runs under MoonSharp with a fake UE4SS. -->
+  <ItemGroup>
+    <None Include="..\..\Lua Scripts inside game directory\items.json" Link="TestData\items.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\inventory_cheats.lua" Link="TestData\Scripts\inventory_cheats.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\json.lua" Link="TestData\Scripts\json.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\queue.lua" Link="TestData\Scripts\queue.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\spawner.lua" Link="TestData\Scripts\spawner.lua" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

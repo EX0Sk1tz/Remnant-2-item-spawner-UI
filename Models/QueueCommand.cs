@@ -12,6 +12,9 @@ public sealed class QueueCommand
 
     public List<string>? Paths { get; set; }
 
+    // For long lists: name of a file in the mod folder with one path per line (see QueueWriter.SpawnManyAsync).
+    public string? PathsFile { get; set; }
+
     public List<string>? Types { get; set; }
 
     public int DelayMs { get; set; } = 500;

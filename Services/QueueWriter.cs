@@ -51,6 +51,33 @@ public sealed class QueueWriter
         });
     }
 
+    public const string SpawnListFileName = "spawn_list.txt";
+
+    // Same one-item-at-a-time safe spawn as UnlockTypesAsync, but for an explicit list of paths
+    // (queue.lua's "spawn_many_safe"). Plain "summon" only -- don't pass trait paths here.
+    // queue.lua clamps delayMs to 100-10000.
+    //
+    // The paths go into their own file, one per line, instead of into command_queue.json: the mod
+    // re-reads the command file every 200ms on UE4SS's async thread, and a ~40 KB command there
+    // (all ~400 missing items) coincided with game crashes inside UE4SS's ProcessEvent hook.
+    public async Task SpawnManyAsync(IEnumerable<string> paths, int stackSize, int delayMs = 500)
+    {
+        var listPath = Path.Combine(_pathService.GetModRootPath(), SpawnListFileName);
+
+        // Written (atomically) before the command that points at it.
+        await WriteFileAtomicallyAsync(listPath, string.Join("\n", paths) + "\n");
+
+        await WriteCommandAsync(new QueueCommand
+        {
+            Id = CreateId(),
+            Action = "spawn_many_safe",
+            PathsFile = SpawnListFileName,
+            DropQuantity = 1,
+            StackSize = Math.Clamp(stackSize, 1, 999),
+            DelayMs = Math.Clamp(delayMs, 100, 10000)
+        });
+    }
+
     public async Task CancelCurrentActionAsync()
     {
         await WriteCommandAsync(new QueueCommand
@@ -63,26 +90,31 @@ public sealed class QueueWriter
 
     private async Task WriteCommandAsync(QueueCommand command)
     {
-        var queuePath = _pathService.GetQueuePath();
-        var directory = Path.GetDirectoryName(queuePath);
-
-        if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
-
         var json = JsonSerializer.Serialize(
             command,
             new JsonSerializerOptions
             {
                 WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             });
 
-        // Write to a temp file and rename over the target so the bridge's 200ms poll
-        // never observes a partially-written command_queue.json.
-        var tempPath = queuePath + ".tmp";
+        await WriteFileAtomicallyAsync(_pathService.GetQueuePath(), json);
+    }
 
-        await File.WriteAllTextAsync(tempPath, json);
-        File.Move(tempPath, queuePath, overwrite: true);
+    // Write to a temp file and rename over the target so the bridge's 200ms poll never observes a
+    // partially-written file.
+    private static async Task WriteFileAtomicallyAsync(string path, string content)
+    {
+        var directory = Path.GetDirectoryName(path);
+
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        var tempPath = path + ".tmp";
+
+        await File.WriteAllTextAsync(tempPath, content);
+        File.Move(tempPath, path, overwrite: true);
     }
 
     public async Task SendConsoleCommandAsync(string command)

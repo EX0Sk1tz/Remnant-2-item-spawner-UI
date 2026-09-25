@@ -71,5 +71,21 @@
   "Main.SummonTraitTooltip": "Nutzt SummonTrait. Spawnt einen Trait, hebe ihn auf und spawne dann den nächsten.",
   "Main.AddTraitTooltip": "Nutzt AddTrait. Fügt den Trait direkt über den Summonable-Traits-Mod hinzu.",
   "Main.Updating": "Wird aktualisiert…",
-  "Main.UpdateTooltip": "Klicken, um das Update herunterzuladen und zu installieren"
+  "Main.UpdateTooltip": "Klicken, um das Update herunterzuladen und zu installieren",
+  "Main.MissingOnly": "Nur fehlende",
+  "Main.MissingOnlyTooltip": "Zeigt nur Waffen, Rüstungen, Accessoires, Mutatoren und Relikte, die noch nicht in deinem Inventar sind. Benötigt einen Inventar-Scan aus dem Spiel.",
+  "Main.ScanInventory": "Inventar scannen",
+  "Main.ScanInventoryTooltip": "Liest jetzt dein Inventar im Spiel aus. Solange ein Charakter geladen ist, wird es außerdem alle paar Sekunden automatisch neu gescannt.",
+  "Main.SpawnMissing": "Fehlende spawnen",
+  "Main.SpawnMissingTooltip": "Spawnt je ein Exemplar jedes Items, das noch nicht in deinem Inventar ist: aus der gewählten Unterkategorie oder unter Alle aus allen erfassten Items.",
+  "Main.Owned": "Vorhanden",
+  "Main.CollectionNoScan": "Noch kein Inventar-Scan. Lade einen Charakter im Spiel, während der Mod läuft.",
+  "Main.CollectionType": "{0}: {1} von {2} gesammelt, {3} fehlen",
+  "Main.CollectionAll": "Erfasste Items: {0} von {1} gesammelt, {2} fehlen",
+  "Main.CollectionUntracked": "{0} wird nicht erfasst. Nur Waffen, Rüstungen, Accessoires, Mutatoren und Relikte.",
+  "Main.ContentAll": "Alle Inhalte",
+  "Main.ContentBase": "Hauptspiel",
+  "Main.ContentFilterTooltip": "Zeigt Items aus dem Hauptspiel oder aus einem DLC. Die Sammlungszähler und „Fehlende spawnen“ folgen diesem Filter ebenfalls.",
+  "Main.LastScanLive": "Letzter Scan {0}",
+  "Main.LastScanStale": "Letzter Scan {0} (nicht live: Spiel geschlossen oder nicht im Spiel)"
 }

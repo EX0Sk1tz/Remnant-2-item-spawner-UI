@@ -71,5 +71,21 @@
   "Main.SummonTraitTooltip": "Uses SummonTrait. Spawn one trait, pick it up, then spawn the next one.",
   "Main.AddTraitTooltip": "Uses AddTrait. Adds the trait directly through the Summonable Traits mod.",
   "Main.Updating": "Updating…",
-  "Main.UpdateTooltip": "Click to download and install the update"
+  "Main.UpdateTooltip": "Click to download and install the update",
+  "Main.MissingOnly": "Missing only",
+  "Main.MissingOnlyTooltip": "Show only weapons, armor, accessories, mutators and relics that aren't in your inventory yet. Needs an inventory scan from the game.",
+  "Main.ScanInventory": "Scan Inventory",
+  "Main.ScanInventoryTooltip": "Read your in-game inventory now. While a character is loaded it is also rescanned automatically every few seconds.",
+  "Main.SpawnMissing": "Spawn Missing",
+  "Main.SpawnMissingTooltip": "Spawn one of every item that isn't in your inventory yet: from the selected subcategory, or from all tracked items under All.",
+  "Main.Owned": "Owned",
+  "Main.CollectionNoScan": "No inventory scan yet. Load a character in-game with the mod running.",
+  "Main.CollectionType": "{0}: {1} of {2} collected, {3} missing",
+  "Main.CollectionAll": "Tracked items: {0} of {1} collected, {2} missing",
+  "Main.CollectionUntracked": "{0} is not tracked. Only weapons, armor, accessories, mutators and relics are.",
+  "Main.ContentAll": "All content",
+  "Main.ContentBase": "Base game",
+  "Main.ContentFilterTooltip": "Show items from the base game or from one DLC. The collection counts and Spawn Missing follow this filter too.",
+  "Main.LastScanLive": "Last scan {0}",
+  "Main.LastScanStale": "Last scan {0} (not live: game closed or not in-game)"
 }

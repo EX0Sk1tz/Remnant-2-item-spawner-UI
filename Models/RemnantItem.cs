@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Remnant2UnlockerApp.Services;
 
 namespace Remnant2UnlockerApp.Models;
 
@@ -117,10 +118,46 @@ public sealed class RemnantItem : INotifyPropertyChanged
             _isSummonableTraitsInstalled = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsTraitLocked));
+            OnPropertyChanged(nameof(HasBadges));
             OnPropertyChanged(nameof(CanUseTraitCommands));
             OnPropertyChanged(nameof(CanUseNormalSpawn));
         }
     }
+
+    private bool _isOwned;
+
+    // Blueprint class name used to match this item against the player's inventory scan.
+    public string ClassKey => CollectionTracker.ToClassKey(Path);
+
+    // Null for base-game items; see DlcCatalog.
+    public DlcInfo? Dlc => DlcCatalog.FromPath(Path);
+
+    public bool IsDlc => Dlc != null;
+
+    public string DlcBadgeText => Dlc?.ShortName ?? "";
+
+    public string DlcTooltip => Dlc == null ? "" : $"DLC: {Dlc.Name}";
+
+    // Whether the "missing items" view counts this item at all (see CollectionTracker.TrackedTypes).
+    public bool IsCollectible => CollectionTracker.IsTrackedType(Type);
+
+    // Set from the latest inventory scan; stays false when no scan has been read yet.
+    public bool IsOwned
+    {
+        get => _isOwned;
+        set
+        {
+            if (_isOwned == value)
+                return;
+
+            _isOwned = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasBadges));
+        }
+    }
+
+    // Whether the card shows any badge (trait lock, DLC, owned); the badge line is hidden otherwise.
+    public bool HasBadges => IsTraitLocked || IsDlc || IsOwned;
 
     public bool IsTraitLocked => NeedsSummonableTraitsMod && !IsSummonableTraitsInstalled;
 
