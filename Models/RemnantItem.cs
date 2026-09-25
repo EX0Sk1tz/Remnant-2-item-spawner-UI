@@ -71,14 +71,22 @@ public sealed class RemnantItem : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
             return null;
 
-        var bitmap = new BitmapImage();
-        bitmap.BeginInit();
-        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.UriSource = new Uri(path, UriKind.Absolute);
-        bitmap.EndInit();
-        bitmap.Freeze();
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.UriSource = new Uri(path, UriKind.Absolute);
+            bitmap.EndInit();
+            bitmap.Freeze();
 
-        return bitmap;
+            return bitmap;
+        }
+        catch (Exception)
+        {
+            // Unreadable or corrupt cache file: show the placeholder instead of failing the item.
+            return null;
+        }
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)

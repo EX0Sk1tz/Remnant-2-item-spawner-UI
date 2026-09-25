@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -61,10 +62,19 @@ public sealed class WikiImageService
         DeleteLegacyCache();
     }
 
-    public async Task<string?> GetImageAsync(string itemName)
+    // items.json lists some names twice (e.g. "Simulacrum"); both entries share one lookup so they
+    // never download and write the same cache file at the same time.
+    private readonly ConcurrentDictionary<string, Lazy<Task<string?>>> _pending = new(StringComparer.OrdinalIgnoreCase);
+
+    public Task<string?> GetImageAsync(string itemName)
     {
         var localPath = GetLocalPath(itemName);
 
+        return _pending.GetOrAdd(localPath, _ => new Lazy<Task<string?>>(() => LoadImageAsync(itemName, localPath))).Value;
+    }
+
+    private async Task<string?> LoadImageAsync(string itemName, string localPath)
+    {
         if (File.Exists(localPath))
         {
             Debug.WriteLine($"[WikiImage] Cache hit: {itemName}");
@@ -153,7 +163,11 @@ public sealed class WikiImageService
                 return false;
             }
 
-            await File.WriteAllBytesAsync(localPath, bytes);
+            // Write to a temp file and rename, so a reader never sees a half-written image.
+            var tempPath = localPath + ".tmp";
+            await File.WriteAllBytesAsync(tempPath, bytes);
+            File.Move(tempPath, localPath, overwrite: true);
+
             Debug.WriteLine($"[WikiImage] Saved: {localPath} ({imageUrl})");
             return true;
         }
@@ -293,6 +307,11 @@ public sealed class WikiImageService
         var marker = MarkerSuffixPattern.Match(itemName.Trim()).Value.Trim().Trim('(', ')').TrimEnd('*');
         var variant = marker.Length > 0 ? $"{baseName} ({marker.ToLowerInvariant()})" : baseName;
 
+        // Variant items share one page whose image shows a single variant (the yellow stone), but
+        // wiki.gg has a file per variant: File:Prismatic Stone (blue).png
+        if (marker.Length > 0 && await QueryWikiGgFileAsync($"File:{variant}.png") is { } variantFile)
+            return variantFile;
+
         var titles = new[] { itemName.Trim(), variant, baseName, $"{baseName} (fragment)" }
             .Distinct(StringComparer.Ordinal)
             .ToList();
@@ -314,6 +333,31 @@ public sealed class WikiImageService
             .Where(pair => NameKey(Regex.Replace(pair.Key, "\\s*\\(fragment\\)$", "")) == key)
             .Select(pair => pair.Value)
             .FirstOrDefault();
+    }
+
+    /// <summary>Thumbnail URL of a wiki.gg file page, or null when the file doesn't exist.</summary>
+    private static async Task<string?> QueryWikiGgFileAsync(string fileTitle)
+    {
+        var url = $"{WikiGgApiUrl}?action=query&format=json&prop=imageinfo&iiprop=url&iiurlwidth=256&titles={Uri.EscapeDataString(fileTitle)}";
+
+        using var response = await GetWithRetryAsync(url);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        if (!document.RootElement.TryGetProperty("query", out var root) || !root.TryGetProperty("pages", out var pages))
+            return null;
+
+        foreach (var page in pages.EnumerateObject())
+        {
+            if (page.Value.TryGetProperty("imageinfo", out var info) && info.GetArrayLength() > 0 &&
+                info[0].TryGetProperty("thumburl", out var thumb))
+            {
+                return thumb.GetString();
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Requested title (after normalisation/redirects are mapped back) → thumbnail URL.</summary>

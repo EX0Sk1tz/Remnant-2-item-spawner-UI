@@ -1320,10 +1320,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 {
                     item.IsImageLoading = true;
                     item.ImagePath = await _wikiImageService.GetImageAsync(item.Name);
-                    item.IsImageLoading = false;
+                }
+                catch (Exception ex)
+                {
+                    AppLogService.Error($"Failed to load image for {item.Name}", ex);
                 }
                 finally
                 {
+                    item.IsImageLoading = false;
                     throttle.Release();
                 }
             });
