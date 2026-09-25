@@ -26,6 +26,7 @@
   "Settings.BoostWeaponMods": "Weapon Mods",
   "Settings.BoostWeaponModsTooltip": "Boosts damage, duration, and charges on your currently equipped weapon mods. Safe to use repeatedly.\n\nEach field is a multiplier on the mod's base value — e.g. 10 means 10x. Exception: \"...Frequency\" and \"...Delay\" fields are time intervals, so a higher number makes them trigger less often. Use a value below 1 for those if you want more frequent triggers.",
   "Settings.Language": "Language",
+  "Settings.Theme": "Theme",
 
   "Settings.Cheats": "Cheats",
   "Settings.InfiniteHealth": "Infinite Health",

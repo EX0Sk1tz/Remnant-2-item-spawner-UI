@@ -7,6 +7,9 @@ public partial class App : System.Windows.Application
 {
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
+        // Before base.OnStartup so the main window (StartupUri) is created in the saved theme.
+        ThemeManager.RestoreSaved();
+
         base.OnStartup(e);
 
         DispatcherUnhandledException += OnDispatcherUnhandledException;

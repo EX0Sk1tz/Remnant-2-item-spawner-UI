@@ -5,231 +5,24 @@
         Height="760"
         Width="1320"
         WindowStartupLocation="CenterScreen"
-        Background="#101116"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        FontFamily="{DynamicResource UiFont}"
         MinHeight="760"
         MinWidth="1320"
         ResizeMode="CanMinimize"
         Topmost="{Binding AlwaysOnTop}">
 
     <Window.Resources>
-        <Style x:Key="BaseButtonStyle" TargetType="Button">
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-            <Setter Property="RenderTransform">
-                <Setter.Value>
-                    <ScaleTransform ScaleX="1" ScaleY="1"/>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonRoot"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="9"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonRoot" Property="Opacity" Value="0.9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="RenderTransform">
-                                    <Setter.Value>
-                                        <ScaleTransform ScaleX="0.985" ScaleY="0.985"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonRoot" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}"/>
-
-        <Style x:Key="AllCategoryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="Margin" Value="0,0,0,12"/>
-            <Setter Property="Padding" Value="13,0"/>
-            <Setter Property="Background" Value="#1A1D27"/>
-            <Setter Property="Foreground" Value="#F2F2F2"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-        </Style>
-
-        <Style x:Key="CategoryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Margin" Value="0,5,0,0"/>
-            <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="Background" Value="#1A1D27"/>
-            <Setter Property="Foreground" Value="#D8DCE5"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
-
-        <Style x:Key="ProfessionalExpanderStyle" TargetType="Expander">
-            <Setter Property="Foreground" Value="#F2F2F2"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Expander">
-                        <Border x:Name="Outer"
-                                Background="#171922"
-                                BorderBrush="#273044"
-                                BorderThickness="1"
-                                CornerRadius="12">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <ToggleButton x:Name="HeaderSite"
-                                              Grid.Row="0"
-                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
-                                              Background="Transparent"
-                                              BorderThickness="0"
-                                              Cursor="Hand"
-                                              Padding="12,11">
-                                    <ToggleButton.Template>
-                                        <ControlTemplate TargetType="ToggleButton">
-                                            <Border x:Name="HeaderRoot"
-                                                    Background="Transparent"
-                                                    CornerRadius="12"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="22"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-
-                                                    <Border x:Name="ChevronCircle"
-                                                            Grid.Column="0"
-                                                            Width="17"
-                                                            Height="17"
-                                                            CornerRadius="8.5"
-                                                            Background="#2F3A56"
-                                                            VerticalAlignment="Center">
-                                                        <Path x:Name="Chevron"
-                                                              Data="M 4 6 L 8.5 10.5 L 13 6"
-                                                              Stroke="#D8DCE5"
-                                                              StrokeThickness="2"
-                                                              StrokeStartLineCap="Round"
-                                                              StrokeEndLineCap="Round"
-                                                              RenderTransformOrigin="0.5,0.5">
-                                                            <Path.RenderTransform>
-                                                                <RotateTransform Angle="0"/>
-                                                            </Path.RenderTransform>
-                                                        </Path>
-                                                    </Border>
-
-                                                    <ContentPresenter Grid.Column="1"
-                                                                      Margin="8,0,0,0"
-                                                                      HorizontalAlignment="Left"
-                                                                      VerticalAlignment="Center"/>
-                                                </Grid>
-                                            </Border>
-
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="HeaderRoot" Property="Background" Value="#1D2231"/>
-                                                    <Setter TargetName="ChevronCircle" Property="Background" Value="#33405F"/>
-                                                </Trigger>
-
-                                                <Trigger Property="IsChecked" Value="True">
-                                                    <Setter TargetName="HeaderRoot" Property="Background" Value="#1A1D27"/>
-                                                    <Setter TargetName="ChevronCircle" Property="Background" Value="#3B82F6"/>
-                                                    <Setter TargetName="Chevron" Property="Stroke" Value="#FFFFFF"/>
-                                                    <Setter TargetName="Chevron" Property="RenderTransform">
-                                                        <Setter.Value>
-                                                            <RotateTransform Angle="180"/>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </ToggleButton.Template>
-
-                                    <TextBlock Text="{TemplateBinding Header}"
-                                               Foreground="#F2F2F2"
-                                               FontSize="14"
-                                               FontWeight="Bold"/>
-                                </ToggleButton>
-
-                                <Border x:Name="ContentHost"
-                                        Grid.Row="1"
-                                        Padding="10,0,10,10"
-                                        Visibility="Collapsed"
-                                        Opacity="0">
-                                    <ContentPresenter/>
-                                </Border>
-                            </Grid>
-                        </Border>
-
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsExpanded" Value="True">
-                                <Setter TargetName="ContentHost" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="ContentHost" Property="Opacity" Value="1"/>
-                                <Setter TargetName="Outer" Property="Background" Value="#171922"/>
-                                <Setter TargetName="Outer" Property="BorderBrush" Value="#273044"/>
-                                <Setter TargetName="Outer" Property="CornerRadius" Value="12"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="ItemCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#1A1D27"/>
-            <Setter Property="BorderBrush" Value="#232838"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="14"/>
-            <Setter Property="Padding" Value="14"/>
-            <Setter Property="Margin" Value="10,6"/>
-            <Setter Property="MinHeight" Value="92"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True">
-                    <Setter Property="Background" Value="#1F2D4A"/>
-                    <Setter Property="BorderBrush" Value="#3B82F6"/>
-                </DataTrigger>
-
-                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsMouseOver}" Value="True">
-                    <Setter Property="Background" Value="#202637"/>
-                    <Setter Property="BorderBrush" Value="#33405F"/>
-                </DataTrigger>
-
-                <DataTrigger Binding="{Binding IsTraitLocked}" Value="True">
-                    <Setter Property="Opacity" Value="0.48"/>
-                    <Setter Property="BorderBrush" Value="#3B2F13"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-            <Setter Property="Width" Value="42"/>
-            <Setter Property="Height" Value="42"/>
-            <Setter Property="Background" Value="#1A1D27"/>
-            <Setter Property="Foreground" Value="#D8DCE5"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-        </Style>
-
+        <!-- This window's tooltips have their own look; every value comes from the theme so a
+             switch updates them (an implicit style can't be based on a DynamicResource). -->
         <Style TargetType="ToolTip">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{DynamicResource MainToolTipBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource MainToolTipBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="{DynamicResource MainToolTipBorderThickness}"/>
+            <Setter Property="Padding" Value="{DynamicResource MainToolTipPadding}"/>
+            <Setter Property="Foreground" Value="{DynamicResource MainToolTipForegroundBrush}"/>
+            <Setter Property="MaxWidth" Value="{DynamicResource MainToolTipMaxWidth}"/>
+            <Setter Property="ContentTemplate" Value="{DynamicResource MainToolTipContentTemplate}"/>
             <Setter Property="HasDropShadow" Value="True"/>
         </Style>
     </Window.Resources>
@@ -240,7 +33,13 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#171922" Padding="18">
+        <!-- Background layers (transparent in themes that don't use them) -->
+        <Rectangle Grid.ColumnSpan="2" Fill="{DynamicResource Grain}" IsHitTestVisible="False"/>
+        <Rectangle Grid.ColumnSpan="2" Fill="{DynamicResource SkyGlow}" IsHitTestVisible="False"/>
+        <Rectangle Grid.ColumnSpan="2" Fill="{DynamicResource FireGlow}" IsHitTestVisible="False"/>
+        <Rectangle Grid.ColumnSpan="2" Fill="{DynamicResource Vignette}" IsHitTestVisible="False"/>
+
+        <Border Grid.Column="0" Style="{DynamicResource SidebarPanelStyle}" Padding="18">
             <DockPanel>
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,24">
                     <Grid.ColumnDefinitions>
@@ -250,80 +49,63 @@
 
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="REMNANT 2"
-                                   Foreground="#F1F1F1"
-                                   FontSize="24"
-                                   FontWeight="Bold"
+                                   Style="{DynamicResource AppTitleTextStyle}"
                                    Margin="0,0,0,4"/>
 
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Unlocker Bridge"
-                                       Foreground="#8F95A3"
-                                       FontSize="13"
+                                       Style="{DynamicResource AppSubtitleTextStyle}"
                                        VerticalAlignment="Center"/>
 
                             <TextBlock Text="{Binding VersionText}"
-                                       Foreground="#5B6272"
-                                       FontSize="11"
+                                       Style="{DynamicResource VersionTextStyle}"
                                        Margin="6,0,0,0"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
 
                         <Button Content="{Binding UpdateBadgeText}"
                                 Command="{Binding ShowUpdatePreviewCommand}"
-                                Foreground="#93C5FD"
+                                Style="{DynamicResource UpdateBadgeButtonStyle}"
+                                Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolVis}}"
                                 FontSize="11"
                                 Padding="8,3"
                                 HorizontalAlignment="Left"
                                 Margin="0,8,0,0"
-                                ToolTip="{Binding Loc[Main.UpdateTooltip]}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource ChipButtonStyle}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsUpdateAvailable}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                                ToolTip="{Binding Loc[Main.UpdateTooltip]}"/>
                     </StackPanel>
 
                     <Button Grid.Column="1"
                             Content="⚙"
                             Click="OpenSettings_Click"
-                            Style="{StaticResource IconButtonStyle}"/>
+                            Style="{DynamicResource IconButtonStyle}"/>
                 </Grid>
 
                 <ScrollViewer VerticalScrollBarVisibility="Hidden"
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <TextBox Text="{Binding CategorySearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource SearchBoxStyle}"
                                  Height="38"
                                  FontSize="13"
                                  Padding="12,8"
                                  Margin="0,0,0,10"
-                                 Background="#1A1D27"
-                                 Foreground="#F2F2F2"
-                                 BorderBrush="#303645"
-                                 BorderThickness="1"
                                  ToolTip="{Binding Loc[Main.SearchSubcategoriesTooltip]}"/>
 
                         <Button Content="{Binding Loc[Main.All]}"
                                 Command="{Binding SelectTypeCommand}"
                                 CommandParameter="All"
-                                Style="{StaticResource AllCategoryButtonStyle}"/>
+                                Style="{DynamicResource AllCategoryButtonStyle}"/>
 
                         <Button Content="{Binding Loc[Main.Favorites]}"
                                 Command="{Binding SelectTypeCommand}"
                                 CommandParameter="Favorites"
-                                Style="{StaticResource AllCategoryButtonStyle}"/>
+                                Style="{DynamicResource AllCategoryButtonStyle}"/>
 
                         <ItemsControl ItemsSource="{Binding CategoryGroups}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Header="{Binding Name}"
-                                              Style="{StaticResource ProfessionalExpanderStyle}"
+                                              Style="{DynamicResource ProfessionalExpanderStyle}"
                                               IsExpanded="True">
                                         <ItemsControl ItemsSource="{Binding Types}">
                                             <ItemsControl.ItemTemplate>
@@ -331,7 +113,7 @@
                                                     <Button Content="{Binding}"
                                                             Command="{Binding DataContext.SelectTypeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}"
-                                                            Style="{StaticResource CategoryButtonStyle}"/>
+                                                            Style="{DynamicResource CategoryButtonStyle}"/>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -359,106 +141,30 @@
 
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{DynamicResource SearchBoxStyle}"
                          Height="42"
                          FontSize="15"
-                         Padding="14,9"
-                         Background="#1A1D27"
-                         Foreground="#F2F2F2"
-                         BorderBrush="#303645"
-                         BorderThickness="1"/>
+                         Padding="14,9"/>
 
                 <Button Grid.Column="1"
                         Content="{Binding Loc[Main.Reload]}"
                         Command="{Binding ReloadCommand}"
+                        Style="{DynamicResource ToolbarButtonStyle}"
                         Height="42"
-                        Margin="12,0,0,0"
-                        Background="#252936"/>
+                        Margin="12,0,0,0"/>
             </Grid>
 
             <ListView x:Name="ItemsListView"
                       Grid.Row="1"
                       ItemsSource="{Binding Items}"
                       SelectedItem="{Binding SelectedItem}"
-                      Background="#151821"
-                      BorderBrush="#303645"
-                      BorderThickness="1"
-                      Foreground="#F2F2F2"
+                      Style="{DynamicResource ItemsListStyle}"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                       ScrollViewer.VerticalScrollBarVisibility="Auto">
 
-                <ListView.Resources>
-                    <Style x:Key="ItemsListThumbStyle" TargetType="Thumb">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="Thumb">
-                                    <Border x:Name="ThumbBorder"
-                                            Background="#33405F"
-                                            CornerRadius="4"
-                                            Margin="2,0"/>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="ThumbBorder" Property="Background" Value="#3B82F6"/>
-                                        </Trigger>
-                                        <Trigger Property="IsDragging" Value="True">
-                                            <Setter TargetName="ThumbBorder" Property="Background" Value="#3B82F6"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-
-                    <Style TargetType="ScrollBar">
-                        <Setter Property="Width" Value="10"/>
-                        <Setter Property="MinWidth" Value="10"/>
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ScrollBar">
-                                    <Grid Background="Transparent">
-                                        <Track x:Name="PART_Track"
-                                               IsDirectionReversed="True">
-                                            <Track.DecreaseRepeatButton>
-                                                <RepeatButton Command="ScrollBar.PageUpCommand"
-                                                              Opacity="0"
-                                                              Focusable="False"/>
-                                            </Track.DecreaseRepeatButton>
-                                            <Track.IncreaseRepeatButton>
-                                                <RepeatButton Command="ScrollBar.PageDownCommand"
-                                                              Opacity="0"
-                                                              Focusable="False"/>
-                                            </Track.IncreaseRepeatButton>
-                                            <Track.Thumb>
-                                                <Thumb Style="{StaticResource ItemsListThumbStyle}"/>
-                                            </Track.Thumb>
-                                        </Track>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListView.Resources>
-
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Margin" Value="0"/>
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListViewItem">
-                                    <ContentPresenter/>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListView.ItemContainerStyle>
-
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ItemCardStyle}">
+                        <Border Style="{DynamicResource ItemCardStyle}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="82"/>
@@ -468,68 +174,38 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Border Grid.Column="0"
+                                        Style="{DynamicResource ItemThumbStyle}"
                                         Width="64"
                                         Height="64"
-                                        CornerRadius="12"
-                                        Background="#252936"
                                         ClipToBounds="True"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Center">
                                     <Grid>
                                         <TextBlock Text="?"
-                                                   Foreground="#8F95A3"
+                                                   Foreground="{DynamicResource TextFaintBrush}"
                                                    FontSize="22"
                                                    FontWeight="Bold"
                                                    HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasImage}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
+                                                   VerticalAlignment="Center"
+                                                   Visibility="{Binding HasImage, Converter={StaticResource BoolVisInv}}"/>
 
                                         <Image Source="{Binding Image}"
                                                Stretch="Uniform"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
-                                               Margin="4">
-                                            <Image.Style>
-                                                <Style TargetType="Image">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasImage}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Image.Style>
-                                        </Image>
+                                               Margin="4"
+                                               Visibility="{Binding HasImage, Converter={StaticResource BoolVis}}"/>
 
                                         <ProgressBar Width="30"
                                                      Height="30"
                                                      IsIndeterminate="True"
                                                      HorizontalAlignment="Center"
-                                                     VerticalAlignment="Center">
-                                            <ProgressBar.Style>
-                                                <Style TargetType="ProgressBar">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsImageLoading}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </ProgressBar.Style>
-                                        </ProgressBar>
+                                                     VerticalAlignment="Center"
+                                                     Visibility="{Binding IsImageLoading, Converter={StaticResource BoolVis}}"/>
 
                                         <Button Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}"
+                                                Style="{DynamicResource FavoriteButtonStyle}"
                                                 Width="22"
                                                 Height="22"
                                                 Padding="0"
@@ -537,22 +213,7 @@
                                                 VerticalAlignment="Top"
                                                 Margin="0,-6,-6,0"
                                                 Cursor="Hand"
-                                                ToolTip="{Binding DataContext.Loc[Main.ToggleFavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                                                    <Setter Property="Background" Value="#252936"/>
-                                                    <Setter Property="Foreground" Value="#8F95A3"/>
-                                                    <Setter Property="FontSize" Value="12"/>
-                                                    <Setter Property="Content" Value="☆"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
-                                                            <Setter Property="Content" Value="★"/>
-                                                            <Setter Property="Foreground" Value="#FACC15"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
+                                                ToolTip="{Binding DataContext.Loc[Main.ToggleFavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     </Grid>
                                 </Border>
 
@@ -561,50 +222,31 @@
                                             Margin="8,0,16,0">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding Name}"
-                                                   Foreground="#F2F2F2"
+                                                   Foreground="{DynamicResource TextBrush}"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
                                                    TextTrimming="CharacterEllipsis"/>
 
-                                        <Border Background="#3B2F13"
-                                                BorderBrush="#FACC15"
-                                                BorderThickness="1"
-                                                CornerRadius="8"
-                                                Padding="7,2"
-                                                Margin="8,0,0,0">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsTraitLocked}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-
+                                        <Border Style="{DynamicResource TraitBadgeStyle}"
+                                                Margin="8,0,0,0"
+                                                Visibility="{Binding IsTraitLocked, Converter={StaticResource BoolVis}}">
                                             <TextBlock Text="Requires Summonable Traits"
-                                                       Foreground="#FACC15"
-                                                       FontSize="10"
-                                                       FontWeight="Bold"/>
+                                                       Style="{DynamicResource TraitBadgeTextStyle}"/>
                                         </Border>
                                     </StackPanel>
 
                                     <TextBlock Text="{Binding Type}"
-                                               Foreground="#8F95A3"
+                                               Foreground="{DynamicResource TextFaintBrush}"
                                                FontSize="13"
                                                Margin="0,6,0,0"/>
                                 </StackPanel>
 
                                 <Border Grid.Column="2"
-                                        Background="#252936"
-                                        CornerRadius="12"
-                                        Padding="10,5"
+                                        Style="{DynamicResource TypePillStyle}"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Type}"
-                                               Foreground="#D8DCE5"
-                                               FontSize="12"/>
+                                               Style="{DynamicResource TypePillTextStyle}"/>
                                 </Border>
 
                                 <Grid Grid.Column="3"
@@ -618,108 +260,61 @@
 
                                     <StackPanel Grid.Column="0" Orientation="Horizontal">
                                         <Button Content="{Binding DataContext.Loc[Main.Spawn], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Style="{DynamicResource PrimaryActionButtonStyle}"
+                                                Visibility="{Binding CanUseNormalSpawn, Converter={StaticResource BoolVis}}"
                                                 Height="40"
                                                 Width="92"
-                                                Background="#2563EB"
-                                                Click="SpawnItem_Click">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding CanUseNormalSpawn}" Value="False">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
+                                                Click="SpawnItem_Click"/>
 
                                         <Button Content="{Binding DataContext.Loc[Main.Force], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Style="{DynamicResource DangerActionButtonStyle}"
+                                                Visibility="{Binding CanUseNormalSpawn, Converter={StaticResource BoolVis}}"
                                                 Height="40"
                                                 Width="92"
                                                 Margin="10,0,0,0"
-                                                Background="#7C2D12"
-                                                Click="ForceConsoleSpawnItem_Click">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding CanUseNormalSpawn}" Value="False">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
+                                                Click="ForceConsoleSpawnItem_Click"/>
 
                                         <Button Content="{Binding DataContext.Loc[Main.Spawn], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Style="{DynamicResource PrimaryActionButtonStyle}"
+                                                Visibility="{Binding NeedsSummonableTraitsMod, Converter={StaticResource BoolVis}}"
+                                                IsEnabled="{Binding CanUseTraitCommands}"
+                                                Opacity="{Binding CanUseTraitCommands, Converter={StaticResource BoolDim}}"
                                                 Height="40"
                                                 Width="92"
-                                                Background="#2563EB"
                                                 Click="SummonTrait_Click"
-                                                ToolTip="{Binding DataContext.Loc[Main.SummonTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Setter Property="IsEnabled" Value="True"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding NeedsSummonableTraitsMod}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding CanUseTraitCommands}" Value="False">
-                                                            <Setter Property="IsEnabled" Value="False"/>
-                                                            <Setter Property="Opacity" Value="0.45"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
+                                                ToolTip="{Binding DataContext.Loc[Main.SummonTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}"/>
 
                                         <Button Content="{Binding DataContext.Loc[Main.Add], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Style="{DynamicResource SuccessActionButtonStyle}"
+                                                Visibility="{Binding NeedsSummonableTraitsMod, Converter={StaticResource BoolVis}}"
+                                                IsEnabled="{Binding CanUseTraitCommands}"
+                                                Opacity="{Binding CanUseTraitCommands, Converter={StaticResource BoolDim}}"
                                                 Height="40"
                                                 Width="92"
                                                 Margin="10,0,0,0"
-                                                Background="#16A34A"
                                                 Click="AddTrait_Click"
-                                                ToolTip="{Binding DataContext.Loc[Main.AddTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}">
-                                            <Button.Style>
-                                                <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                    <Setter Property="IsEnabled" Value="True"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding NeedsSummonableTraitsMod}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding CanUseTraitCommands}" Value="False">
-                                                            <Setter Property="IsEnabled" Value="False"/>
-                                                            <Setter Property="Opacity" Value="0.45"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                        </Button>
+                                                ToolTip="{Binding DataContext.Loc[Main.AddTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}"/>
 
                                         <Button Content="{Binding DataContext.Loc[Main.Copy], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Style="{DynamicResource SecondaryActionButtonStyle}"
                                                 Height="40"
                                                 Width="92"
                                                 Margin="10,0,0,0"
-                                                Background="#3A3F51"
                                                 Click="CopyCommand_Click"/>
                                     </StackPanel>
 
                                     <Border Grid.Column="1"
                                             Width="1"
                                             Height="34"
-                                            Background="#303645"
+                                            Background="{DynamicResource HairlineBrush}"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"/>
 
                                     <Button Grid.Column="2"
                                             Content="{Binding DataContext.Loc[Main.Wiki], RelativeSource={RelativeSource AncestorType=Window}}"
+                                            Style="{DynamicResource QuietButtonStyle}"
                                             Height="40"
                                             Width="82"
-                                            Background="#252936"
-                                            Foreground="#D8DCE5"
                                             Click="OpenWiki_Click"/>
                                 </Grid>
                             </Grid>
@@ -738,84 +333,42 @@
 
                 <TextBlock Grid.Column="0"
                            Text="{Binding StatusText}"
-                           Foreground="#B8BFCC"
+                           Foreground="{DynamicResource StatusTextBrush}"
                            VerticalAlignment="Center"
                            FontSize="14"/>
 
                 <Button Grid.Column="1"
                         Click="OpenDiagnostics_Click"
+                        Style="{DynamicResource DiagnosticsButtonStyle}"
                         Height="36"
                         Margin="8,0,0,0"
-                        Background="#252936"
-                        Foreground="#D8DCE5"
                         ToolTip="{Binding Loc[Main.DiagnosticsTooltip]}">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
-                                    <Setter Property="Foreground" Value="#FACC15"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
 
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center">
                         <TextBlock Text="ⓘ"
                                    FontSize="15"
                                    FontWeight="Bold"
-                                   Margin="0,0,6,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                                   Margin="0,0,6,0"
+                                   Visibility="{Binding HasDiagnosticIssue, Converter={StaticResource BoolVis}}"/>
 
-                        <TextBlock Text="{Binding Loc[Main.Diagnostics]}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <ContentControl Content="{Binding Loc[Main.Diagnostics]}"
+                                        Style="{DynamicResource TrackedLabelStyle}"
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Visibility="{Binding HasDiagnosticIssue, Converter={StaticResource BoolVisInv}}"/>
 
                         <TextBlock Text="{Binding DiagnosticHint}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    TextTrimming="CharacterEllipsis"
-                                   MaxWidth="140">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasDiagnosticIssue}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                                   MaxWidth="140"
+                                   Visibility="{Binding HasDiagnosticIssue, Converter={StaticResource BoolVis}}"/>
                     </StackPanel>
                 </Button>
 
                 <Border Grid.Column="2"
-                        Background="#1A1D27"
-                        BorderBrush="#273044"
-                        BorderThickness="1"
-                        CornerRadius="10"
+                        Style="{DynamicResource StatusPanelStyle}"
                         Height="44"
                         Margin="8,0,0,0"
                         Padding="12,0">
@@ -826,32 +379,21 @@
                             <ColumnDefinition Width="92"/>
                         </Grid.ColumnDefinitions>
 
-                        <Ellipse Grid.Column="0"
-                                 Width="8"
-                                 Height="8"
-                                 VerticalAlignment="Center">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="#DC2626"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsGamePathValid}" Value="True">
-                                            <Setter Property="Fill" Value="#22C55E"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
+                        <Control Grid.Column="0"
+                                 Style="{DynamicResource StatusMarkStyle}"
+                                 Tag="{Binding IsGamePathValid}"
+                                 VerticalAlignment="Center"/>
 
                         <StackPanel Grid.Column="1"
                                     VerticalAlignment="Center"
                                     Margin="8,0,8,0">
                             <TextBlock Text="{Binding GamePathStatus}"
-                                       Foreground="#F2F2F2"
+                                       Foreground="{DynamicResource TextBrush}"
                                        FontSize="12"
                                        FontWeight="SemiBold"/>
 
                             <TextBlock Text="{Binding GamePathDisplay}"
-                                       Foreground="#8F95A3"
+                                       Foreground="{DynamicResource TextFaintBrush}"
                                        FontSize="11"
                                        TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
@@ -859,18 +401,17 @@
                         <Button Grid.Column="2"
                                 Content="{Binding Loc[Main.Browse]}"
                                 Command="{Binding SelectGamePathCommand}"
-                                Height="30"
-                                Background="#252936"
-                                Foreground="#D8DCE5"/>
+                                Style="{DynamicResource QuietButtonStyle}"
+                                Height="30"/>
                     </Grid>
                 </Border>
 
                 <Button Grid.Column="3"
                         Content="{Binding Loc[Main.SpawnGroup]}"
                         Command="{Binding UnlockGroupCommand}"
+                        Style="{DynamicResource SecondaryActionButtonStyle}"
                         Height="44"
-                        Margin="8,0,0,0"
-                        Background="#3A3F51"/>
+                        Margin="8,0,0,0"/>
             </Grid>
         </Grid>
 
@@ -889,12 +430,8 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border x:Name="ToastCard"
+                            Style="{DynamicResource ToastCardStyle}"
                             Width="240"
-                            Background="#1A1D27"
-                            BorderBrush="#33405F"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="10,8"
                             Margin="0,8,0,0">
                         <Border.RenderTransform>
                             <TranslateTransform X="60"/>
@@ -927,26 +464,25 @@
 
                             <Border x:Name="AccentBar"
                                     Grid.Column="0"
-                                    Background="#2563EB"
-                                    CornerRadius="2"
+                                    Style="{DynamicResource ToastAccentBarStyle}"
                                     Margin="0,0,8,0"/>
 
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="{Binding Title}"
-                                           Foreground="#F2F2F2"
+                                           Foreground="{DynamicResource TextBrush}"
                                            FontSize="12"
                                            FontWeight="Bold"
                                            TextWrapping="Wrap"/>
 
                                 <TextBlock Text="{Binding Message}"
-                                           Foreground="#B7BBC7"
+                                           Foreground="{DynamicResource ToastMessageBrush}"
                                            FontSize="11"
                                            Margin="0,3,0,0"
                                            TextWrapping="Wrap"/>
 
                                 <TextBlock x:Name="ActionLink"
                                            Text="{Binding ActionText}"
-                                           Foreground="#60A5FA"
+                                           Foreground="{DynamicResource AccentTextBrush}"
                                            FontSize="11"
                                            FontWeight="SemiBold"
                                            Margin="0,6,0,0"
@@ -956,7 +492,7 @@
 
                             <TextBlock Grid.Column="2"
                                        Text="&#10005;"
-                                       Foreground="#6B7280"
+                                       Foreground="{DynamicResource HintTextBrush}"
                                        FontSize="10"
                                        Cursor="Hand"
                                        VerticalAlignment="Top"
@@ -967,13 +503,13 @@
 
                     <DataTemplate.Triggers>
                         <DataTrigger Binding="{Binding Type}" Value="Success">
-                            <Setter TargetName="AccentBar" Property="Background" Value="#16A34A"/>
+                            <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource ToastSuccessBrush}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Type}" Value="Warning">
-                            <Setter TargetName="AccentBar" Property="Background" Value="#D97706"/>
+                            <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource ToastWarningBrush}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Type}" Value="Error">
-                            <Setter TargetName="AccentBar" Property="Background" Value="#DC2626"/>
+                            <Setter TargetName="AccentBar" Property="Background" Value="{DynamicResource ToastErrorBrush}"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding ActionText}" Value="{x:Null}">
                             <Setter TargetName="ActionLink" Property="Visibility" Value="Collapsed"/>

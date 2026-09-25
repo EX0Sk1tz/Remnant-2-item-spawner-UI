@@ -26,6 +26,7 @@
   "Settings.BoostWeaponMods": "Waffenmods",
   "Settings.BoostWeaponModsTooltip": "Verstärkt Schaden, Dauer und Ladungen deiner aktuell ausgerüsteten Waffenmods. Mehrfaches Anwenden ist unbedenklich.\n\nJedes Feld ist ein Multiplikator auf den Basiswert des Mods – z. B. bedeutet 10 das 10-Fache. Ausnahme: Felder wie „...Frequency“ oder „...Delay“ sind Zeitintervalle, daher lässt eine höhere Zahl sie seltener auslösen. Nutze dort einen Wert unter 1 für häufigere Auslösungen.",
   "Settings.Language": "Sprache",
+  "Settings.Theme": "Design",
 
   "Settings.Cheats": "Cheats",
   "Settings.InfiniteHealth": "Unendliche Gesundheit",

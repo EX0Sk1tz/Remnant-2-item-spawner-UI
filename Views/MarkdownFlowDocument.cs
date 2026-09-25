@@ -1,11 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Documents;
-using System.Windows.Media;
-using WpfBrush = System.Windows.Media.Brush;
 using WpfBrushes = System.Windows.Media.Brushes;
-using WpfColor = System.Windows.Media.Color;
-using WpfFontFamily = System.Windows.Media.FontFamily;
 
 namespace Remnant2UnlockerApp.Views;
 
@@ -19,21 +15,25 @@ internal static class MarkdownFlowDocument
 {
     private static readonly Regex InlineTokenPattern = new(@"(\*\*.+?\*\*|`[^`]+`)", RegexOptions.Compiled);
 
-    private static readonly WpfBrush CodeForeground = new SolidColorBrush(WpfColor.FromRgb(0x93, 0xC5, 0xFD));
-    private static readonly WpfFontFamily CodeFontFamily = new("Consolas");
+    // Theme keys (Themes/*.xaml). Set as resource references so a theme switch restyles the notes live.
+    private const string ForegroundKey = "TextDimBrush";
+    private const string FontKey = "UiFont";
+    private const string CodeForegroundKey = "CodeTextBrush";
+    private const string CodeFontKey = "MonoFont";
 
-    public static FlowDocument Build(string markdown, WpfBrush foreground)
+    public static FlowDocument Build(string markdown)
     {
         var document = new FlowDocument
         {
-            // FlowDocument defaults to Times New Roman regardless of the app's font -- it doesn't
-            // inherit FontFamily from its container the way a normal TextBlock would.
-            FontFamily = new WpfFontFamily("Segoe UI"),
-            Foreground = foreground,
             FontSize = 13,
             PagePadding = new Thickness(0),
             Background = WpfBrushes.Transparent
         };
+
+        // FlowDocument defaults to Times New Roman regardless of the app's font -- it doesn't
+        // inherit FontFamily from its container the way a normal TextBlock would.
+        document.SetResourceReference(FlowDocument.FontFamilyProperty, FontKey);
+        document.SetResourceReference(FlowDocument.ForegroundProperty, ForegroundKey);
 
         List? currentList = null;
         var isFirstBlock = true;
@@ -123,11 +123,10 @@ internal static class MarkdownFlowDocument
 
             if (token.StartsWith('`') && token.EndsWith('`') && token.Length >= 2)
             {
-                yield return new Run(token[1..^1])
-                {
-                    FontFamily = CodeFontFamily,
-                    Foreground = CodeForeground
-                };
+                var code = new Run(token[1..^1]);
+                code.SetResourceReference(TextElement.FontFamilyProperty, CodeFontKey);
+                code.SetResourceReference(TextElement.ForegroundProperty, CodeForegroundKey);
+                yield return code;
                 continue;
             }
 

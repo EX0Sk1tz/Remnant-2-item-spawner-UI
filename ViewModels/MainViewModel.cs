@@ -155,6 +155,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         Loc = new LocalizationService(_languageCode);
 
+        ThemeManager.ThemeChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(IsClassicTheme));
+            OnPropertyChanged(nameof(IsRemnantTheme));
+        };
+
         _allCategoryGroups = new List<CategoryGroup>
         {
             new() { Name = "Weapons", Types = new List<string> { "Bow", "Handgun", "Long Gun", "Melee" } },
@@ -778,6 +784,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsWikiGgSelected));
+        }
+    }
+
+    // Change notifications come from ThemeManager.ThemeChanged (subscribed in the constructor).
+    public bool IsClassicTheme
+    {
+        get => ThemeManager.Current == ThemeManager.Classic;
+        set
+        {
+            if (value && !IsClassicTheme)
+                ThemeManager.Apply(ThemeManager.Classic);
+        }
+    }
+
+    public bool IsRemnantTheme
+    {
+        get => ThemeManager.Current == ThemeManager.Remnant;
+        set
+        {
+            if (value && !IsRemnantTheme)
+                ThemeManager.Apply(ThemeManager.Remnant);
         }
     }
 
