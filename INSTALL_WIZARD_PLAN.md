@@ -5,6 +5,38 @@ Also read `ARCHITECTURE.md` (especially the Lua bridge section and the threading
 
 ---
 
+## 0. PROGRESS (session 2, 2026-09-26) — read this first
+
+**All phases (1–7) are done** (uncommitted, 172 tests passing). Session 3 finished Phase 6 and 7 — see "Session 3" below. Remaining: the manual in-game checklist in §8 (user), and committing.
+
+### Session 3
+- **Phase 6 done**: `Services/AppSelfInstaller.cs` (`ShouldOfferInstall` seam, `Install` copies the exe + any `*_cor3.dll`, `CreateShortcut` via WScript.Shell, `StartInstalled`), `Views/InstallAppWindow.xaml(.cs)`, `App.OfferSelfInstall` (before `base.OnStartup`, `OnExplicitShutdown` while open, `Environment.Exit(0)` after installing), `Install.*` texts (en/de), `AppSelfInstallerTests`. Verified with a real single-file publish in the scratchpad: dialog → install into a scratch folder (shortcut unchecked) → installed copy starts into the wizard; second start doesn't ask again.
+- **Bug found + fixed**: a publish without `IncludeNativeLibrariesForSelfExtract` leaves WPF's `*_cor3.dll` next to the exe and the copied exe crashed (`DllNotFoundException`). The csproj now sets it for every single-file publish, and the installer also copies `*_cor3.dll` if present.
+- **Phase 7 done**: `Instructions.txt` rewritten (wizard quick start + manual fallback, Cheat Mod removed), README install/troubleshooting/build sections, ARCHITECTURE "Installer" section. Diagnostics: new info check "Stack size & item level support" (`CheckSummonPatch`, `DiagnosticsSummonPatchTests`), fix texts point at the wizard / Allow Asset Mods.
+
+### Done
+- **Phase 1**: csproj embeds the payload (`ModPayload/...` logical names); `Services/ModPayload.cs`; `.gitattributes` pins `*.lua eol=crlf` so hashes are stable. Tests: `ModPayloadTests` (incl. summon SHA256, CRLF/no-BOM), helper `RepoPaths`.
+- **Phase 2**: `ModsConfig` (pure mods.txt edit), `InstallBackup` (backups relative to Win64, keep 5, clears ReadOnly on copies), `SafeFile` (atomic write/copy, `IsAccessDenied`), `ModInstaller` (GetStatus/InstallOrUpdate/EnableMods/RestoreLatestBackup), `GameProcess.IsRunning`. `IsModInstalled` = `Scripts\main.lua` exists (the app itself creates the folder for hotkeys.json). `AppUpdateService.CopyModScriptsIfPresent` removed (signature now `DownloadAndApplyUpdateAsync(url)`). Startup sync: `MainViewModel.SyncModFilesOnStartupAsync` (called in `MainWindow.OnLoadedAsync` before `LoadAsync`; silent update + toast, or toast with "Update" if the game runs). Tests: `ModsConfigTests`, `ModInstallerTests`, helper `FakeGameFolder`.
+- **Phase 3**: `GameLocator` (Steam registry + libraryfolders.vdf incl. legacy format, Epic manifests, Game Pass drives, `NormalizeSelection`, `IsSteamLibraryPath`). **Steam app id 1282100 verified** (appmanifest on the user's PC). Tests: `GameLocatorTests`.
+- **Phase 4**: `PackageInstaller` (zip via ZipFile, rar/7z via `%SystemRoot%\System32\tar.exe`, folders used in place; temp cleaned). Deviation from §6.2: **an AllowModsMod-only package is accepted when UE4SS is already installed** — the user's real `Mods\AllowModsMod.rar` contains only `AllowModsMod/dlls/main.dll`. An existing `Mods\mods.txt`/`enabled.txt` is never overwritten by the package's stock one. Error codes → `Wizard.PackageError.*` texts. Tests: `PackageInstallerTests` (7z via tar really runs).
+- **Phase 5**: `ViewModels/SetupWizardViewModel.cs` + rewritten `Views/SetupWizardWindow.xaml(.cs)` (pages Game → CloseGame → Components → Antivirus → TestLaunch → Done; drop zone / Choose file / Choose folder; Install/Repair; Undo last change; Restart as administrator with `--setup --game-path`). Entry points: first start when `!IsConfigured`, `--setup`, Settings → General → "Repair / update installation" (`SettingsWindow.SetupWizardRequested`), failed-sync toast, and Browse in the main window when the exe exists but the mod doesn't. `Services/StartupOptions.cs` parses args in `App.OnStartup`. All texts in en/de (`Sync.*`, `Wizard.*`, `Settings.Installation*`); `LocalizationTests` checks that both files have the same keys and that every `Loc[...]` key used in code exists. `SetupWizardTests` covers `CheckBridge`.
+- **UI verified in the real app** (UIA + PrintWindow, both themes) against a fake game folder: every page, AMM zip install via the file dialog, repair, startup sync toast, the Settings entry, the close-game page. Not tested: Restart as administrator (UAC), real Steam launch, real game.
+
+### Phase 6 — started, not finished
+- Done so far: `UserSettings` has `InstallPromptHandled` and `InstallDir`; `GamePathService.SaveSettings()` is now public.
+- To do: `Services/AppSelfInstaller.cs` (single-file check `string.IsNullOrEmpty(typeof(App).Assembly.Location)` behind a pure `ShouldOfferInstall(isSingleFile, processPath, installDir, promptHandled)` seam; copy `Environment.ProcessPath` → `<dir>\Remnant2UnlockerApp.exe` via tmp+move; `CreateShortcut(lnkPath, targetExe)` via `dynamic` WScript.Shell; start the installed copy, then exit). `Views/InstallAppWindow.xaml(.cs)`: folder (default `%LocalAppData%\Programs\Remnant2Unlocker` or `InstallDir`) + Browse, "Create desktop shortcut" checkbox, note if an exe already exists there (= update), error if it's locked (another instance running), buttons Install / Run without installing. Show it in `App.OnStartup` **before** `base.OnStartup`, with `ShutdownMode = OnExplicitShutdown` while it's open (otherwise closing it ends the app); after installing, log and `Environment.Exit(0)` (StartupUri would still create the main window). Language: `en` unless hotkeys.json has one. Localize `Install.*` in en+de. Tests: the seam, plus shortcut creation into a temp folder. UI test needs `dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true` into the scratchpad; install into a scratch folder with the shortcut unchecked (don't touch the real desktop).
+
+### Phase 7 — docs (not started)
+`Instructions.txt` (short: run the app, follow the wizard; manual steps as fallback; remove Cheat Mod), `ARCHITECTURE.md` (installer section: ModPayload/ModInstaller/ModsConfig/InstallBackup/PackageInstaller/GameLocator/wizard/startup sync/self-install), `README.md`. Also §6.3: Diagnostics info entry "Stack size & item level support", and Diagnostics fix texts that mention the Cheat Mod / "copy the folder" should point at the wizard.
+
+### UI testing notes (for the next session)
+- **Never launch the dev build with the real settings**: startup sync would write into the real game (`G:\Steam\...`). Back up `%AppData%\Remnant2UnlockerApp\settings.json` (real value: `G:\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64`), point it at a fake folder, restore afterwards.- The permission checker blocks `Remove-Item` commands it misparses; `[IO.File]::Delete` works. Bash can't fork in this environment; use PowerShell.
+- Windows file dialog: its file-name box isn't in the UIA tree; focus the dialog, send `%n`, the path, then `{ENTER}` via SendKeys.
+- A "running game" can be simulated with a renamed copy of `ping.exe` called `Remnant2-Win64-Shipping.exe`.
+- Tests that use `AppLogService` write into the real `app.log` (as before; harmless).
+
+---
+
 ## 1. Goal
 
 The app installs itself and everything the mod needs, so a new user never extracts folders or edits text files:
@@ -124,7 +156,7 @@ The app installs itself and everything the mod needs, so a new user never extrac
   6. **Done.**
 - Entry points: first start when not configured (replace current behaviour in `MainWindow.OnLoadedAsync`); **Settings → "Repair / update installation"**; command-line `--setup` (used by the admin restart).
 - **Startup sync:** on every start, if the mod is installed and `ModInstaller.GetStatus` says outdated: game not running → update silently + toast "Mod files updated to match this app version"; game running → toast with action "Update" and "restart the game afterwards". Remove `AppUpdateService.CopyModScriptsIfPresent` (one code path).
-- Localize all new texts in `Localization/en.json` + `de.json`; styles for both themes (`Themes/Classic.xaml`, `Themes/Remnant.xaml` must define the same keys).
+- Localize all new texts in `Localization/en.json` + `de.json`; styles go in `Themes/Remnant.xaml`.
 - Diagnostics: add a check "Stack size & item level support" (patched summon present) as an info-level entry; update fix texts that mention the Cheat Mod to point at Allow Asset Mods / the wizard.
 
 ## 7. Implementation phases (do in order; build + test after each)

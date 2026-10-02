@@ -284,6 +284,14 @@ local function IsTraitType(entry)
     return itemType == "trait" or itemType == "core trait" or itemType == "archetype trait"
 end
 
+-- Prisms can't be summoned either (no pickup actor); they go through prisms.lua's "AddPrism",
+-- same as the single-item Add button.
+local function IsPrismType(entry)
+    if type(entry) ~= "table" then return false end
+
+    return tostring(entry.type or entry.Type or ""):lower() == "prism"
+end
+
 local function GetDropQuantity(command)
     return ClampNumber(GetCommandValue(command, "dropQuantity", "DropQuantity"), 1, 1, 999)
 end
@@ -396,6 +404,9 @@ ProcessNextSafeItem = function()
     if IsTraitType(entry) then
         ExecuteConsoleCommand("AddTrait " .. tostring(path))
         ok, result = true, "AddTrait " .. tostring(path)
+    elseif IsPrismType(entry) then
+        ExecuteConsoleCommand("AddPrism " .. tostring(path))
+        ok, result = true, "AddPrism " .. tostring(path)
     else
         -- track=false: no FindAllOf actor scans in batches (see spawner.lua).
         ok, result = Spawner.SpawnPath(

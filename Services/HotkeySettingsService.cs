@@ -62,6 +62,7 @@ public sealed class HotkeySettingsService
                 destroyNearbySpawned = settings.DestroyNearbySpawned,
                 replenishCooldowns = settings.ReplenishCooldowns,
                 fastPlayerActions = settings.FastPlayerActions,
+                enemyOutline = settings.EnemyOutline,
                 wiki = settings.Wiki,
                 movementSpeedMultiplier = settings.MovementSpeedMultiplier,
                 stackSize = settings.StackSize,

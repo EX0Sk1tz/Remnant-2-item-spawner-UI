@@ -221,6 +221,26 @@ public class LuaSafeSpawnPacingTests
         Assert.Equal(0, (int)_lua.Globals.Get("__nestedGameThreadCalls").Number);
     }
 
+    // Prisms have no pickup actor, so "summon" does nothing for them: group spawn must send the
+    // mod's "AddPrism" command instead, like the card's Add button.
+    [Fact]
+    public void GroupSpawn_AddsPrismsWithAddPrism_NotSummon()
+    {
+        _lua.DoString("""
+            __files["Mods/Remnant2Unlocker/items.json"] = '[' ..
+                '{"name":"Prism of Greed","type":"Prism","path":"/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfGreed.PrismOfGreed_C"},' ..
+                '{"name":"Ring A","type":"Ring","path":"/Game/Items/Ring_A.Ring_A_C"}]'
+            __files["Mods/Remnant2Unlocker/command_queue.json"] = '{"id":1,"action":"reload_items"}'
+            """);
+        Advance(1_000, gameThreadEveryMs: 50);
+
+        _lua.DoString("""__files["Mods/Remnant2Unlocker/command_queue.json"] = '{"id":2,"action":"unlock_types_safe","types":["Prism"],"delayMs":100}'""");
+        Advance(2_000, gameThreadEveryMs: 50);
+
+        Assert.Equal(new[] { "AddPrism /Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfGreed.PrismOfGreed_C" }, Commands());
+        Assert.Equal(0, (int)_lua.Globals.Get("__nestedGameThreadCalls").Number);
+    }
+
     [Fact]
     public void BatchSpawns_SkipTheFindAllOfScans_ButSingleSpawnsKeepThem()
     {

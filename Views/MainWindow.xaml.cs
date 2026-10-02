@@ -21,25 +21,53 @@ public partial class MainWindow : Window
 
         _viewModel.GroupSpawnQueued += (_, e) => OpenSpawnProgressWindow(e.Title, e.DelayMsPerItem);
         _viewModel.UpdatePreviewRequested += (_, _) => OpenUpdatePreviewWindow();
+        _viewModel.SetupWizardRequested += async (_, _) => await OpenSetupWizardAsync();
 
         Loaded += async (_, _) => await OnLoadedAsync();
     }
 
     private async Task OnLoadedAsync()
     {
-        if (!_viewModel.IsGamePathValid)
-        {
-            var wizard = new SetupWizardWindow(_viewModel)
-            {
-                Owner = this
-            };
+        if (!_viewModel.IsGamePathValid || StartupOptions.OpenSetup)
+            ShowSetupWizard(StartupOptions.GamePath);
 
-            wizard.ShowDialog();
-        }
+        // Before LoadAsync, so an updated items.json is what gets loaded.
+        await _viewModel.SyncModFilesOnStartupAsync();
 
         await _viewModel.LoadAsync();
 
         _ = CheckForUpdatesAsync();
+    }
+
+    private void ShowSetupWizard(string? gamePathOverride = null)
+    {
+        var wizard = new SetupWizardWindow(new SetupWizardViewModel(_viewModel.PathService, _viewModel.Loc, gamePathOverride))
+        {
+            Owner = IsLoaded ? this : null
+        };
+
+        wizard.ShowDialog();
+    }
+
+    private bool _isSetupWizardOpen;
+
+    private async Task OpenSetupWizardAsync()
+    {
+        if (_isSetupWizardOpen)
+            return;
+
+        _isSetupWizardOpen = true;
+
+        try
+        {
+            ShowSetupWizard();
+        }
+        finally
+        {
+            _isSetupWizardOpen = false;
+        }
+
+        await _viewModel.LoadAsync();
     }
 
     private async Task CheckForUpdatesAsync()
@@ -209,6 +237,9 @@ public partial class MainWindow : Window
         };
 
         window.ShowDialog();
+
+        if (window.SetupWizardRequested)
+            _viewModel.RequestSetupWizard();
     }
 
     private async void OpenDiagnostics_Click(object sender, RoutedEventArgs e)
@@ -286,6 +317,19 @@ public partial class MainWindow : Window
         await _viewModel.AddTraitAsync(item);
 
         ScrollNextItemIntoViewIfNeeded(item);
+    }
+
+    private async void AddPrism_Click(object sender, RoutedEventArgs e)
+    {
+        var item = GetItemFromSender(sender);
+
+        if (item == null)
+        {
+            _viewModel.StatusText = "AddPrism failed: item context missing";
+            return;
+        }
+
+        await _viewModel.AddPrismAsync(item);
     }
 
 }

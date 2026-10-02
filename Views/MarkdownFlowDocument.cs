@@ -15,7 +15,7 @@ internal static class MarkdownFlowDocument
 {
     private static readonly Regex InlineTokenPattern = new(@"(\*\*.+?\*\*|`[^`]+`)", RegexOptions.Compiled);
 
-    // Theme keys (Themes/*.xaml). Set as resource references so a theme switch restyles the notes live.
+    // Theme keys (Themes/Remnant.xaml), set as resource references like the views' DynamicResources.
     private const string ForegroundKey = "TextDimBrush";
     private const string FontKey = "UiFont";
     private const string CodeForegroundKey = "CodeTextBrush";

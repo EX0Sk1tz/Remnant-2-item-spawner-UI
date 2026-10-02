@@ -4453,5 +4453,40 @@
     "name": "Preservation",
     "type": "Trait",
     "path": "/Game/World_DLC3/Items/Traits/Preservation/Trait_Preservation.Trait_Preservation_C"
+  },
+  {
+    "name": "Prism of Greed",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfGreed.PrismOfGreed_C"
+  },
+  {
+    "name": "Prism of Hatred",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfHatred.PrismOfHatred_C"
+  },
+  {
+    "name": "Prism of Jealousy",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfJealousy.PrismOfJealousy_C"
+  },
+  {
+    "name": "Prism of Lethargy",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfLethargy.PrismOfLethargy_C"
+  },
+  {
+    "name": "Prism of Passion",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfPassion.PrismOfPassion_C"
+  },
+  {
+    "name": "Prism of Pride",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfPride.PrismOfPride_C"
+  },
+  {
+    "name": "Prism of Voracity",
+    "type": "Prism",
+    "path": "/Game/Events/Paragon/PrismStone/UniquePrisms/PrismOfVoracity.PrismOfVoracity_C"
   }
 ]

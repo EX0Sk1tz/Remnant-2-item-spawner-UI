@@ -5,9 +5,8 @@
   fire-orange embers, a teal halo and golden light. Sharp corners, 1 px hairlines,
   letter-spaced upper-case labels.
 
-  THEME CONTRACT: every theme (Themes/*.xaml) defines exactly the same x:Key set, and
-  the views reference those keys only through DynamicResource. ThemeManager swaps the
-  whole dictionary at runtime; "Grain" is set by ThemeManager, not by the theme.
+  This is the app's only theme, merged in App.xaml. "Grain" is set by ThemeManager at
+  startup, not by this dictionary.
 
   Values
     True · UiFont · MonoFont · Tracked · TrackedTextTemplate
@@ -47,7 +46,7 @@
                     SettingsTextBoxStyle ItemsListStyle ItemRowContainerStyle ItemsListThumbStyle
                     StatusMarkStyle ModernToggleButtonStyle ModernCheckBoxStyle
                     ModernComboBoxItemStyle ModernComboBoxStyle NavTabControlStyle NavTabItemStyle
-                    SegmentOptionStyle ThemeOptionStyle InfoToolTipStyle SpawnProgressBarStyle
+                    SegmentOptionStyle InfoToolTipStyle SpawnProgressBarStyle
                     SliderFillRepeatButton
     Implicit        ScrollBar ToolTip Slider ProgressBar Hyperlink
 
@@ -1149,7 +1148,10 @@
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="bd" Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                        <!-- No Margin="{TemplateBinding Padding}" here: TextBox already applies its
+                             Padding inside the content host, so doing it again doubles it and a
+                             fixed-height box (the search fields) clips its text to a few pixels. -->
+                        <ScrollViewer x:Name="PART_ContentHost"
                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -1588,43 +1590,6 @@
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Root" Property="Background" Value="#4A171B"/>
                             <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource EmberBrush}"/>
-                            <Setter Property="Foreground" Value="#F2E6D3"/>
-                        </Trigger>
-                        <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource EmberHiBrush}"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- Theme picker entry: segmented option with a checkmark on the active theme -->
-    <Style x:Key="ThemeOptionStyle" TargetType="RadioButton" BasedOn="{StaticResource SegmentOptionStyle}">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Root" Height="34" Background="Transparent" BorderBrush="Transparent" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path x:Name="Check"
-                                  Data="M 0 4 L 3.5 7.5 L 10 0"
-                                  Stroke="{StaticResource EmberHiBrush}"
-                                  StrokeThickness="1.5"
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,10,0"
-                                  Visibility="Collapsed"/>
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="{StaticResource AshHiBrush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                        </Trigger>
-                        <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#4A171B"/>
-                            <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource EmberBrush}"/>
-                            <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                             <Setter Property="Foreground" Value="#F2E6D3"/>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">

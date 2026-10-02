@@ -47,7 +47,7 @@
 
                         <StackPanel Margin="0,0,0,4">
 
-                            <Border Style="{DynamicResource SectionCardStyle}">
+                            <Border Style="{DynamicResource SectionCardStyle}" controls:ToggleRow.IsEnabled="True">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -146,31 +146,6 @@
                                       SelectedValue="{Binding LanguageCode}"
                                       Style="{DynamicResource ModernComboBoxStyle}"/>
 
-                            <ContentControl Content="{Binding Loc[Settings.Theme]}"
-                                            Style="{DynamicResource SectionHeaderStyle}"
-                                            Margin="0,20,0,10"/>
-
-                            <Border Style="{DynamicResource SectionCardStyle}" Padding="4" Margin="0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <RadioButton Grid.Column="0"
-                                                 Content="Classic"
-                                                 GroupName="ThemeSelection"
-                                                 IsChecked="{Binding IsClassicTheme}"
-                                                 Style="{DynamicResource ThemeOptionStyle}"/>
-
-                                    <RadioButton Grid.Column="1"
-                                                 Content="Remnant"
-                                                 GroupName="ThemeSelection"
-                                                 IsChecked="{Binding IsRemnantTheme}"
-                                                 Style="{DynamicResource ThemeOptionStyle}"/>
-                                </Grid>
-                            </Border>
-
                             <ContentControl Content="{Binding Loc[Settings.SettingsProfile]}"
                                        Style="{DynamicResource SectionHeaderStyle}"
                                        Margin="0,20,0,10"/>
@@ -198,6 +173,45 @@
                                         Command="{Binding LoadSettingsProfileCommand}"
                                         FontSize="13"/>
                             </Grid>
+
+                            <TextBlock Text="{Binding SettingsProfileInfo}"
+                                       Foreground="{DynamicResource TextFaintBrush}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="0,8,0,0"/>
+
+                            <Border Style="{DynamicResource SectionCardStyle}" Margin="0,10,0,0" controls:ToggleRow.IsEnabled="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Loc[Settings.LoadProfileOnStartup]}"
+                                               TextWrapping="Wrap"
+                                               Style="{DynamicResource RowLabelStyle}"/>
+
+                                    <ToggleButton Grid.Column="1"
+                                                  IsChecked="{Binding LoadProfileOnStartup}"
+                                                  Style="{DynamicResource ModernToggleButtonStyle}"/>
+                                </Grid>
+                            </Border>
+
+                            <ContentControl Content="{Binding Loc[Settings.Installation]}"
+                                            Style="{DynamicResource SectionHeaderStyle}"
+                                            Margin="0,20,0,10"/>
+
+                            <TextBlock Text="{Binding Loc[Settings.InstallationHint]}"
+                                       Foreground="{DynamicResource TextFaintBrush}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,10"/>
+
+                            <Button Style="{DynamicResource DialogButtonStyle}"
+                                    Content="{Binding Loc[Settings.RepairInstallation]}"
+                                    Click="RepairInstallation_Click"
+                                    FontSize="13"/>
                         </StackPanel>
                     </TabItem>
 
@@ -370,6 +384,22 @@
                                                 Focusable="True"/>
                                     </Grid>
 
+                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Loc[Settings.ToggleEnemyOutline]}" Style="{DynamicResource RowLabelStyle}"/>
+
+                                        <Button Grid.Column="1"
+                                                Style="{DynamicResource HotkeyButtonStyle}"
+                                                Content="{Binding EnemyOutlineHotkeyDisplay}"
+                                                Command="{Binding StartEnemyOutlineHotkeyCaptureCommand}"
+                                                PreviewKeyDown="EnemyOutlineHotkeyButton_PreviewKeyDown"
+                                                PreviewMouseDown="EnemyOutlineHotkeyButton_PreviewMouseDown"
+                                                Focusable="True"/>
+                                    </Grid>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -388,7 +418,7 @@
                             <Border Style="{DynamicResource SectionCardStyle}">
                                 <StackPanel>
 
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -407,7 +437,7 @@
                                         <ToggleButton Grid.Column="1" IsChecked="{Binding InfiniteHealth}" Style="{DynamicResource ModernToggleButtonStyle}"/>
                                     </Grid>
 
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -417,7 +447,7 @@
                                         <ToggleButton Grid.Column="1" IsChecked="{Binding InfiniteStamina}" Style="{DynamicResource ModernToggleButtonStyle}"/>
                                     </Grid>
 
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -427,7 +457,7 @@
                                         <ToggleButton Grid.Column="1" IsChecked="{Binding InfiniteAmmo}" Style="{DynamicResource ModernToggleButtonStyle}"/>
                                     </Grid>
 
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -452,7 +482,7 @@
 
                             <Border Style="{DynamicResource SectionCardStyle}">
                                 <StackPanel>
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -490,7 +520,7 @@
 
                             <ContentControl Content="{Binding Loc[Settings.Loot]}" Style="{DynamicResource SectionHeaderStyle}"/>
 
-                            <Border Style="{DynamicResource SectionCardStyle}">
+                            <Border Style="{DynamicResource SectionCardStyle}" controls:ToggleRow.IsEnabled="True">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -506,7 +536,7 @@
 
                             <Border Style="{DynamicResource SectionCardStyle}">
                                 <StackPanel>
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -516,7 +546,7 @@
                                         <ToggleButton Grid.Column="1" IsChecked="{Binding NoRecoil}" Style="{DynamicResource ModernToggleButtonStyle}"/>
                                     </Grid>
 
-                                    <Grid Style="{DynamicResource RowGridStyle}">
+                                    <Grid Style="{DynamicResource RowGridStyle}" controls:ToggleRow.IsEnabled="True">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -527,7 +557,28 @@
                                     </Grid>
                                 </StackPanel>
                             </Border>
-                        </StackPanel>
+
+                            <ContentControl Content="{Binding Loc[Settings.Vision]}" Style="{DynamicResource SectionHeaderStyle}"/>
+
+                            <Border Style="{DynamicResource SectionCardStyle}" controls:ToggleRow.IsEnabled="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Style="{DynamicResource RowLabelWithInfoStyle}">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip Style="{DynamicResource InfoToolTipStyle}">
+                                                <TextBlock Text="{Binding Loc[Settings.EnemyOutlineTooltip]}" Style="{DynamicResource InfoToolTipTextStyle}"/>
+                                            </ToolTip>
+                                        </TextBlock.ToolTip>
+                                        <Run Text="{Binding Loc[Settings.EnemyOutline], Mode=OneWay}"/>
+                                        <Run Text=" ⓘ" Foreground="{DynamicResource WarnBrush}" FontWeight="Bold"/>
+                                    </TextBlock>
+                                    <ToggleButton Grid.Column="1" IsChecked="{Binding EnemyOutline}" Style="{DynamicResource ModernToggleButtonStyle}"/>
+                                </Grid>
+                            </Border>                        </StackPanel>
                     </TabItem>
 
                     <!-- ================= Commands ================= -->

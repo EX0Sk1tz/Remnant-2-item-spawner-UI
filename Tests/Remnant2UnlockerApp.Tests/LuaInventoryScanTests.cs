@@ -48,22 +48,29 @@ public class LuaInventoryScanTests
                 GetFullName = function(self) return "BlueprintGeneratedClass /Game/Items/" .. className end,
                 GetFName = function(self) return Name(className) end,
             }
-            local entry = { ItemBP = itemBP, InstanceData = { Quantity = quantity or 1 } }
-            return { get = function(self) return entry end }
+            return { ItemBP = itemBP, InstanceData = { Quantity = quantity or 1 } }
         end
 
         -- An inventory slot whose ItemBP isn't loaded: GetFullName on nil throws.
         function MakeBrokenItem()
-            return { get = function(self) return { ItemBP = nil } end }
+            return { ItemBP = nil }
         end
 
+        -- Inventory.Items as UE4SS exposes a TArray property: read in place, 1-based, GetArrayNum.
+        -- GetItems() throws: it returns a copy that UE4SS read after it was freed, which crashed
+        -- the game (UE4SS.dll+0x673CEF), so the script must not call it.
         function MakePlayer(items)
             local player = {
                 IsValid = function(self) return true end,
                 GetClass = function(self) return { GetFName = function(self) return Name("Character_Master_Player_C") end } end,
             }
             if items ~= nil then
-                player.Inventory = { GetItems = function(self) return items end }
+                local array = { GetArrayNum = function(self) return #items end }
+                for i, entry in ipairs(items) do array[i] = entry end
+                player.Inventory = {
+                    Items = array,
+                    GetItems = function(self) error("GetItems() must not be used: read Inventory.Items in place") end,
+                }
             end
             return player
         end

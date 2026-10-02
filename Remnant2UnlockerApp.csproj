@@ -7,7 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	<UseWindowsForms>true</UseWindowsForms>
-    <Version>4.4.0</Version>
+    <Version>4.5.0</Version>
+  </PropertyGroup>
+
+  <!-- A single-file publish must really be one file: the app installs itself by copying just the
+       exe (AppSelfInstaller), and WPF's native DLLs (*_cor3.dll) would otherwise sit next to it. -->
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +37,18 @@
     <None Remove="Summonable Traits Lua\**" />
     <Page Remove="Lua Scripts inside game directory\**" />
     <Page Remove="Summonable Traits Lua\**" />
+  </ItemGroup>
+
+  <!-- The in-game mod, embedded so the app can install/update it itself (Services/ModPayload.cs).
+       Runtime/sample files (cheats.json, hotkeys.json, status.json, command_queue.json) are not
+       embedded: the app and the mod create those. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Lua Scripts inside game directory\Scripts\**\*.lua"
+                      LogicalName="ModPayload/Remnant2Unlocker/Scripts/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Lua Scripts inside game directory\items.json;Lua Scripts inside game directory\enabled.txt"
+                      LogicalName="ModPayload/Remnant2Unlocker/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Lua Scripts inside game directory\ConsoleCommandsMod\Scripts\summon_unloaded_assets.lua"
+                      LogicalName="ModPayload/ConsoleCommandsMod/Scripts/summon_unloaded_assets.lua" />
   </ItemGroup>
 
 </Project>

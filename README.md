@@ -12,6 +12,7 @@
 - Force spawn through in game console
 - Group spawn an entire category/subcategory at once
 - Trait support (Spawn or Add directly to inventory) via the optional Summonable Traits mod
+- Prisms (Other → Prism): Add any of the seven unique prisms straight to your inventory; prisms you already have are skipped
 - Copy summon command to clipboard
 - Integrated wiki button (wiki.gg or Fextralife, selectable in Settings)
 - Hotkey Customization (Console key, Teleport, Destroy Target/Last Spawned/Nearby Spawned, Replenish Cooldowns & Mod Power, Fast Player Actions)
@@ -32,82 +33,42 @@
 
 # Requirements
 
-- Scripts I uploaded [here](https://github.com/EX0Sk1tz/Remnant-2-item-spawner-scripts). (They are already included in the latest release)
-- UE4SS installed
-- Mods enabled in UE4SS
-- (Optional) [Summonable Traits](#3-optional-install-summonable-traits) mod, only needed if you want to spawn or add Trait / Core Trait / Archetype Trait items
+- Remnant 2 (Steam, Epic or Game Pass)
+- [Allow Asset Mods](https://www.nexusmods.com/remnant2/mods/2) from Nexus Mods (UE4SS + AllowModsMod + UE4SS's console mods, all in one download). The setup wizard installs it for you from the file you download.
+- (Optional) [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122), only needed if you want to spawn or add Trait / Core Trait / Archetype Trait items
+
+The Remnant2Unlocker mod itself (the in-game half of this app) is built into the app and installed/updated automatically.
 
 ---
 
 # Installation
 
-## 1. Install UE4SS
+1. Download the latest release and run `Remnant2UnlockerApp.exe`.
+2. On the first start the app offers to **install itself** (default `%LocalAppData%\Programs\Remnant2Unlocker`, optional desktop shortcut). "Run without installing" keeps it portable.
+3. The **setup wizard** opens:
+   - **Game** – finds Steam, Epic and Game Pass installs; or choose the folder (the game's main folder works too).
+   - **Close the game** – only shown if Remnant 2 is running.
+   - **Components** – everything the mod needs, with live status:
+     - *UE4SS + AllowModsMod (Allow Asset Mods)*: click **Open Nexus page**, download the main file, and drop the `.zip` / `.rar` / `.7z` onto the wizard (or **Choose file…** / **Choose folder…**).
+     - *Remnant2Unlocker mod*, *Stack size & item level support* (a `summon` command that understands stack size and level) and *mods enabled in mods.txt*: installed by **Install / Repair**.
+     - *Summonable Traits (optional)*: same drop zone, or **Skip**.
+   - **Antivirus check** – makes sure Windows Defender didn't quarantine UE4SS right after it was copied.
+   - **Test launch** – starts the game (Steam) or asks you to, and waits until the mod reports in.
 
-Install UE4SS into:
+Afterwards:
 
-```text
-...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
-```
+- Reopen the wizard any time: **Settings → General → Repair / update installation**.
+- After an app update, the mod files in the game are brought up to date automatically on the next start (while the game runs, the app asks first).
+- Every file the app replaces in the game folder is backed up to `Mods\Remnant2Unlocker\Backups` (last 5 kept); **Undo last change** in the wizard restores the latest one.
+- Steam under `C:\Program Files (x86)` needs admin rights to write; the wizard offers **Restart as administrator**.
 
-After installation the folder should contain:
+Manual installation steps (without the wizard) are in [Instructions.txt](Instructions.txt).
 
-```text
-Remnant2-Win64-Shipping.exe
-Mods
-ue4ss
-```
+## Nested `ue4ss` folder / Game Pass notes
 
-> **Game Pass / Windows Store install?** See [Game Pass notes](#game-pass--windows-store-notes) below — the folder layout is different and needs an experimental UE4SS build.
+Newer UE4SS builds (the UE4SS console shows "v3.0.1 Beta") keep everything in a `ue4ss` subfolder, on Steam and Epic (`Win64\ue4ss\Mods`) as well as Game Pass. A leftover `Win64\Mods` from an older UE4SS is then ignored by UE4SS; the app detects this and uses `ue4ss\Mods`.
 
----
-
-## 2. Install the Unlocker Mod
-
-Copy the included:
-
-```text
-Remnant2Unlocker
-```
-
-folder into:
-
-```text
-...\Remnant2\Remnant2\Binaries\Win64\Mods
-```
-
-Final structure:
-
-```text
-Win64
-└─ Mods
-   └─ Remnant2Unlocker
-      ├─ Scripts        (all .lua files from the zip — leave the whole folder as-is)
-      ├─ command_queue.json
-      ├─ enabled.txt
-      ├─ hotkeys.json
-      ├─ items.json
-      └─ status.json
-```
-
----
-
-## 3. (Optional) Install Summonable Traits
-
-Only needed if you want to spawn or directly add Trait / Core Trait / Archetype Trait items. Everything else works without it.
-
-Download from Nexusmods:
-[Summonable Traits](https://www.nexusmods.com/remnant2/mods/122)
-
-The app's Diagnostics window will report whether it detects this mod as installed.
----
-
-## Game Pass / Windows Store notes
-
-The Xbox/Microsoft Store (WinGDK) build of Remnant 2 can't load UE4SS the normal way, so it needs to be hooked through a `dwmapi.dll` proxy instead. Use **[UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1)** (the repo's rolling "experimental" build hasn't been updated since December 2024, so 3.0.1 is the one to grab). This changes where everything lives:
-
-```text
-...\XboxGames\Remnant 2\Content\Remnant2\Binaries\WinGDK
-```
+The Xbox/Microsoft Store (WinGDK) build loads UE4SS through a `dwmapi.dll` proxy; **[UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1)** is known to work. With it, mods live in `WinGDK\ue4ss\mods` instead of `WinGDK\Mods`:
 
 ```text
 WinGDK
@@ -115,54 +76,18 @@ WinGDK
 ├─ dwmapi.dll                 <- proxy dll, loads UE4SS on game start
 └─ ue4ss
    ├─ UE4SS.dll
-   └─ mods                    <- note: nested here, not WinGDK\Mods
+   └─ mods                    <- nested here, not WinGDK\Mods
       ├─ Remnant2Unlocker
       ├─ AllowModsMod
       ├─ mods.txt / enabled.txt
       └─ ...
 ```
 
-So for Game Pass, copy the `Remnant2Unlocker` folder into:
-
-```text
-...\WinGDK\ue4ss\mods
-```
-
-instead of `WinGDK\Mods`. When browsing to the game folder in the app (step 5 below), still point it at the `WinGDK` folder itself — the app checks both `Mods\` and `ue4ss\mods\` automatically and will find the mod either way.
+The app and the wizard detect both layouts; always select the `Win64` / `WinGDK` folder itself.
 
 Known issues on Game Pass:
 - This setup is janky and depends on which UE4SS build you're using — expect more friction than Steam/Epic.
 - `AllowModsMod` has occasionally been reported to crash the game on the Windows Store version. If you hit crashes right after launch, make sure you're on [UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1) and not an older or mismatched build.
-
----
-
-## 4. Start the Game
-
-Launch Remnant 2 normally through Steam.
-
----
-
-## 5. Start the Unlocker App
-
-Run:
-
-```text
-Remnant2UnlockerApp.exe
-```
-
-Click:
-
-```text
-Browse
-```
-
-and select:
-
-```text
-...\Remnant2\Remnant2\Binaries\Win64
-```
-
-The path is saved automatically.
 
 ---
 
@@ -190,7 +115,7 @@ Useful for:
 
 ## Add (Traits only)
 
-Adds a Trait / Core Trait / Archetype Trait directly to your inventory instead of spawning a world item. Requires the optional [Summonable Traits](#3-optional-install-summonable-traits) mod.
+Adds a Trait / Core Trait / Archetype Trait directly to your inventory instead of spawning a world item. Requires the optional [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122) mod (install it in the setup wizard).
 
 ---
 
@@ -263,7 +188,7 @@ Per-mod boost values for HotShot, Sandstorm, Concussive Shot, Helix, Statis Beam
 
 # Diagnostics
 
-Click the diagnostics icon to check your setup: game path, UE4SS core files (`UE4SS.dll`, and `dwmapi.dll` on Game Pass), required UE4SS mods present/enabled, `Remnant2Unlocker` files valid, and (if the game isn't running) whether UE4SS's log confirms everything loaded correctly. Each check shows what failed and how to fix it. Use **Copy Report** to copy the full report to your clipboard when asking for help.
+Click the diagnostics icon to check your setup: game path, UE4SS core files (`UE4SS.dll`, and `dwmapi.dll` on Game Pass), required UE4SS mods present/enabled, `Remnant2Unlocker` files valid, stack size & item level support installed, and (if the game isn't running) whether UE4SS's log confirms everything loaded correctly. Each check shows what failed and how to fix it. Use **Copy Report** to copy the full report to your clipboard when asking for help.
 
 ---
 
@@ -271,12 +196,7 @@ Click the diagnostics icon to check your setup: game path, UE4SS core files (`UE
 
 ## Spawn does nothing
 
-Check:
-- UE4SS is installed correctly
-- all required mods are enabled
-- the correct Win64 folder is selected
-
-Run Diagnostics first — it will usually name the exact missing piece.
+Run Diagnostics first — it will usually name the exact missing piece. Then open **Settings → Repair / update installation** and click **Install / Repair**.
 
 ---
 
@@ -288,16 +208,13 @@ UE4SS itself never loaded. This is almost always antivirus/Windows Defender quar
 
 ## The app says "Game path not configured"
 
-Select:
+Open the setup wizard (**Settings → Repair / update installation**) and pick your install there. It finds Steam, Epic and Game Pass installs, and accepts the game's main folder as well as `Binaries\Win64` / `Binaries\WinGDK`.
 
-```text
-...\Remnant2\Remnant2\Binaries\Win64
-```
+---
 
-Not:
-- Steam folder
-- Remnant2 root folder
-- Mods folder
+## Stack size / item level is ignored
+
+The patched `summon` command is missing (Diagnostics: *Stack size & item level support*). Run **Install / Repair** in the setup wizard.
 
 ---
 
@@ -313,7 +230,7 @@ Some assets are unstable through direct spawning.
 
 ## Traits won't spawn or Add is blocked
 
-Install the [Summonable Traits](#3-optional-install-summonable-traits) mod. Run Diagnostics to confirm the app detects it.
+Install the [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122) mod: drop its download onto the setup wizard. Run Diagnostics to confirm the app detects it.
 
 ---
 
@@ -330,6 +247,8 @@ bin\Release\net8.0-windows\win-x64\publish
 ```
 
 The app checks GitHub Releases on startup and can download/install updates itself, so release assets must be a `.zip` containing the contents of that publish folder (not `.rar`).
+
+The exe must be a true single file (the csproj turns on `IncludeNativeLibrariesForSelfExtract` for single-file publishes): the app installs itself by copying just the exe. The in-game mod files are embedded in the exe (from `Lua Scripts inside game directory/`), so the `Remnant2Unlocker` folder in the release zip is only for manual installs.
 
 ---
 

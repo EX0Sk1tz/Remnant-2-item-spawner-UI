@@ -5,16 +5,14 @@
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- The active theme. ThemeManager replaces this entry (matched by "Themes/" in its
-                 Source) at runtime; views only use DynamicResource for theme keys. -->
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Remnant2UnlockerApp;component/Themes/Classic.xaml"/>
+                <ResourceDictionary Source="/Remnant2UnlockerApp;component/Themes/Remnant.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Film grain; ThemeManager sets the texture for Remnant and Transparent otherwise. -->
+            <!-- Film grain; ThemeManager.Initialize replaces this with the texture at startup. -->
             <SolidColorBrush x:Key="Grain" Color="Transparent"/>
 
-            <!-- Theme-independent converters -->
+            <!-- Converters -->
             <controls:BoolToVisibilityConverter x:Key="BoolVis"/>
             <controls:BoolToVisibilityConverter x:Key="BoolVisInv" Invert="True"/>
             <controls:BoolToOpacityConverter x:Key="BoolDim"/>

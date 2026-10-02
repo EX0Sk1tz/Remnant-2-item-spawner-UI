@@ -25,9 +25,12 @@
   <ItemGroup>
     <None Include="..\..\Lua Scripts inside game directory\items.json" Link="TestData\items.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Lua Scripts inside game directory\Scripts\inventory_cheats.lua" Link="TestData\Scripts\inventory_cheats.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\enemy_outline.lua" Link="TestData\Scripts\enemy_outline.lua" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Lua Scripts inside game directory\Scripts\json.lua" Link="TestData\Scripts\json.lua" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Lua Scripts inside game directory\Scripts\queue.lua" Link="TestData\Scripts\queue.lua" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Lua Scripts inside game directory\Scripts\spawner.lua" Link="TestData\Scripts\spawner.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\prisms.lua" Link="TestData\Scripts\prisms.lua" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Lua Scripts inside game directory\Scripts\paths.lua" Link="TestData\Scripts\paths.lua" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

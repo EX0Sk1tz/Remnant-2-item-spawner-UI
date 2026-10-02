@@ -43,9 +43,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly List<CategoryGroup> _allCategoryGroups = new();
     private readonly SummonableTraitsService _summonableTraitsService;
     private readonly FavoritesService _favoritesService;
+    private readonly SettingsProfileService _settingsProfileService;
     private readonly OwnedItemsService _ownedItemsService;
     private readonly Dictionary<string, CategoryTypeEntry> _typeEntries = new(StringComparer.OrdinalIgnoreCase);
     private readonly DispatcherTimer _ownedItemsPollTimer;
+    private readonly DispatcherTimer _cheatsPollTimer;
     private bool _isSummonableTraitsInstalled;
 
     // The inventory snapshot the item list currently reflects, and its per-type counts.
@@ -83,6 +85,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _isCapturingDestroyNearbySpawnedHotkey;
     private bool _isCapturingReplenishCooldownsHotkey;
     private bool _isCapturingFastPlayerActionsHotkey;
+    private bool _isCapturingEnemyOutlineHotkey;
     private string _teleportHotkey = "F6";
     private string _consoleKey = "F10";
     private string _destroyTargetHotkey = "None";
@@ -90,6 +93,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _destroyNearbySpawnedHotkey = "None";
     private string _replenishCooldownsHotkey = "F1";
     private string _fastPlayerActionsHotkey = "F2";
+    private string _enemyOutlineHotkey = "F7";
     private double _movementSpeedMultiplier = 1.0;
     private bool _infiniteHealth;
     private bool _infiniteStamina;
@@ -100,6 +104,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _lootFullDropChance;
     private bool _noRecoil;
     private bool _noSpread;
+    private bool _enemyOutline;
     private int _stackSize = 1;
     private string _languageCode = "en";
     private int _levelUpCount = 1;
@@ -129,6 +134,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _weaponModBoostSettingsService = new WeaponModBoostSettingsService(_pathService);
         _summonableTraitsService = new SummonableTraitsService(_pathService);
         _favoritesService = new FavoritesService();
+        _settingsProfileService = new SettingsProfileService();
         _ownedItemsService = new OwnedItemsService(_pathService);
         _diagnosticsService = new DiagnosticsService(_pathService, _summonableTraitsService);
 
@@ -140,7 +146,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         // last saved -- every app start begins from a clean CheatSettings() default and pushes
         // that straight back to cheats.json, so the in-game mod resets to "everything off" within
         // its next 1s poll too, instead of silently resuming whatever was active last session. A
-        // saved loadout is only ever restored deliberately, via Settings > General > Load.
+        // saved loadout is only ever restored deliberately, via Settings > General > Load or the
+        // opt-in "load on startup" option (applied at the end of this constructor).
         var cheatSettings = new CheatSettings();
         _infiniteHealth = cheatSettings.InfiniteHealth;
         _infiniteStamina = cheatSettings.InfiniteStamina;
@@ -151,6 +158,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _lootFullDropChance = cheatSettings.LootFullDropChance;
         _noRecoil = cheatSettings.NoRecoil;
         _noSpread = cheatSettings.NoSpread;
+        _enemyOutline = cheatSettings.EnemyOutline;
         _cheatSettingsService.Save(cheatSettings);
 
         var settings = _hotkeySettingsService.Load();
@@ -163,6 +171,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _destroyNearbySpawnedHotkey = string.IsNullOrWhiteSpace(settings.DestroyNearbySpawned) ? "None" : settings.DestroyNearbySpawned;
         _replenishCooldownsHotkey = string.IsNullOrWhiteSpace(settings.ReplenishCooldowns) ? "F1" : settings.ReplenishCooldowns;
         _fastPlayerActionsHotkey = string.IsNullOrWhiteSpace(settings.FastPlayerActions) ? "F2" : settings.FastPlayerActions;
+        _enemyOutlineHotkey = string.IsNullOrWhiteSpace(settings.EnemyOutline) ? "F7" : settings.EnemyOutline;
         _selectedWiki = string.IsNullOrWhiteSpace(settings.Wiki) ? "wiki.gg" : settings.Wiki;
         _stackSize = settings.StackSize <= 0 ? 1 : settings.StackSize;
         _languageCode = string.IsNullOrWhiteSpace(settings.Language) ? "en" : settings.Language;
@@ -179,12 +188,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Loc = new LocalizationService(_languageCode);
         _contentFilterOptions = BuildContentFilterOptions();
 
-        ThemeManager.ThemeChanged += (_, _) =>
-        {
-            OnPropertyChanged(nameof(IsClassicTheme));
-            OnPropertyChanged(nameof(IsRemnantTheme));
-        };
-
         _allCategoryGroups = new List<CategoryGroup>
         {
             new() { Name = "Weapons", Types = new List<string> { "Bow", "Handgun", "Long Gun", "Melee" } },
@@ -193,7 +196,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             new() { Name = "Traits", Types = new List<string> { "Archetype Trait", "Core Trait", "Trait", "Trait Point" } },
             new() { Name = "Items", Types = new List<string> { "Concoction", "Consumable", "Curative", "Grenade", "Relic" } },
             new() { Name = "Materials", Types = new List<string> { "Crafting Material", "Currency", "Engram Material", "Upgrade Material" } },
-            new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special" } }
+            new() { Name = "Other", Types = new List<string> { "Mutator", "Prism Fragment", "Special", "Prism" } }
         };
 
         foreach (var type in _allCategoryGroups.SelectMany(x => x.Types))
@@ -215,6 +218,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StartDestroyNearbySpawnedHotkeyCaptureCommand = new RelayCommand(StartDestroyNearbySpawnedHotkeyCapture);
         StartReplenishCooldownsHotkeyCaptureCommand = new RelayCommand(StartReplenishCooldownsHotkeyCapture);
         StartFastPlayerActionsHotkeyCaptureCommand = new RelayCommand(StartFastPlayerActionsHotkeyCapture);
+        StartEnemyOutlineHotkeyCaptureCommand = new RelayCommand(StartEnemyOutlineHotkeyCapture);
         LevelUpCommand = new RelayCommand(async () => await LevelUpAsync());
         SetAllWeaponLevelCommand = new RelayCommand(async () => await SetAllWeaponLevelAsync());
         SetInventoryItemQuantityCommand = new RelayCommand(async () => await SetInventoryItemQuantityAsync());
@@ -229,12 +233,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         InitializeWeaponModBoostGroups(_weaponModBoostSettingsService.Load());
 
+        // Opt-in exception to the "cheats start off" rule above: the user asked for their saved loadout.
+        if (LoadProfileOnStartup && TryApplySettingsProfile() == true)
+            AppLogService.Info("Applied the saved settings profile on startup");
+
         RefreshPathState();
 
         // Only stats one small file per tick and parses it only when its write time changes.
         _ownedItemsPollTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _ownedItemsPollTimer.Tick += (_, _) => PollOwnedItems();
         _ownedItemsPollTimer.Start();
+
+        // The in-game Enemy Outlines hotkey writes cheats.json; keep the Settings switch in step.
+        _cheatsPollTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _cheatsPollTimer.Tick += (_, _) => PollEnemyOutline();
+        _cheatsPollTimer.Start();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -242,6 +255,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public event EventHandler<GroupSpawnQueuedEventArgs>? GroupSpawnQueued;
 
     public event EventHandler? UpdatePreviewRequested;
+
+    /// <summary>Something (e.g. a failed mod sync toast) wants the setup wizard opened.</summary>
+    public event EventHandler? SetupWizardRequested;
 
     public ObservableCollection<RemnantItem> Items { get; } = new();
 
@@ -275,6 +291,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public RelayCommand StartFastPlayerActionsHotkeyCaptureCommand { get; }
 
+    public RelayCommand StartEnemyOutlineHotkeyCaptureCommand { get; }
+
     public RelayCommand LevelUpCommand { get; }
 
     public RelayCommand SetAllWeaponLevelCommand { get; }
@@ -306,6 +324,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public DiagnosticReport DiagnosticReport => _diagnosticReport;
 
     public BridgeStatusService BridgeStatusService => _bridgeStatusService;
+
+    public GamePathService PathService => _pathService;
+
+    public void RequestSetupWizard() => SetupWizardRequested?.Invoke(this, EventArgs.Empty);
 
     public QueueWriter QueueWriter => _queueWriter;
 
@@ -514,7 +536,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         AimFov = AimFov,
         LootFullDropChance = LootFullDropChance,
         NoRecoil = NoRecoil,
-        NoSpread = NoSpread
+        NoSpread = NoSpread,
+        EnemyOutline = EnemyOutline
     };
 
     private void SaveCheatSettings()
@@ -604,6 +627,21 @@ public sealed class MainViewModel : INotifyPropertyChanged
         StatusText = FastPlayerActionsHotkey == "None"
             ? "Fast Player Actions hotkey cleared"
             : $"Fast Player Actions hotkey saved: {FastPlayerActionsHotkey}";
+    }
+
+    public void SetEnemyOutlineHotkey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            return;
+
+        EnemyOutlineHotkey = key;
+        IsCapturingEnemyOutlineHotkey = false;
+
+        SaveHotkeySettings();
+
+        StatusText = EnemyOutlineHotkey == "None"
+            ? "Enemy Outlines hotkey cleared"
+            : $"Enemy Outlines hotkey saved: {EnemyOutlineHotkey}";
     }
 
     public bool InfiniteHealth
@@ -787,6 +825,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public bool EnemyOutline
+    {
+        get => _enemyOutline;
+        set
+        {
+            if (_enemyOutline == value)
+                return;
+
+            _enemyOutline = value;
+            OnPropertyChanged();
+
+            StatusText = EnemyOutline
+                ? "Enemy Outlines enabled"
+                : "Enemy Outlines disabled";
+
+            SaveCheatSettings();
+        }
+    }
+
     public string SelectedWiki
     {
         get => _selectedWiki;
@@ -826,27 +883,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    // Change notifications come from ThemeManager.ThemeChanged (subscribed in the constructor).
-    public bool IsClassicTheme
-    {
-        get => ThemeManager.Current == ThemeManager.Classic;
-        set
-        {
-            if (value && !IsClassicTheme)
-                ThemeManager.Apply(ThemeManager.Classic);
-        }
-    }
-
-    public bool IsRemnantTheme
-    {
-        get => ThemeManager.Current == ThemeManager.Remnant;
-        set
-        {
-            if (value && !IsRemnantTheme)
-                ThemeManager.Apply(ThemeManager.Remnant);
-        }
-    }
-
     public bool AlwaysOnTop
     {
         get => _alwaysOnTop;
@@ -882,6 +918,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             OnPropertyChanged(nameof(ContentFilterOptions));
             OnPropertyChanged(nameof(CollectionSummaryText));
             OnPropertyChanged(nameof(LastScanText));
+            OnPropertyChanged(nameof(SettingsProfileInfo));
             SaveHotkeySettings();
         }
     }
@@ -963,7 +1000,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    // All 7 hotkey capture buttons share one active-capture slot -- starting a new capture
+    public bool IsCapturingEnemyOutlineHotkey
+    {
+        get => _isCapturingEnemyOutlineHotkey;
+        set
+        {
+            _isCapturingEnemyOutlineHotkey = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(EnemyOutlineHotkeyDisplay));
+        }
+    }
+
+    // All 8 hotkey capture buttons share one active-capture slot -- starting a new capture
     // must clear every other one, or two buttons could show "Press key..." at once.
     private void ResetHotkeyCaptureFlags()
     {
@@ -974,6 +1022,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IsCapturingDestroyNearbySpawnedHotkey = false;
         IsCapturingReplenishCooldownsHotkey = false;
         IsCapturingFastPlayerActionsHotkey = false;
+        IsCapturingEnemyOutlineHotkey = false;
     }
 
     private void StartDestroyTargetHotkeyCapture()
@@ -1004,6 +1053,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         ResetHotkeyCaptureFlags();
         IsCapturingFastPlayerActionsHotkey = true;
+    }
+
+    private void StartEnemyOutlineHotkeyCapture()
+    {
+        ResetHotkeyCaptureFlags();
+        IsCapturingEnemyOutlineHotkey = true;
     }
 
     public string TeleportHotkey
@@ -1083,6 +1138,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public string EnemyOutlineHotkey
+    {
+        get => _enemyOutlineHotkey;
+        set
+        {
+            _enemyOutlineHotkey = string.IsNullOrWhiteSpace(value) ? "None" : value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(EnemyOutlineHotkeyDisplay));
+        }
+    }
+
     public string TeleportHotkeyDisplay => IsCapturingTeleportHotkey
         ? "Press key..."
         : TeleportHotkey;
@@ -1110,6 +1176,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string FastPlayerActionsHotkeyDisplay => IsCapturingFastPlayerActionsHotkey
         ? "Press key..."
         : FastPlayerActionsHotkey;
+
+    public string EnemyOutlineHotkeyDisplay => IsCapturingEnemyOutlineHotkey
+        ? "Press key..."
+        : EnemyOutlineHotkey;
 
     public double MovementSpeedMultiplier
     {
@@ -1335,10 +1405,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (result != Forms.DialogResult.OK)
             return;
 
-        _pathService.SetWin64Path(dialog.SelectedPath);
+        var selected = GameLocator.NormalizeSelection(dialog.SelectedPath);
+        _pathService.SetWin64Path(selected);
 
         RefreshPathState();
         await RefreshDiagnosticsAsync();
+
+        // The game is there but the mod isn't installed yet: that's the setup wizard's job.
+        if (!IsGamePathValid && GamePathService.HasSupportedGameExe(selected))
+        {
+            StatusText = "Game found, the mod isn't installed yet";
+            RequestSetupWizard();
+            return;
+        }
 
         if (!IsGamePathValid)
         {
@@ -1528,6 +1607,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return;
         }
 
+        if (item.IsPrism)
+        {
+            StatusText = "Prisms can't be spawned; use Add";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(item.Path))
         {
             StatusText = $"Spawn blocked: missing path for {item.Name}";
@@ -1582,6 +1668,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(item.Path))
         {
             StatusText = $"Copy blocked: missing path for {item.Name}";
+            return;
+        }
+
+        if (item.IsPrism)
+        {
+            Forms.Clipboard.SetText(item.AddPrismCommand);
+            StatusText = $"Copied AddPrism command: {item.Name}";
             return;
         }
 
@@ -1660,6 +1753,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ShowSpawnedToast("AddTrait sent", item.Name);
 
         _ = LogBridgeOutcomeAsync($"AddTrait '{item.Name}'");
+    }
+
+    // Prisms go straight into the inventory through the mod's own "AddPrism" command
+    // (Scripts/prisms.lua), which skips prisms the player already has.
+    public async Task AddPrismAsync(RemnantItem item)
+    {
+        RefreshPathState();
+
+        if (!IsGamePathValid)
+        {
+            StatusText = "AddPrism blocked: game path is not configured";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        if (!item.IsPrism || string.IsNullOrWhiteSpace(item.Path))
+        {
+            StatusText = "AddPrism blocked: selected item is not a prism";
+            ShowBlockedToast(StatusText);
+            return;
+        }
+
+        AppLogService.Info($"AddPrism requested: {item.Name} (path={item.Path})");
+
+        await _queueWriter.SendConsoleCommandAsync(item.AddPrismCommand);
+
+        StatusText = $"AddPrism sent: {item.Name}";
+        ShowSpawnedToast("AddPrism sent", item.Name);
+
+        _ = LogBridgeOutcomeAsync($"AddPrism '{item.Name}'");
     }
 
     public async Task LevelUpAsync()
@@ -2007,6 +2130,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 ? string.Format(Loc["Main.LastScanStale"], time)
                 : string.Format(Loc["Main.LastScanLive"], time);
         }
+    }
+
+    // Takes the game's value without saving it back: the game already wrote it.
+    private void PollEnemyOutline()
+    {
+        if (!IsGamePathValid)
+            return;
+
+        var fromGame = _cheatSettingsService.TryReadEnemyOutline();
+
+        if (fromGame is not bool value || value == _enemyOutline)
+            return;
+
+        _enemyOutline = value;
+        OnPropertyChanged(nameof(EnemyOutline));
+        StatusText = value ? "Enemy Outlines enabled in-game" : "Enemy Outlines disabled in-game";
+        AppLogService.Info($"Enemy Outlines {(value ? "enabled" : "disabled")} by the in-game hotkey");
     }
 
     private void PollOwnedItems()
@@ -2361,6 +2501,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         DestroyNearbySpawned = DestroyNearbySpawnedHotkey,
         ReplenishCooldowns = ReplenishCooldownsHotkey,
         FastPlayerActions = FastPlayerActionsHotkey,
+        EnemyOutline = EnemyOutlineHotkey,
         Wiki = SelectedWiki,
         MovementSpeedMultiplier = MovementSpeedMultiplier,
         StackSize = StackSize,
@@ -2388,6 +2529,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _lootFullDropChance = settings.LootFullDropChance;
         _noRecoil = settings.NoRecoil;
         _noSpread = settings.NoSpread;
+        _enemyOutline = settings.EnemyOutline;
 
         _cheatSettingsService.Save(BuildCheatSettings());
         OnPropertyChanged(string.Empty);
@@ -2403,6 +2545,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _destroyNearbySpawnedHotkey = string.IsNullOrWhiteSpace(settings.DestroyNearbySpawned) ? "None" : settings.DestroyNearbySpawned;
         _replenishCooldownsHotkey = string.IsNullOrWhiteSpace(settings.ReplenishCooldowns) ? "F1" : settings.ReplenishCooldowns;
         _fastPlayerActionsHotkey = string.IsNullOrWhiteSpace(settings.FastPlayerActions) ? "F2" : settings.FastPlayerActions;
+        _enemyOutlineHotkey = string.IsNullOrWhiteSpace(settings.EnemyOutline) ? "F7" : settings.EnemyOutline;
         _selectedWiki = string.IsNullOrWhiteSpace(settings.Wiki) ? "wiki.gg" : settings.Wiki;
         _movementSpeedMultiplier = settings.MovementSpeedMultiplier <= 0 ? 1.0 : settings.MovementSpeedMultiplier;
         _stackSize = settings.StackSize <= 0 ? 1 : settings.StackSize;
@@ -2413,64 +2556,78 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(string.Empty);
     }
 
+    /// <summary>"Last saved: …" under the Save/Load buttons, or a hint that nothing is saved yet.</summary>
+    public string SettingsProfileInfo => _settingsProfileService.LastSaved is { } saved
+        ? string.Format(Loc["Settings.ProfileLastSaved"], saved.ToString("g"))
+        : Loc["Settings.ProfileNone"];
+
+    /// <summary>Apply the saved profile at every app start. Kept in the app's settings.json, not in the game folder.</summary>
+    public bool LoadProfileOnStartup
+    {
+        get => _pathService.Settings.LoadProfileOnStartup;
+        set
+        {
+            if (_pathService.Settings.LoadProfileOnStartup == value)
+                return;
+
+            _pathService.Settings.LoadProfileOnStartup = value;
+
+            try
+            {
+                _pathService.SaveSettings();
+            }
+            catch (Exception ex)
+            {
+                AppLogService.Error("Failed to save the load-profile-on-startup option", ex);
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
     private void SaveSettingsProfile()
     {
-        using var dialog = new Forms.SaveFileDialog
-        {
-            Title = "Save Settings",
-            Filter = "Remnant 2 Unlocker Settings (*.json)|*.json",
-            DefaultExt = "json",
-            FileName = "Remnant2UnlockerSettings.json"
-        };
-
-        if (dialog.ShowDialog() != Forms.DialogResult.OK)
-            return;
-
         try
         {
-            var profile = new SettingsProfile
+            _settingsProfileService.Save(new SettingsProfile
             {
                 Cheats = BuildCheatSettings(),
                 Hotkeys = BuildHotkeySettings(),
                 WeaponModBoosts = BuildWeaponModBoostSettings()
-            };
+            });
 
-            var json = JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(dialog.FileName, json);
-
-            StatusText = $"Settings saved to {Path.GetFileName(dialog.FileName)}";
+            StatusText = "Settings profile saved";
         }
         catch (Exception ex)
         {
+            AppLogService.Error($"Failed to save settings profile to {_settingsProfileService.ProfilePath}", ex);
             StatusText = $"Settings save failed: {ex.Message}";
         }
+
+        OnPropertyChanged(nameof(SettingsProfileInfo));
     }
 
     // Favorites deliberately have no place here: FavoritesService keeps its own file and this
     // method never touches it, so favoriting continues to work exactly as it does today.
     private void LoadSettingsProfile()
     {
-        using var dialog = new Forms.OpenFileDialog
+        StatusText = TryApplySettingsProfile() switch
         {
-            Title = "Load Settings",
-            Filter = "Remnant 2 Unlocker Settings (*.json)|*.json"
+            true => "Settings profile loaded",
+            false => "Settings load failed, see the app log",
+            null => Loc["Settings.ProfileNone"]
         };
+    }
 
-        if (dialog.ShowDialog() != Forms.DialogResult.OK)
-            return;
-
+    /// <summary>Applies the saved profile. True when applied, null when none is saved, false on a read error.</summary>
+    private bool? TryApplySettingsProfile()
+    {
         try
         {
-            var json = File.ReadAllText(dialog.FileName);
-            var profile = JsonSerializer.Deserialize<SettingsProfile>(
-                json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var profile = _settingsProfileService.Load();
 
             if (profile == null)
-            {
-                StatusText = "Settings file could not be read";
-                return;
-            }
+                return null;
 
             if (profile.Cheats != null)
                 ApplyCheatSettings(profile.Cheats);
@@ -2481,11 +2638,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (profile.WeaponModBoosts != null)
                 InitializeWeaponModBoostGroups(profile.WeaponModBoosts);
 
-            StatusText = $"Settings loaded from {Path.GetFileName(dialog.FileName)}";
+            return true;
         }
         catch (Exception ex)
         {
-            StatusText = $"Settings load failed: {ex.Message}";
+            AppLogService.Error($"Failed to load settings profile from {_settingsProfileService.ProfilePath}", ex);
+            return false;
         }
     }
 
@@ -2509,11 +2667,84 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         try
         {
-            await AppUpdateService.DownloadAndApplyUpdateAsync(_updateDownloadUrl, _pathService);
+            await AppUpdateService.DownloadAndApplyUpdateAsync(_updateDownloadUrl);
         }
         finally
         {
             IsUpdating = false;
+        }
+    }
+
+    /// <summary>
+    /// Keeps the mod files in the game in sync with the ones built into this app version. The game
+    /// only reads them at start, so while it's running the user decides (and restarts it afterwards).
+    /// </summary>
+    public async Task SyncModFilesOnStartupAsync()
+    {
+        if (!_pathService.IsConfigured)
+            return;
+
+        var win64Path = _pathService.Win64Path;
+
+        try
+        {
+            var status = await Task.Run(() => ModInstaller.GetStatus(win64Path));
+
+            if (status.AreFilesUpToDate)
+                return;
+
+            AppLogService.Info($"Startup sync: {status.OutOfDateCount} mod file(s) differ from this app version");
+
+            if (GameProcess.IsRunning())
+            {
+                ToastService.Show(
+                    Loc["Sync.OutdatedTitle"],
+                    string.Format(Loc["Sync.OutdatedGameRunning"], status.OutOfDateCount),
+                    ToastType.Warning,
+                    durationMs: 30000,
+                    actionText: Loc["Sync.Update"],
+                    onAction: () => _ = ApplyModSyncAsync(win64Path, gameRunning: true));
+
+                return;
+            }
+
+            await ApplyModSyncAsync(win64Path, gameRunning: false);
+        }
+        catch (Exception ex)
+        {
+            AppLogService.Error("Startup mod sync failed", ex);
+        }
+    }
+
+    private async Task ApplyModSyncAsync(string win64Path, bool gameRunning)
+    {
+        try
+        {
+            var result = await Task.Run(() => ModInstaller.InstallOrUpdate(win64Path));
+
+            if (result.Success)
+            {
+                ToastService.Show(
+                    Loc["Sync.UpdatedTitle"],
+                    gameRunning ? Loc["Sync.UpdatedRestartGame"] : Loc["Sync.Updated"],
+                    ToastType.Success,
+                    gameRunning ? 12000 : 6000);
+
+                return;
+            }
+
+            ToastService.Show(
+                Loc["Sync.FailedTitle"],
+                result.AccessDenied ? Loc["Sync.FailedAccessDenied"] : Loc["Sync.Failed"],
+                ToastType.Error,
+                durationMs: 15000,
+                actionText: Loc["Sync.OpenSetup"],
+                onAction: () => SetupWizardRequested?.Invoke(this, EventArgs.Empty));
+        }
+        catch (Exception ex)
+        {
+            AppLogService.Error("Mod sync failed", ex);
+            ToastService.Show(Loc["Sync.FailedTitle"], ex.Message, ToastType.Error, 8000);
         }
     }
 

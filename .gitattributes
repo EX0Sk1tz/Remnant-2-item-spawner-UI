@@ -3,6 +3,10 @@
 ###############################################################################
 * text=auto
 
+# The mod's Lua files are embedded into the app and installed byte-for-byte; the installer
+# compares SHA256 hashes, so they must check out with the same line endings everywhere.
+*.lua text eol=crlf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #

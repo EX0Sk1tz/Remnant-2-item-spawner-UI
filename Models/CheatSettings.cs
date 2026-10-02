@@ -17,4 +17,7 @@ public sealed class CheatSettings
 
     public bool NoRecoil { get; set; }
     public bool NoSpread { get; set; }
+
+    // Hunter's Mark outline on every enemy, through walls (enemy_outline.lua).
+    public bool EnemyOutline { get; set; }
 }

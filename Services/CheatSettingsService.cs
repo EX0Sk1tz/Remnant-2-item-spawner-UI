@@ -43,6 +43,41 @@ public sealed class CheatSettingsService
         }
     }
 
+    // enemyOutline is the one value the game also writes (its in-game hotkey, enemy_outline.lua).
+    // Returns null when the file is missing, has no such value, or was caught mid-write, so a
+    // half-written file never reads as "off" the way Load()'s defaults would.
+    public bool? TryReadEnemyOutline()
+    {
+        try
+        {
+            var path = GetCheatsPath();
+
+            if (!File.Exists(path))
+                return null;
+
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+
+            foreach (var property in document.RootElement.EnumerateObject())
+            {
+                if (!property.Name.Equals("enemyOutline", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                return property.Value.ValueKind switch
+                {
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    _ => null
+                };
+            }
+
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
     public void Save(CheatSettings settings)
     {
         var path = GetCheatsPath();
@@ -62,7 +97,8 @@ public sealed class CheatSettingsService
                 aimFov = settings.AimFov,
                 lootFullDropChance = settings.LootFullDropChance,
                 noRecoil = settings.NoRecoil,
-                noSpread = settings.NoSpread
+                noSpread = settings.NoSpread,
+                enemyOutline = settings.EnemyOutline
             },
             new JsonSerializerOptions
             {

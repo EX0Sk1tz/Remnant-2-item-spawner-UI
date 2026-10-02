@@ -8,7 +8,7 @@ namespace Remnant2UnlockerApp.Services;
 
 public static class AppUpdateService
 {
-    public static async Task DownloadAndApplyUpdateAsync(string downloadUrl, GamePathService pathService)
+    public static async Task DownloadAndApplyUpdateAsync(string downloadUrl)
     {
         var tempRoot = Path.Combine(Path.GetTempPath(), "Remnant2UnlockerUpdate");
         Directory.CreateDirectory(tempRoot);
@@ -35,11 +35,10 @@ public static class AppUpdateService
 
         ZipFile.ExtractToDirectory(zipPath, extractPath, overwriteFiles: true);
 
-        // The release zip also carries the "Remnant2Unlocker" lua mod folder (see
-        // Instructions.txt) alongside the app payload. Update it in-place in the game's
-        // Mods folder before the app payload is touched, and exclude it from the robocopy
-        // below so a stray copy doesn't end up sitting next to the exe.
-        CopyModScriptsIfPresent(extractPath, pathService);
+        // The release zip also carries the "Remnant2Unlocker" mod folder for manual installs.
+        // It is not copied anywhere: the new app has the same files built in and brings the
+        // game's copy up to date on its next start (MainViewModel.SyncModFilesOnStartupAsync).
+        // It's excluded from the robocopy below so a stray copy doesn't end up next to the exe.
 
         // Some archives wrap the payload in a single top-level folder -- unwrap it so the
         // copy below lands the exe and its content files directly in the install directory.
@@ -80,56 +79,5 @@ Remove-Item -LiteralPath '{extractPath}' -Recurse -Force -ErrorAction SilentlyCo
         });
 
         System.Windows.Application.Current.Dispatcher.Invoke(() => System.Windows.Application.Current.Shutdown());
-    }
-
-    // Only refreshes the lua scripts themselves -- user-editable files in the mod folder
-    // (items.json, hotkeys.json, etc.) are left alone.
-    private static void CopyModScriptsIfPresent(string extractRoot, GamePathService pathService)
-    {
-        if (!pathService.IsConfigured)
-        {
-            AppLogService.Warn("Skipping mod script update: game path is not configured.");
-            return;
-        }
-
-        var modFolder = Directory.EnumerateDirectories(extractRoot, "Remnant2Unlocker", SearchOption.AllDirectories)
-            .FirstOrDefault();
-
-        if (modFolder is null)
-            return;
-
-        var sourceScripts = Directory.EnumerateDirectories(modFolder)
-            .FirstOrDefault(dir => Path.GetFileName(dir).Equals("Scripts", StringComparison.OrdinalIgnoreCase));
-
-        if (sourceScripts is null)
-            return;
-
-        var destScripts = pathService.GetScriptsPath();
-
-        if (!Directory.Exists(destScripts))
-        {
-            AppLogService.Warn($"Skipping mod script update: destination folder not found: {destScripts}");
-            return;
-        }
-
-        try
-        {
-            CopyDirectoryContents(sourceScripts, destScripts);
-        }
-        catch (Exception ex)
-        {
-            AppLogService.Warn("Failed to update mod lua scripts.", ex);
-        }
-    }
-
-    private static void CopyDirectoryContents(string sourceDir, string destDir)
-    {
-        Directory.CreateDirectory(destDir);
-
-        foreach (var file in Directory.GetFiles(sourceDir))
-            File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)), overwrite: true);
-
-        foreach (var dir in Directory.GetDirectories(sourceDir))
-            CopyDirectoryContents(dir, Path.Combine(destDir, Path.GetFileName(dir)));
     }
 }

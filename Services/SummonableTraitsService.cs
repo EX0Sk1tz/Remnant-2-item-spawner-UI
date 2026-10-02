@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 namespace Remnant2UnlockerApp.Services;
 
@@ -11,25 +11,47 @@ public sealed class SummonableTraitsService
         _pathService = pathService;
     }
 
-    public bool IsInstalled()
+    public bool IsInstalled() => FindModFolder(_pathService.GetModsFolderPath()) != null;
+
+    /// <summary>True if a main.lua's content is the Summonable Traits mod's entry script.</summary>
+    public static bool IsSummonableTraitsScript(string content) =>
+        content.Contains("RegisterConsoleCommandHandler(\"SummonTrait\"", StringComparison.OrdinalIgnoreCase)
+        && content.Contains("RegisterConsoleCommandHandler(\"AddTrait\"", StringComparison.OrdinalIgnoreCase)
+        && content.Contains("Material_AwardTrait_Base", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The top-level folder under <paramref name="searchRoot"/> (a Mods folder, or an extracted
+    /// download) whose main.lua is the Summonable Traits script, or null.
+    /// </summary>
+    public static string? FindModFolder(string searchRoot)
     {
-        var modsPath = _pathService.GetModsFolderPath();
+        var mainLua = FindMainLua(searchRoot);
 
-        if (!Directory.Exists(modsPath))
-            return false;
+        if (mainLua == null)
+            return null;
 
-        foreach (var mainLua in Directory.EnumerateFiles(modsPath, "main.lua", SearchOption.AllDirectories))
+        var relative = Path.GetRelativePath(searchRoot, mainLua);
+        var first = relative.Split(Path.DirectorySeparatorChar)[0];
+
+        // main.lua directly in searchRoot or searchRoot\Scripts: the root itself is the mod folder.
+        return string.Equals(Path.GetFileName(mainLua), relative, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(first, "Scripts", StringComparison.OrdinalIgnoreCase)
+            ? searchRoot
+            : Path.Combine(searchRoot, first);
+    }
+
+    /// <summary>The Summonable Traits main.lua under <paramref name="searchRoot"/>, or null.</summary>
+    public static string? FindMainLua(string searchRoot)
+    {
+        if (!Directory.Exists(searchRoot))
+            return null;
+
+        foreach (var mainLua in Directory.EnumerateFiles(searchRoot, "main.lua", SearchOption.AllDirectories))
         {
             try
             {
-                var content = File.ReadAllText(mainLua);
-
-                if (content.Contains("RegisterConsoleCommandHandler(\"SummonTrait\"", StringComparison.OrdinalIgnoreCase)
-                    && content.Contains("RegisterConsoleCommandHandler(\"AddTrait\"", StringComparison.OrdinalIgnoreCase)
-                    && content.Contains("Material_AwardTrait_Base", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
+                if (IsSummonableTraitsScript(File.ReadAllText(mainLua)))
+                    return mainLua;
             }
             catch (Exception ex)
             {
@@ -39,6 +61,6 @@ public sealed class SummonableTraitsService
             }
         }
 
-        return false;
+        return null;
     }
 }

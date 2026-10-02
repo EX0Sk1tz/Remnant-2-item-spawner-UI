@@ -107,6 +107,12 @@ public sealed class RemnantItem : INotifyPropertyChanged
 
     public bool NeedsSummonableTraitsMod => IsTraitEntry && !IsTraitPoint;
 
+    // Prisms have no pickup actor, so "summon" can't spawn them; they're added straight to the
+    // inventory with the mod's "AddPrism" console command (Scripts/prisms.lua).
+    public bool IsPrism => Type.Equals("Prism", StringComparison.OrdinalIgnoreCase);
+
+    public string AddPrismCommand => $"AddPrism {Path}";
+
     public bool IsSummonableTraitsInstalled
     {
         get => _isSummonableTraitsInstalled;
@@ -163,5 +169,5 @@ public sealed class RemnantItem : INotifyPropertyChanged
 
     public bool CanUseTraitCommands => NeedsSummonableTraitsMod && IsSummonableTraitsInstalled;
 
-    public bool CanUseNormalSpawn => !NeedsSummonableTraitsMod;
+    public bool CanUseNormalSpawn => !NeedsSummonableTraitsMod && !IsPrism;
 }

@@ -10,6 +10,8 @@ local WeaponModCommands = require("weapon_mod_commands")
 local Aim = require("aim")
 local Loot = require("loot")
 local WeaponHandling = require("weapon_handling")
+local EnemyOutline = require("enemy_outline")
+local Prisms = require("prisms")
 
 -- An uncaught error in any one module's Start() used to abort this entire chunk, silently
 -- skipping every module listed after it (confirmed in testing: a failed RegisterHook call in
@@ -33,6 +35,8 @@ SafeStart("WeaponModCommands", WeaponModCommands)
 SafeStart("Aim", Aim)
 SafeStart("Loot", Loot)
 SafeStart("WeaponHandling", WeaponHandling)
+SafeStart("EnemyOutline", EnemyOutline)
+SafeStart("Prisms", Prisms)
 
 RegisterKeyBind(Key.F8, function()
     print("[Remnant2Unlocker] Bridge is running")

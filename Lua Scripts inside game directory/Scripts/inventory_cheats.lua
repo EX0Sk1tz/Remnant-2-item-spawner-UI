@@ -76,13 +76,16 @@ local function RunFnInPlayerInv(fn)
         local inventory = player.Inventory
         if not inventory then return false end
 
-        local items = inventory:GetItems()
+        -- The Items array is read in place. inventory:GetItems() returns a copy that UE4SS kept
+        -- reading after it was freed, which crashed the game at random (UE4SS.dll+0x673CEF in
+        -- every crash dump from this scan, which runs every 5 s).
+        local items = inventory.Items
         if not items then return false end
 
-        for _, item in pairs(items) do
+        for i = 1, items:GetArrayNum() do
             -- One entry with a missing/unloaded ItemBP must not abort the scan for every other item.
             local okConfig, config = pcall(function()
-                local entry = item:get()
+                local entry = items[i]
                 local itemBP = entry.ItemBP
                 local fullName = itemBP:GetFullName()
 

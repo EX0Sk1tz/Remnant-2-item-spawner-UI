@@ -408,6 +408,15 @@
                                                 Click="AddTrait_Click"
                                                 ToolTip="{Binding DataContext.Loc[Main.AddTraitTooltip], RelativeSource={RelativeSource AncestorType=Window}}"/>
 
+                                        <!-- Prisms: no Spawn/Force (they have no pickup actor), only Add and Copy. -->
+                                        <Button Content="{Binding DataContext.Loc[Main.Add], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Style="{DynamicResource SuccessActionButtonStyle}"
+                                                Visibility="{Binding IsPrism, Converter={StaticResource BoolVis}}"
+                                                Height="40"
+                                                Width="92"
+                                                Click="AddPrism_Click"
+                                                ToolTip="{Binding DataContext.Loc[Main.AddPrismTooltip], RelativeSource={RelativeSource AncestorType=Window}}"/>
+
                                         <Button Content="{Binding DataContext.Loc[Main.Copy], RelativeSource={RelativeSource AncestorType=Window}}"
                                                 Style="{DynamicResource SecondaryActionButtonStyle}"
                                                 Height="40"

@@ -18,6 +18,15 @@ public partial class SettingsWindow : Window
         _viewModel.RefreshInventoryItems();
     }
 
+    /// <summary>"Repair / update installation" was clicked; the main window opens the wizard after this closes.</summary>
+    public bool SetupWizardRequested { get; private set; }
+
+    private void RepairInstallation_Click(object sender, RoutedEventArgs e)
+    {
+        SetupWizardRequested = true;
+        Close();
+    }
+
     private void ConsoleKeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (!_viewModel.IsCapturingConsoleKey)
@@ -255,4 +264,33 @@ public partial class SettingsWindow : Window
             viewModel.SetFastPlayerActionsHotkey(key);
     }
 
+    private void EnemyOutlineHotkeyButton_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingEnemyOutlineHotkey)
+            return;
+
+        e.Handled = true;
+
+        if (e.Key == Key.Escape)
+        {
+            viewModel.SetEnemyOutlineHotkey("None");
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        viewModel.SetEnemyOutlineHotkey(key.ToString());
+    }
+
+    private void EnemyOutlineHotkeyButton_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || !viewModel.IsCapturingEnemyOutlineHotkey)
+            return;
+
+        e.Handled = true;
+
+        var key = MouseButtonToKeyName(e.ChangedButton);
+
+        if (key != null)
+            viewModel.SetEnemyOutlineHotkey(key);
+    }
 }

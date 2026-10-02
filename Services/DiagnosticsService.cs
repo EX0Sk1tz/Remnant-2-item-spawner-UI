@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -84,7 +84,7 @@ public sealed class DiagnosticsService
             "Remnant2Unlocker folder",
             "Unlocker missing",
             "The Remnant2Unlocker mod folder is missing.",
-            "Copy the Remnant2Unlocker folder into Win64\\Mods.",
+            "Open Settings > \"Repair / update installation\" and click Install / Repair.",
             true);
 
         CheckFile(
@@ -93,7 +93,7 @@ public sealed class DiagnosticsService
             "command_queue.json",
             "Queue file missing",
             "The command queue file is missing.",
-            "Create command_queue.json or reinstall the release package.",
+            "Spawn or reload once; the app creates it automatically.",
             false);
 
         CheckFile(
@@ -111,7 +111,7 @@ public sealed class DiagnosticsService
             "Remnant2Unlocker main.lua",
             "Unlocker script missing",
             "The Lua entry script for Remnant2Unlocker is missing.",
-            "Reinstall the scripts folder from the release package.",
+            "Open Settings > \"Repair / update installation\" and click Install / Repair.",
             true);
 
         CheckJsonFile(
@@ -162,7 +162,7 @@ public sealed class DiagnosticsService
             "ConsoleCommandsMod missing",
             "Console command handler missing",
             "The custom summon handler is required for unloaded assets.",
-            "Install ConsoleCommandsMod and make sure summon_unloaded_assets.lua exists.");
+            "ConsoleCommandsMod comes with Allow Asset Mods (UE4SS). Drop that download onto the setup wizard (Settings > \"Repair / update installation\").");
 
         CheckRequiredLuaMod(
             report,
@@ -172,7 +172,7 @@ public sealed class DiagnosticsService
             "ConsoleEnablerMod missing",
             "Console enabler missing",
             "The console enabler is required for force spawning and manual command testing.",
-            "Install ConsoleEnablerMod and make sure scripts\\main.lua exists.");
+            "ConsoleEnablerMod comes with Allow Asset Mods (UE4SS). Drop that download onto the setup wizard (Settings > \"Repair / update installation\").");
 
         CheckRequiredLuaMod(
             report,
@@ -182,7 +182,9 @@ public sealed class DiagnosticsService
             "CheatManagerEnablerMod missing",
             "CheatManager missing",
             "The CheatManager must be enabled or summon commands may load assets without spawning items.",
-            "Install CheatManagerEnablerMod and make sure scripts\\main.lua exists.");
+            "CheatManagerEnablerMod comes with Allow Asset Mods (UE4SS). Drop that download onto the setup wizard (Settings > \"Repair / update installation\").");
+
+        CheckSummonPatch(report, modsPath);
 
         CheckModEnabled(report, path, "AllowModsMod");
         CheckModEnabled(report, path, "ConsoleCommandsMod");
@@ -252,11 +254,7 @@ public sealed class DiagnosticsService
         AppLogService.WriteDiagnosticsReport(sb.ToString());
     }
 
-    private static bool IsGameRunning()
-    {
-        return Process.GetProcessesByName("Remnant2-Win64-Shipping").Length > 0
-            || Process.GetProcessesByName("Remnant2-WinGDK-Shipping").Length > 0;
-    }
+    private static bool IsGameRunning() => GameProcess.IsRunning();
 
     private static void CheckGameExecutable(DiagnosticReport report, string path)
     {
@@ -404,7 +402,7 @@ public sealed class DiagnosticsService
                 $"{modName} script missing",
                 $"{modName} incomplete",
                 $"{modName} exists, but the required script is missing.",
-                $"Replace the full {modName} folder from a clean release package.",
+                $"{modName} comes with Allow Asset Mods (UE4SS). Drop that download onto the setup wizard again (Settings > \"Repair / update installation\").",
                 requiredFile,
                 DiagnosticStatus.Error);
 
@@ -449,7 +447,7 @@ public sealed class DiagnosticsService
                 $"{modName} is not enabled",
                 $"{modName} disabled",
                 $"{modName} is missing or disabled in the UE4SS mod config.",
-                $"Add or change this line: {modName} : 1",
+                $"Run Install / Repair in the setup wizard (Settings > \"Repair / update installation\"), or add/change this line: {modName} : 1",
                 $"Checked mods.txt and enabled.txt for {modName} : 1",
                 DiagnosticStatus.Error);
 
@@ -457,6 +455,36 @@ public sealed class DiagnosticsService
         }
 
         AddPass(report, $"{modName} enabled", $"{modName} : 1 found in the UE4SS mod config.", $"{modsTxt} / {enabledTxt}");
+    }
+
+    // Info only: without our summon handler items still spawn (spawner.lua falls back to a plain
+    // "summon <path>"), just without stack size and item level.
+    private static void CheckSummonPatch(DiagnosticReport report, string modsPath)
+    {
+        var patch = ModPayload.SummonPatch;
+
+        if (patch == null)
+            return;
+
+        var target = patch.GetTargetPath(modsPath);
+
+        if (!File.Exists(target))
+            return; // ConsoleCommandsMod itself is missing; reported above.
+
+        if (ModPayload.HashFile(target) == patch.Sha256)
+        {
+            AddPass(report, "Stack size & item level support", "The summon command that understands stack size and item level is installed.", target);
+            return;
+        }
+
+        AddIssue(
+            report,
+            "Stack size & item level support not installed",
+            "Stack size / item level ignored",
+            "ConsoleCommandsMod has UE4SS's stock summon_unloaded_assets.lua (or an older copy). Items still spawn, but one at a time and at level 0.",
+            "Open Settings > \"Repair / update installation\" and click Install / Repair.",
+            target,
+            DiagnosticStatus.Info);
     }
 
     private void CheckSummonableTraits(DiagnosticReport report, bool? summonableTraitsInstalled)
@@ -477,7 +505,7 @@ public sealed class DiagnosticsService
             "Summonable Traits mod not detected",
             "Optional: trait spawning",
             "Trait, Core Trait, and Archetype Trait items require a separate, optional \"Summonable Traits\" mod that registers the SummonTrait/AddTrait console commands. It was not found under Mods\\.",
-            "Install the Summonable Traits mod if you want to spawn Trait/Archetype Trait items. Everything else works without it.",
+            "If you want to spawn Trait/Archetype Trait items, install it in the setup wizard (Settings > \"Repair / update installation\"). Everything else works without it.",
             "Checked all main.lua files under Mods\\ for RegisterConsoleCommandHandler(\"SummonTrait\"/\"AddTrait\") and Material_AwardTrait_Base.",
             DiagnosticStatus.Info);
     }
@@ -572,7 +600,7 @@ public sealed class DiagnosticsService
             "AllowModsMod patch was not applied",
             "AllowModsMod patch missing",
             "AllowModsMod did not report that the game delegate was patched.",
-            "Use the bundled UE4SS version and replace AllowModsMod from the release package.",
+            "Reinstall Allow Asset Mods: drop the Nexus download onto the setup wizard (Settings > \"Repair / update installation\").",
             logPath);
 
         CheckLogContains(

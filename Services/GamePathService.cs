@@ -62,21 +62,29 @@ public sealed class GamePathService
 
     /// <summary>
     /// Finds the folder that directly contains the UE4SS mods (Remnant2Unlocker, AllowModsMod, etc).
-    /// Steam/Epic UE4SS installs put it at "&lt;root&gt;\Mods". Some Game Pass / Windows Store setups
-    /// use an experimental UE4SS build (loaded via a dwmapi.dll proxy) that nests everything under
-    /// "&lt;root&gt;\ue4ss\mods" instead. Prefer whichever actually exists on disk; fall back to the
-    /// Steam/Epic layout when neither is present yet (e.g. before UE4SS is installed).
+    /// The tagged UE4SS releases put it at "&lt;root&gt;\Mods". The newer experimental builds (they report
+    /// "v3.0.1 Beta", load via a dwmapi.dll proxy, and ship in the Allow Asset Mods package) nest
+    /// everything under "&lt;root&gt;\ue4ss\Mods" instead - on Steam and Epic as well as Game Pass.
+    /// A UE4SS.dll that only exists in the nested folder decides it, even when a stray "&lt;root&gt;\Mods"
+    /// is left over from an older install: UE4SS never loads mods from there. Otherwise prefer
+    /// whichever folder exists; fall back to "&lt;root&gt;\Mods" when neither does (before UE4SS is installed).
     /// </summary>
     public static string ResolveModsFolder(string? path)
     {
         var standard = Path.Combine(path ?? "", "Mods");
 
-        if (string.IsNullOrWhiteSpace(path) || Directory.Exists(standard))
+        if (string.IsNullOrWhiteSpace(path))
             return standard;
 
-        var gamePassNested = Path.Combine(path, "ue4ss", "mods");
+        var nested = Path.Combine(path, "ue4ss", "mods");
 
-        return Directory.Exists(gamePassNested) ? gamePassNested : standard;
+        if (File.Exists(Path.Combine(path, "ue4ss", "UE4SS.dll")) && !File.Exists(Path.Combine(path, "UE4SS.dll")))
+            return nested;
+
+        if (Directory.Exists(standard))
+            return standard;
+
+        return Directory.Exists(nested) ? nested : standard;
     }
 
     public string GetItemsPath()
@@ -176,7 +184,7 @@ public sealed class GamePathService
         }
     }
 
-    private void SaveSettings()
+    public void SaveSettings()
     {
         var json = JsonSerializer.Serialize(
             Settings,
@@ -192,4 +200,13 @@ public sealed class GamePathService
 public sealed class UserSettings
 {
     public string? Win64Path { get; set; }
+
+    /// <summary>The first-start "Install Remnant 2 Unlocker" dialog was answered (installed or "Run without installing").</summary>
+    public bool InstallPromptHandled { get; set; }
+
+    /// <summary>Where the app installed itself, if it did.</summary>
+    public string? InstallDir { get; set; }
+
+    /// <summary>Settings → General: apply the saved settings profile at every app start.</summary>
+    public bool LoadProfileOnStartup { get; set; }
 }

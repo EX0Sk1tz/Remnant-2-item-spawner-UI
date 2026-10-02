@@ -1,143 +1,103 @@
 Remnant 2 Unlocker - Setup Instructions
 ========================================
 
-This guide assumes you have never set up a UE4SS/Lua mod for Remnant 2 before.
+
+Quick start (recommended)
+-------------------------
+
+1. Download the latest version from Nexus Mods:
+   https://www.nexusmods.com/remnant2/mods/215
+   (also on GitHub: https://github.com/EX0Sk1tz/Remnant-2-item-spawner-UI/releases)
+   Unpack the zip and run Remnant2UnlockerApp.exe.
+
+2. On the first start the app asks where to install itself (default:
+   %LocalAppData%\Programs\Remnant2Unlocker) and can create a desktop
+   shortcut. "Run without installing" keeps it where it is.
+
+3. The setup wizard opens and does the rest:
+   - finds your game (Steam, Epic or Game Pass), or lets you choose the folder
+   - asks you to close the game if it's running
+   - installs everything the mod needs. The one thing you download yourself
+     is "Allow Asset Mods" from Nexus Mods (https://www.nexusmods.com/remnant2/mods/2):
+     click "Open Nexus page", download the main file, and drop the .zip/.rar/.7z
+     onto the wizard (or use "Choose file..."). Optional: Summonable Traits
+     (https://www.nexusmods.com/remnant2/mods/122) the same way.
+   - "Install / Repair" installs the Remnant2Unlocker mod, the stack size /
+     item level support, and switches the mods on in mods.txt
+   - checks that your antivirus didn't remove UE4SS again
+   - starts the game once and waits until the mod reports in
+
+That's it. You never have to copy folders or edit text files.
+
+- Open the wizard again any time: Settings > General > "Repair / update
+  installation".
+- After an app update, the mod files in the game are updated automatically
+  on the next start (if the game is running, the app asks first; restart the
+  game afterwards).
+- Everything the app replaces in the game folder is backed up first, into
+  Mods\Remnant2Unlocker\Backups. "Undo last change" in the wizard puts the
+  latest backup back.
+- Steam installs under C:\Program Files (x86) need administrator rights to
+  write to. The wizard offers "Restart as administrator" when that happens.
 
 
-0. What you need first
------------------------
+Manual installation (fallback)
+==============================
 
-- Remnant 2 installed via Steam, Epic, or Game Pass. Steps 1-8 below are
-  written for Steam/Epic. If you're on Game Pass (Xbox/Windows Store), read
-  those steps for the general idea, then see section 9 ("Game Pass / Windows
-  Store differences") for the folder layout you'll actually need - it's
-  different enough to trip you up otherwise.
-- Know where your game is installed, typically:
+Only needed if the wizard can't be used. The game folder below is:
 
     Steam/Epic: ...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
     Game Pass:  ...\XboxGames\Remnant 2\Content\Remnant2\Binaries\WinGDK
 
-  This is the ONLY folder you'll need for everything below - remember it.
+"Win64\Mods" below means the folder UE4SS loads mods from. If your UE4SS sits
+in a "ue4ss" subfolder (Win64\ue4ss\UE4SS.dll), that is Win64\ue4ss\Mods
+instead - on Steam and Epic too. See "Nested ue4ss folder / Game Pass" below.
 
 
-1. Install UE4SS + the mod-loading patch ("Allow Asset Mods")
---------------------------------------------------------------
+1. Install UE4SS + AllowModsMod ("Allow Asset Mods")
+----------------------------------------------------
 
-Remnant 2 blocks mods by default. UE4SS is the scripting framework that runs
-Lua mods in the first place, and "Allow Asset Mods" is an extra patch that
-lets Remnant 2 actually load them. The "Allow Asset Mods" package on Nexus
-Mods bundles both (a matching UE4SS build + the unlock patch) in one zip.
+Remnant 2 blocks mods by default. The "Allow Asset Mods" package on Nexus
+Mods bundles UE4SS (the framework that runs Lua mods), UE4SS's standard mods
+(ConsoleCommandsMod, ConsoleEnablerMod, CheatManagerEnablerMod, ...) and
+AllowModsMod, the patch that lets the game load them. No other package is
+needed.
 
-1. Download the zip from Nexus Mods ("Allow Asset Mods", Remnant 2 Nexus).
-2. Extract the FULL contents of the zip directly into:
-
-    ...\Steam\steamapps\common\Remnant2\Remnant2\Binaries\Win64
-
-3. Afterwards, check that the Win64 folder contains at least this:
-
-    Win64
-    |- Remnant2-Win64-Shipping.exe
-    |- Mods
-    `- ue4ss
-
-   If "Mods" or "ue4ss" are missing, you likely extracted into the wrong
-   folder (e.g. one level too high or too low).
-
-4. IMPORTANT: antivirus / Windows Defender false positives.
-   UE4SS.dll and AllowModsMod's main.dll work by hooking into the game
-   process - this is exactly what a virus scanner looks for, so it's common
-   for antivirus software (including Windows Defender) to quarantine or
-   silently delete them right after extraction. If things seem to disappear
-   or stop working with no clear cause, check your antivirus's quarantine/
-   history first and restore or allow-list the UE4SS folder before doing
-   anything else.
-
-5. How do you know UE4SS actually loaded? When you start the game, a
-   separate black console window titled "UE4SS" should pop up alongside it.
-   If that window never appears, UE4SS itself failed to load - that's an
-   antivirus or installation problem, not a mod configuration problem, so
-   fix that before troubleshooting anything else in this guide.
+1. Download the main file from https://www.nexusmods.com/remnant2/mods/2
+2. Extract the FULL contents directly into the Win64 folder.
+3. If an older UE4SS left an xinput1_3.dll there, delete it.
+4. Antivirus / Windows Defender often quarantines UE4SS.dll right after
+   extraction, because it hooks into the game. If things disappear, restore
+   them from the quarantine and add an exclusion for the Binaries folder.
 
 
-2. Install the Cheat Mod (ConsoleCommandsMod, ConsoleEnablerMod, CheatManagerEnablerMod)
-------------------------------------------------------------------------------------------
+2. Install the Remnant2Unlocker mod
+-----------------------------------
 
-This app additionally needs three small Lua mods that unlock the in-game
-console and the CheatManager. All three come together in the "Cheat Mod"
-package on Nexus Mods.
+The release zip contains a folder called "Remnant2Unlocker". Copy that
+folder into Win64\Mods. The app keeps its files up to date afterwards.
 
-1. Download the zip.
-2. Extract it so each of the three mod folders ends up directly under
-   Win64\Mods\:
-
-    Win64
-    `- Mods
-       |- ConsoleCommandsMod
-       |- ConsoleEnablerMod
-       `- CheatManagerEnablerMod
-
-   If the zip already ships that structure, just extract its contents into
-   Win64 (allow overwrite).
+Stack size and item level: the app replaces UE4SS's
+Mods\ConsoleCommandsMod\Scripts\summon_unloaded_assets.lua with a version
+that understands them. Without it items still spawn, one at a time at level 0.
+The wizard / "Install / Repair" installs it; manually you can take it from
+the repo folder "Lua Scripts inside game directory\ConsoleCommandsMod\Scripts".
 
 
-3. Install the Remnant2Unlocker mod (this tool)
---------------------------------------------------
+3. (Optional) Summonable Traits
+-------------------------------
 
-1. Download the latest release zip from the GitHub Releases page:
-   https://github.com/EX0Sk1tz/Remnant-2-item-spawner-UI/releases
-
-2. The zip contains a folder called "Remnant2Unlocker" - copy ONLY that
-   folder into:
-
-    ...\Remnant2\Remnant2\Binaries\Win64\Mods
-
-3. Final structure:
-
-    Win64
-    `- Mods
-       `- Remnant2Unlocker
-          |- Scripts    (all .lua files from the zip - leave the folder as-is)
-          |- command_queue.json
-          |- enabled.txt
-          |- hotkeys.json
-          |- items.json
-          `- status.json
-
-   Don't second-guess the exact file list inside Scripts\ - it changes
-   between releases as features get added. As long as the whole
-   Remnant2Unlocker folder you copied is intact and unmodified, you're set.
-
-4. The .exe from the same zip (Remnant2UnlockerApp.exe) can live anywhere on
-   your PC (e.g. Desktop) - it does NOT need to be inside the game folder.
+Only needed to spawn Trait / Core Trait / Archetype Trait items. Download it
+from https://www.nexusmods.com/remnant2/mods/122 and extract its mod folder
+into Win64\Mods.
 
 
-4. (Optional) Install Summonable Traits
-------------------------------------------
+4. Enable the mods
+------------------
 
-Only needed if you want to spawn or add Trait / Core Trait / Archetype Trait
-items directly to your inventory.
-
-1. Download Summonable Traits from Nexus Mods:
-   https://www.nexusmods.com/remnant2/mods/122
-
-2. Extract the mod folder into Win64\Mods as well.
-
-Everything else works fine without this mod.
-
-
-5. Enable all the mods
---------------------------
-
-UE4SS needs a list of which mods are active. Open with a text editor
-(Notepad is fine):
-
-    Win64\Mods\mods.txt
-
-(Some UE4SS versions use Win64\Mods\enabled.txt instead - if mods.txt
-doesn't exist, use that one.)
-
-Make sure there is a line ending in " : 1" for EACH of the following mods
-(just append any missing lines at the bottom):
+Open Win64\Mods\mods.txt (some UE4SS versions use Mods\enabled.txt) and make
+sure these lines exist with " : 1". Add missing ones ABOVE the
+"; Built-in keybinds, do not move up!" line:
 
     AllowModsMod : 1
     ConsoleCommandsMod : 1
@@ -145,120 +105,68 @@ Make sure there is a line ending in " : 1" for EACH of the following mods
     CheatManagerEnablerMod : 1
     Remnant2Unlocker : 1
 
-0 = disabled, 1 = enabled. Don't forget to save the file.
+(plus the Summonable Traits folder name, if installed).
 
 
-6. Start the game
----------------------
+5. Start the game, then the app
+-------------------------------
 
-Launch Remnant 2 normally through Steam. Let it fully load into the main
-menu/world at least once - this is when UE4SS writes the log file the app
-uses later for diagnostics.
-
-
-7. Start the app and set the game path
-------------------------------------------
-
-1. Run Remnant2UnlockerApp.exe.
-2. Click "Browse" and select exactly this folder:
-
-    ...\Remnant2\Remnant2\Binaries\Win64
-
-   NOT the Steam folder, NOT the Remnant2 root folder, NOT the Mods folder -
-   exactly the Win64 folder.
-
-3. The path is saved automatically.
+Start Remnant 2 once, then run Remnant2UnlockerApp.exe and select the Win64
+folder when asked (choosing the game's main folder works too).
 
 
-8. Run Diagnostics
-----------------------
+Nested ue4ss folder / Game Pass
+-------------------------------
 
-Click the Diagnostics icon in the app. It automatically checks:
-
-- whether the game path is correct
-- whether UE4SS itself is installed (UE4SS.dll, UE4SS-settings.ini, and on
-  Game Pass, dwmapi.dll)
-- whether all required mod folders are present
-- whether all mods are enabled in mods.txt/enabled.txt
-- (if the game is currently running) whether UE4SS's log confirms everything
-  started correctly
-
-Every reported issue comes with a suggested fix - this is the fastest way to
-find out what's still missing. If you need to ask for help, click "Copy
-Report" in the Diagnostics window and paste it into Discord - it's the
-fastest way for someone else to see exactly what's wrong on your setup.
-
-
-9. Game Pass / Windows Store differences
---------------------------------------------
-
-The Xbox/Microsoft Store (WinGDK) build of Remnant 2 can't load UE4SS the
-normal way. It needs to be hooked through a dwmapi.dll proxy instead of the
-usual method. Use UE4SS v3.0.1:
+Newer UE4SS builds (the UE4SS console shows "v3.0.1 Beta"; Allow Asset Mods
+may ship one) load through a dwmapi.dll proxy and keep everything in a
+"ue4ss" subfolder. This happens on Steam and Epic (Win64\ue4ss\Mods) as well
+as on the Xbox/Microsoft Store (WinGDK) build. A leftover Win64\Mods folder
+from an older UE4SS is then ignored by UE4SS - put the mods in ue4ss\Mods.
+For Game Pass, UE4SS v3.0.1 is known to work:
 
     https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1
 
-(the repo's rolling "experimental" build hasn't been updated since December
-2024, so 3.0.1 is the version to grab). This changes where things end up on
-disk:
+The Game Pass layout looks like this (Steam/Epic: Win64 instead of WinGDK):
 
     WinGDK
     |- Remnant2-WinGDK-Shipping.exe
-    |- dwmapi.dll             (proxy dll, loads UE4SS on game start)
+    |- dwmapi.dll
     `- ue4ss
        |- UE4SS.dll
-       `- mods                (note: nested here, NOT WinGDK\Mods)
-          |- Remnant2Unlocker
-          |- AllowModsMod
-          |- ConsoleCommandsMod
-          |- ConsoleEnablerMod
-          |- CheatManagerEnablerMod
+       `- mods
+          |- Remnant2Unlocker, AllowModsMod, ConsoleCommandsMod, ...
           `- mods.txt / enabled.txt
 
-So wherever steps 1-5 above say to copy a mod folder into "Win64\Mods", copy
-it into "WinGDK\ue4ss\mods" instead. Likewise, mods.txt/enabled.txt (step 5)
-lives at "WinGDK\ue4ss\mods\mods.txt" (or enabled.txt).
-
-When you get to step 7 (setting the game path in the app), still point
-Browse at the WinGDK folder itself - the app checks both "Mods\" and
-"ue4ss\mods\" automatically and will find your mods either way.
-
-Known issues on Game Pass:
-- This setup is inherently janky and depends on which UE4SS build you're
-  using - expect more friction than Steam/Epic.
-- AllowModsMod has occasionally been reported to crash the game on the
-  Windows Store version. If the game crashes right after launch, make sure
-  you're on UE4SS v3.0.1 (link above) and not an older or mismatched build.
+The app and the wizard detect both layouts; always select the Win64 / WinGDK
+folder itself. Game Pass setups are more fragile than Steam/Epic, and AllowModsMod
+has been reported to crash the Store version with mismatched UE4SS builds.
 
 
 Troubleshooting
 ===============
 
+Run Diagnostics (the icon in the app) first - it names the missing piece and
+"Copy Report" gives you something to paste when asking for help. The setup
+wizard (Settings > "Repair / update installation") fixes most problems.
+
 Spawn does nothing:
-  Check the UE4SS installation, make sure all mods are enabled in
-  mods.txt/enabled.txt, and make sure you selected the correct Win64 folder.
-  Run Diagnostics first - it will usually name the exact missing piece.
+  Run the wizard's "Install / Repair" and check Diagnostics.
 
 No UE4SS console window appears when the game starts:
-  UE4SS itself never loaded - this is almost always antivirus/Windows
-  Defender quarantining UE4SS.dll (or dwmapi.dll on Game Pass) right after
-  you extract it, since it's a DLL that hooks the game process. Check your
-  antivirus quarantine/history, restore the file, and add the UE4SS folder
-  to its exclusions so it doesn't happen again on every update.
+  UE4SS never loaded - almost always antivirus quarantining UE4SS.dll (or
+  dwmapi.dll on Game Pass). Restore it and add an exclusion.
 
-"Game path not configured":
-  Select the exact Win64 (or WinGDK on Game Pass) folder again - not the
-  Steam/Xbox folder, not the game root folder, not the Mods folder. On Game
-  Pass, also double check your mods actually ended up under
-  WinGDK\ue4ss\mods - see section 9.
+Stack size / item level is ignored:
+  The patched summon command is missing (Diagnostics: "Stack size & item
+  level support"). Run "Install / Repair".
 
 Some items crash or fail to spawn:
   Use "Force" or "Copy" instead - some assets are unstable through direct
   spawning.
 
 Traits won't spawn or Add is blocked:
-  The Summonable Traits mod is missing or not enabled - check with
-  Diagnostics.
+  Summonable Traits is missing or not enabled - install it in the wizard.
 
 
 Notice

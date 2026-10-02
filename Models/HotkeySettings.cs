@@ -18,6 +18,8 @@ public sealed class HotkeySettings
 
     public string FastPlayerActions { get; set; } = "None";
 
+    public string EnemyOutline { get; set; } = "F7";
+
     public string Wiki { get; set; } = "wiki.gg";
 
     public double MovementSpeedMultiplier { get; set; } = 1.0;

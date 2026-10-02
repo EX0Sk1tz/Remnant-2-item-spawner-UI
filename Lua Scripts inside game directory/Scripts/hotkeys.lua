@@ -2,6 +2,7 @@ local json = require("json")
 local UEHelpers = require("UEHelpers")
 local Destroy = require("destroy")
 local CombatActions = require("combat_actions")
+local EnemyOutline = require("enemy_outline")
 
 local Hotkeys = {}
 
@@ -14,6 +15,7 @@ local activeDestroyLastSpawnedKey = "None"
 local activeDestroyNearbySpawnedKey = "None"
 local activeReplenishCooldownsKey = "None"
 local activeFastPlayerActionsKey = "None"
+local activeEnemyOutlineKey = "None"
 
 local boundTeleportKeys = {}
 local boundDestroyTargetKeys = {}
@@ -21,6 +23,7 @@ local boundDestroyLastSpawnedKeys = {}
 local boundDestroyNearbySpawnedKeys = {}
 local boundReplenishCooldownsKeys = {}
 local boundFastPlayerActionsKeys = {}
+local boundEnemyOutlineKeys = {}
 
 local function ReadAllText(path)
     local file = io.open(path, "r")
@@ -113,7 +116,8 @@ local DEFAULT_SETTINGS = {
     destroyLastSpawned = "None",
     destroyNearbySpawned = "None",
     replenishCooldowns = "None",
-    fastPlayerActions = "None"
+    fastPlayerActions = "None",
+    enemyOutline = "None"
 }
 
 local function LoadSettings()
@@ -280,6 +284,29 @@ local function RegisterFastPlayerActionsKey(keyName)
     print("[Remnant2Unlocker] FastPlayerActions hotkey registered: " .. keyName)
 end
 
+local function RegisterEnemyOutlineKey(keyName)
+    if boundEnemyOutlineKeys[keyName] then
+        return
+    end
+
+    local keyEnum = GetKeyEnum(keyName)
+
+    if not keyEnum then
+        print("[Remnant2Unlocker] EnemyOutline hotkey not bound: " .. tostring(keyName))
+        return
+    end
+
+    RegisterKeyBind(keyEnum, function()
+        if activeEnemyOutlineKey == keyName then
+            EnemyOutline.Toggle()
+        end
+    end)
+
+    boundEnemyOutlineKeys[keyName] = true
+
+    print("[Remnant2Unlocker] EnemyOutline hotkey registered: " .. keyName)
+end
+
 local function ApplySettings(settings)
     local teleportKey = NormalizeKey(settings.teleport)
     local destroyTargetKey = NormalizeKey(settings.destroyTarget)
@@ -287,6 +314,7 @@ local function ApplySettings(settings)
     local destroyNearbySpawnedKey = NormalizeKey(settings.destroyNearbySpawned)
     local replenishCooldownsKey = NormalizeKey(settings.replenishCooldowns)
     local fastPlayerActionsKey = NormalizeKey(settings.fastPlayerActions)
+    local enemyOutlineKey = NormalizeKey(settings.enemyOutline)
 
     if teleportKey ~= activeTeleportKey then
         activeTeleportKey = teleportKey
@@ -322,6 +350,12 @@ local function ApplySettings(settings)
         activeFastPlayerActionsKey = fastPlayerActionsKey
         RegisterFastPlayerActionsKey(fastPlayerActionsKey)
         print("[Remnant2Unlocker] FastPlayerActions hotkey updated: " .. fastPlayerActionsKey)
+    end
+
+    if enemyOutlineKey ~= activeEnemyOutlineKey then
+        activeEnemyOutlineKey = enemyOutlineKey
+        RegisterEnemyOutlineKey(enemyOutlineKey)
+        print("[Remnant2Unlocker] EnemyOutline hotkey updated: " .. enemyOutlineKey)
     end
 end
 
