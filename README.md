@@ -2,73 +2,118 @@
 
 <img width="1921" height="769" alt="image" src="https://github.com/user-attachments/assets/c1dbc76f-fa37-41f9-94c3-99f479cdfcb0" />
 
+Hi there, and welcome! ♥
+
+This is a little desktop app that sits next to Remnant 2 and lets you spawn pretty much any item in the game with one click. It also has a bunch of cheats, hotkeys and quality-of-life helpers that I kept adding because I wanted them myself. Want to try out a build without farming for hours, finish your collection, or just mess around? That's exactly what it's for.
+
+**New in v4.5.0:** the app now sets everything up for you! A setup wizard finds your game, installs the mod and turns everything on, so there's no more copying folders around or editing text files.
+
+Download it from [Nexus Mods](https://www.nexusmods.com/remnant2/mods/215) or from the [Releases](https://github.com/EX0Sk1tz/Remnant-2-item-spawner-UI/releases) page here.
+
 ---
 
 # Features
 
-- Searchable item database
-- Category and subcategory filtering
-- Direct spawn through UE4SS
-- Force spawn through in game console
-- Group spawn an entire category/subcategory at once
-- Trait support (Spawn or Add directly to inventory) via the optional Summonable Traits mod
-- Prisms (Other → Prism): Add any of the seven unique prisms straight to your inventory; prisms you already have are skipped
-- Copy summon command to clipboard
-- Integrated wiki button (wiki.gg or Fextralife, selectable in Settings)
-- Hotkey Customization (Console key, Teleport, Destroy Target/Last Spawned/Nearby Spawned, Replenish Cooldowns & Mod Power, Fast Player Actions)
-- Teleport
-- Movement speed multiplier and configurable default stack size
-- **Cheats**: Infinite Health/Stamina/Ammo, No Fall Damage, Magic Bullets (aim assist with adjustable FOV), 100% Loot Drop Chance, No Recoil, No Spread
-- **Cheat Commands**: Level Up by count, Set All Weapon Level, Set/inspect Inventory Item Quantity by name, Log Inventory Items
-- **Weapon Mod boosts**: per-mod tuning for HotShot, Sandstorm, Concussive Shot, Helix, Statis Beam, Voltaic Rondure, Scrapshot, and Rotted Arrow, plus a "Boost All" shortcut
-- Save/load a full settings profile (Cheats, Hotkeys, Weapon Mod boosts) to a file
-- Built-in Diagnostics to check your UE4SS/mod setup
-- In-app update checker with one-click update install
-- English and German UI language
+### Spawning
+- Searchable item database with category and subcategory filters
+- **Spawn** directly through UE4SS, or **Force** through the in-game console
+- **Spawn Group**: spawn a whole subcategory at once
+- Stack size and item level support out of the box
+- Trait support (Spawn, or Add straight to your inventory) via the optional Summonable Traits mod
+- **Prisms**: add any of the seven unique prisms (Greed, Hatred, Jealousy, Lethargy, Passion, Pride, Voracity) straight to your inventory. No boss kills or crafting needed, and prisms you already have are skipped
+- Copy the summon command to your clipboard
+- Favorites
 - DLC and hidden item support
-- Clean standalone executable
-- No external .NET installation required
+
+### Collection tracking (new!)
+- The app reads your in-game inventory and marks everything you already own
+- Collection counts per category and a **Missing only** filter
+- **Spawn Missing**: spawns one of everything you don't have yet
+- **DLC filter and badges**: show the base game or a single DLC, and see which DLC each item comes from
+
+### Cheats
+- Infinite Health (God Mode), Infinite Stamina, Infinite Ammo
+- No Fall Damage (experimental)
+- Magic Bullets (aim assist with adjustable FOV)
+- 100% Loot Drop Chance
+- No Recoil, No Spread
+- **Enemy Outlines (new!)**: every living enemy glows red like the Hunter's Mark, at any range and through walls. Only you can see it
+
+### Cheat Commands
+- Level Up by count, Set All Weapon Level
+- Set/inspect inventory item quantity by name
+- Log inventory items
+
+### Weapon Mod boosts
+- Per-mod tuning for HotShot, Sandstorm, Concussive Shot, Helix, Statis Beam, Voltaic Rondure, Scrapshot and Rotted Arrow, plus a "Boost All" shortcut
+
+### Hotkeys
+- Console key, Teleport, Destroy Target / Last Spawned / Nearby Spawned, Replenish Cooldowns & Mod Power, Fast Player Actions, Toggle Enemy Outlines (all customizable)
+- Movement speed multiplier
+
+### Comfy stuff
+- **Setup wizard (new!)** that installs and repairs everything for you
+- Mod files in the game stay in sync with the app automatically after updates, with backups and "Undo last change"
+- Optional install of the app itself, with a desktop shortcut
+- Brand-new dark look in the style of Remnant II
+- Settings profile (Cheats, Hotkeys, Weapon Mod boosts) saved in your user profile, so it survives reinstalling the game, and can load automatically on start
+- Built-in Diagnostics to check your setup
+- In-app update checker with one-click update install
+- Integrated wiki button (wiki.gg or Fextralife)
+- English and German UI
+- Single standalone `.exe`, no .NET installation needed
 
 ---
 
 # Requirements
 
 - Remnant 2 (Steam, Epic or Game Pass)
-- [Allow Asset Mods](https://www.nexusmods.com/remnant2/mods/2) from Nexus Mods (UE4SS + AllowModsMod + UE4SS's console mods, all in one download). The setup wizard installs it for you from the file you download.
+- [Allow Asset Mods](https://www.nexusmods.com/remnant2/mods/2) from Nexus Mods. It bundles UE4SS and everything else the game needs to load mods. The setup wizard installs it for you, you just download the file
 - (Optional) [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122), only needed if you want to spawn or add Trait / Core Trait / Archetype Trait items
 
-The Remnant2Unlocker mod itself (the in-game half of this app) is built into the app and installed/updated automatically.
+The Remnant2Unlocker mod itself (the in-game half of this app) is built into the app and gets installed and updated automatically. The separate "Cheat Mod" download for stack size and item level isn't needed anymore either.
 
 ---
 
 # Installation
 
-1. Download the latest release and run `Remnant2UnlockerApp.exe`.
-2. On the first start the app offers to **install itself** (default `%LocalAppData%\Programs\Remnant2Unlocker`, optional desktop shortcut). "Run without installing" keeps it portable.
-3. The **setup wizard** opens:
-   - **Game** – finds Steam, Epic and Game Pass installs; or choose the folder (the game's main folder works too).
-   - **Close the game** – only shown if Remnant 2 is running.
-   - **Components** – everything the mod needs, with live status:
-     - *UE4SS + AllowModsMod (Allow Asset Mods)*: click **Open Nexus page**, download the main file, and drop the `.zip` / `.rar` / `.7z` onto the wizard (or **Choose file…** / **Choose folder…**).
-     - *Remnant2Unlocker mod*, *Stack size & item level support* (a `summon` command that understands stack size and level) and *mods enabled in mods.txt*: installed by **Install / Repair**.
-     - *Summonable Traits (optional)*: same drop zone, or **Skip**.
-   - **Antivirus check** – makes sure Windows Defender didn't quarantine UE4SS right after it was copied.
-   - **Test launch** – starts the game (Steam) or asks you to, and waits until the mod reports in.
+### 1. Start the app
 
-Afterwards:
+Unpack the zip anywhere and run `Remnant2UnlockerApp.exe`.
 
-- Reopen the wizard any time: **Settings → General → Repair / update installation**.
-- After an app update, the mod files in the game are brought up to date automatically on the next start (while the game runs, the app asks first).
-- Every file the app replaces in the game folder is backed up to `Mods\Remnant2Unlocker\Backups` (last 5 kept); **Undo last change** in the wizard restores the latest one.
-- Steam under `C:\Program Files (x86)` needs admin rights to write; the wizard offers **Restart as administrator**.
+On the first start it asks if you want to install it (to `%LocalAppData%\Programs\Remnant2Unlocker`, with an optional desktop shortcut). If you'd rather keep it where you unpacked it, just pick **Run without installing**.
 
-Manual installation steps (without the wizard) are in [Instructions.txt](Instructions.txt).
+### 2. Follow the setup wizard
+
+The wizard opens by itself and walks you through everything:
+
+- **Game**: finds your Steam, Epic or Game Pass install, or lets you pick the folder (the game's main folder works too).
+- **Close the game**: only shows up if Remnant 2 is running.
+- **Components**: everything the mod needs, with live status.
+  - *Allow Asset Mods*: this is the only thing you download yourself. Click **Open Nexus page**, download the main file and drag & drop the `.zip` / `.rar` / `.7z` onto the wizard (or use **Choose file…** / **Choose folder…**).
+  - *Remnant2Unlocker mod*, *Stack size & item level support* and *mods enabled in mods.txt*: all handled by **Install / Repair**.
+  - *Summonable Traits (optional)*: same drop zone, or just **Skip**.
+- **Antivirus check**: makes sure Windows Defender didn't eat UE4SS right after it was copied.
+- **Test launch**: starts the game (or asks you to) and waits until the mod says hello.
+
+And that's it!
+
+A few nice things to know:
+
+- You can reopen the wizard anytime under **Settings → General → Repair / update installation**.
+- After an app update, the mod files in your game folder are updated automatically on the next start. If the game is running, the app asks first (restart the game afterwards).
+- Everything the app replaces in the game folder is backed up first (`Mods\Remnant2Unlocker\Backups`, the last 5 are kept). **Undo last change** in the wizard puts the latest backup back.
+- If your game lives under `C:\Program Files (x86)`, Windows needs admin rights to write there. The wizard offers **Restart as administrator** when that happens.
+
+**Updating from an older version?** On the first start of v4.5.0 the app updates the mod files in your game folder once (with a backup) and shows "Mod updated". Restart the game if it was running and you're good to go.
+
+Prefer doing it by hand? The manual steps are in [Instructions.txt](Instructions.txt).
 
 ## Nested `ue4ss` folder / Game Pass notes
 
-Newer UE4SS builds (the UE4SS console shows "v3.0.1 Beta") keep everything in a `ue4ss` subfolder, on Steam and Epic (`Win64\ue4ss\Mods`) as well as Game Pass. A leftover `Win64\Mods` from an older UE4SS is then ignored by UE4SS; the app detects this and uses `ue4ss\Mods`.
+Newer UE4SS builds (the UE4SS console shows "v3.0.1 Beta") keep everything in a `ue4ss` subfolder. That happens on Steam and Epic (`Win64\ue4ss\Mods`) as well as on Game Pass. A leftover `Win64\Mods` folder from an older UE4SS is then ignored by UE4SS, but don't worry, the app notices this and uses `ue4ss\Mods`.
 
-The Xbox/Microsoft Store (WinGDK) build loads UE4SS through a `dwmapi.dll` proxy; **[UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1)** is known to work. With it, mods live in `WinGDK\ue4ss\mods` instead of `WinGDK\Mods`:
+The Xbox / Microsoft Store (WinGDK) build loads UE4SS through a `dwmapi.dll` proxy. **[UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1)** is known to work. The layout looks like this:
 
 ```text
 WinGDK
@@ -83,154 +128,122 @@ WinGDK
       └─ ...
 ```
 
-The app and the wizard detect both layouts; always select the `Win64` / `WinGDK` folder itself.
+The app and the wizard detect both layouts, so always just point them at the `Win64` / `WinGDK` folder itself.
 
-Known issues on Game Pass:
-- This setup is janky and depends on which UE4SS build you're using — expect more friction than Steam/Epic.
-- `AllowModsMod` has occasionally been reported to crash the game on the Windows Store version. If you hit crashes right after launch, make sure you're on [UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1) and not an older or mismatched build.
+To be honest with you: Game Pass setups are more fragile than Steam/Epic, and `AllowModsMod` has been reported to crash the Store version with mismatched UE4SS builds. If the game crashes right after launch, double-check you're on [UE4SS v3.0.1](https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1).
 
 ---
 
 # Buttons
 
-## Spawn
+### Spawn
+Uses the UE4SS bridge to spawn the selected item. Fast and safe for most items.
 
-Uses the UE4SS bridge and CheatManager to spawn the selected item.
+### Force
+Opens the in-game console and pastes the summon command for you. Handy for DLC items, unloaded assets, or anything that's being stubborn with Spawn.
 
-Fast and safe for most items.
+### Add (Traits and Prisms)
+Puts the item straight into your inventory instead of dropping it in the world. Traits need the optional [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122) mod, prisms work without anything extra.
 
----
+### Spawn Group
+Spawns every item in the selected subcategory, using your default stack size. Groups bigger than 50 items ask first and spawn with a short delay in between so the game doesn't get overwhelmed.
 
-## Force
+### Spawn Missing
+Spawns one of every item you don't own yet in the selected subcategory, in All, or in your Favorites. It respects the DLC filter too.
 
-Uses the in game console directly.
+### Scan Inventory
+Rescans your inventory right away (it also happens automatically every few seconds).
 
-Useful for:
-- DLC items
-- unloaded assets
-- problematic items
-- testing summon commands
-
----
-
-## Add (Traits only)
-
-Adds a Trait / Core Trait / Archetype Trait directly to your inventory instead of spawning a world item. Requires the optional [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122) mod (install it in the setup wizard).
-
----
-
-## Spawn Group
-
-Spawns every item in the selected subcategory at once, using your configured default stack size. Groups larger than 50 items ask for confirmation first and spawn with a short delay between items to avoid overloading the game.
-
----
-
-## Copy
-
-Copies the complete summon command to your clipboard.
-
-Example:
+### Copy
+Copies the full summon command, for example:
 
 ```text
 summon /Game/World_Base/Items/Weapons/Longguns/Special/CrescentMoon/Weapon_CrescentMoon.Weapon_CrescentMoon_C
 ```
 
-You can manually paste and modify the command in the in game console.
+You can paste and tweak it in the in-game console yourself.
 
----
-
-## Wiki
-
-Opens the corresponding Remnant 2 wiki page. Choose wiki.gg or Fextralife as the source in Settings.
+### Wiki
+Opens the item's wiki page on wiki.gg or Fextralife (your choice in Settings).
 
 ---
 
 # Settings
 
-Opened via the gear icon in the top left. Split into five tabs:
+Open them with the gear icon in the top left.
 
-## General
+### General
+- **Always on top**: keeps the app above the game
+- **Wiki**: wiki.gg or Fextralife
+- **Speed multiplier**: movement speed, 1x to 5x
+- **Default stack size**: used for Spawn, Force and Spawn Group
+- **Settings Profile**: Save / Load your Cheats, Hotkeys and Weapon Mod boosts, with an option to load them automatically on startup. Favorites aren't included, they keep working like always
+- **Repair / update installation**: reopens the setup wizard
+- **Language**: English or Deutsch
 
-- **Always on top** — keeps the app window above the game.
-- **Wiki** — choose wiki.gg or Fextralife as the source the Wiki button opens.
-- **Speed multiplier** — movement speed multiplier, 1x–5x.
-- **Default stack size** — quantity used for Spawn/Force/Spawn Group.
-- **Settings Profile** — Save Settings / Load Settings buttons. Saves the current Cheats, Hotkeys, and Weapon Mod boost values to a file, or loads a previously saved one. Favorites aren't included — those keep working as they always have.
-- **Language** — English or Deutsch.
-
-## Hotkeys
-
+### Hotkeys
 - **Console key**, **Teleport**
-- **Destroy Target** — deletes whatever you're currently looking at. Can remove world objects, invisible barriers, or important level parts — use carefully.
+- **Destroy Target**: deletes whatever you're looking at. This can remove world objects, invisible barriers or important level parts, so please be careful with it!
 - **Destroy Last Spawned** / **Destroy Nearby Spawned**
 - **Replenish Cooldowns & Mod Power**
-- **Fast Player Actions** — speeds up skill/attack/evade animations; re-press after changing areas.
+- **Fast Player Actions**: speeds up skill, attack and evade animations. Press it again after changing areas
+- **Toggle Enemy Outlines** (F7 by default)
 
-## Cheats
-
-- **Infinite Health** (God Mode — zeroes incoming damage), **Infinite Stamina**, **Infinite Ammo**
-- **No Fall Damage** — experimental, not fully verified yet
-- **Aim → Magic Bullets** — aim assist, with an adjustable FOV cone
+### Cheats
+- **Infinite Health** (God Mode), **Infinite Stamina**, **Infinite Ammo**
+- **No Fall Damage**: works most of the time, but isn't fully tested yet
+- **Aim → Magic Bullets** with an adjustable FOV cone
 - **Loot → 100% Loot Drop Chance**
 - **Weapon Handling → No Recoil**, **No Spread**
+- **Vision → Enemy Outlines**
 
-## Cheat Commands
+### Cheat Commands
+- **Level Up (count)**, **Set All Weapon Level** (232 is the highest level known to do anything)
+- **Set / inspect Inventory Item Quantity** by name
+- **Log Inventory Items**: writes to `UE4SS.log`, with an "All items" toggle
 
-- **Level Up (count)**, **Set All Weapon Level**
-- **Set/inspect Inventory Item Quantity** by name
-- **Log Inventory Items** — dumps to `UE4SS.log`, with an "all items" toggle
-
-## Weapon Mods
-
-Per-mod boost values for HotShot, Sandstorm, Concussive Shot, Helix, Statis Beam, Voltaic Rondure, Scrapshot, and Rotted Arrow, plus a "Boost All" shortcut. Each field is a multiplier on the mod's base value (e.g. `10` = 10x); duration/frequency fields work in reverse — use a value below 1 for more frequent triggers.
+### Weapon Mods
+Per-mod boost values for HotShot, Sandstorm, Concussive Shot, Helix, Statis Beam, Voltaic Rondure, Scrapshot and Rotted Arrow, plus "Boost All". Each field is a multiplier on the mod's base value (`10` = 10x). "Frequency" and "Delay" fields are time intervals, so they work the other way around: use a value below 1 if you want them to trigger more often.
 
 ---
 
 # Diagnostics
 
-Click the diagnostics icon to check your setup: game path, UE4SS core files (`UE4SS.dll`, and `dwmapi.dll` on Game Pass), required UE4SS mods present/enabled, `Remnant2Unlocker` files valid, stack size & item level support installed, and (if the game isn't running) whether UE4SS's log confirms everything loaded correctly. Each check shows what failed and how to fix it. Use **Copy Report** to copy the full report to your clipboard when asking for help.
+Click the diagnostics icon to check your setup: game path, UE4SS files (`UE4SS.dll`, and `dwmapi.dll` on Game Pass), required mods present and enabled, `Remnant2Unlocker` files, stack size & item level support, and (when the game isn't running) whether UE4SS's log says everything loaded. Every failed check tells you what's wrong and how to fix it, and most fixes point you straight to the wizard.
+
+If you need help, hit **Copy Report** and paste it into your issue or comment. It makes helping you so much easier!
 
 ---
 
 # Troubleshooting
 
-## Spawn does nothing
+**Run Diagnostics first**, it usually names the exact missing piece. And the wizard's **Install / Repair** fixes most problems on its own.
 
-Run Diagnostics first — it will usually name the exact missing piece. Then open **Settings → Repair / update installation** and click **Install / Repair**.
+### Spawn does nothing
+Run **Install / Repair** in the wizard (**Settings → General → Repair / update installation**) and check Diagnostics.
 
----
+### No UE4SS console window appears when the game starts
+UE4SS never loaded. This is almost always your antivirus / Windows Defender quarantining `UE4SS.dll` (or `dwmapi.dll` on Game Pass), because it hooks into the game. Restore it from quarantine and add an exclusion for the Binaries folder so it doesn't happen again. The wizard checks for this too.
 
-## No UE4SS console window appears when the game starts
+### The app says "Game path not configured"
+Open the setup wizard (**Settings → General → Repair / update installation**) and pick your install there. It finds Steam, Epic and Game Pass installs, and accepts the game's main folder as well as `Binaries\Win64` / `Binaries\WinGDK`.
 
-UE4SS itself never loaded. This is almost always antivirus/Windows Defender quarantining `UE4SS.dll` (or `dwmapi.dll` on Game Pass) right after extraction, since it's a DLL that hooks the game process. Check your antivirus quarantine/history, restore the file, and add the UE4SS folder to its exclusions so it doesn't happen again on the next update.
+### Stack size / item level is ignored
+The patched `summon` command is missing (Diagnostics: *Stack size & item level support*). Run **Install / Repair**.
 
----
+### Some items crash or fail to spawn
+Use **Force** or **Copy** instead. Some assets just don't like being spawned directly.
 
-## The app says "Game path not configured"
-
-Open the setup wizard (**Settings → Repair / update installation**) and pick your install there. It finds Steam, Epic and Game Pass installs, and accepts the game's main folder as well as `Binaries\Win64` / `Binaries\WinGDK`.
-
----
-
-## Stack size / item level is ignored
-
-The patched `summon` command is missing (Diagnostics: *Stack size & item level support*). Run **Install / Repair** in the setup wizard.
+### Traits won't spawn or Add is blocked
+Summonable Traits is missing or not enabled. Just drop its download onto the setup wizard, then run Diagnostics to make sure the app sees it.
 
 ---
 
-## Some items crash or fail
+# Good to know about Teleport
 
-Use:
-- Force
-- Copy
-
-Some assets are unstable through direct spawning.
-
----
-
-## Traits won't spawn or Add is blocked
-
-Install the [Summonable Traits](https://www.nexusmods.com/remnant2/mods/122) mod: drop its download onto the setup wizard. Run Diagnostics to confirm the app detects it.
+- Teleporting down a lethal height will kill you, just like falling would. Going up is fine, and it works best aimed at a surface.
+- It won't work while you're holding Shift (sprinting).
+- Anything in the way shortens the teleport. Think of it like a super fast fly mod: you need a clear line of sight.
 
 ---
 
@@ -252,17 +265,9 @@ The exe must be a true single file (the csproj turns on `IncludeNativeLibrariesF
 
 ---
 
-# Notice:
-If experiencing crashes with the Spawn Button, just use the Force Button.
-This will open the console ingame and paste the summon command, the hotkey for the console can be configured in the app.
-
-Teleport will kill you if the vertical distance downwards would be lethal through falling.
-Upwards no restriction. Best to use against a surface.
-Pressing Shift aka. Sprinting while trying to Teleport will not work.
-Any environment blocking your character from its path to the desired location will result in shorter teleport.
-Imagine it being a very fast fly mod, the line of sight must be clear.
-
 # Disclaimer
 
-This project is intended for offline and personal use only.
-Use at your own risk.
+This project is meant for offline and personal use only. Use it at your own risk.
+It's an unofficial fan project and not affiliated with the rights holders of Remnant 2. Licensed under the [MIT License](LICENSE.txt).
+
+Thank you so much for stopping by, and have fun out there! If you run into anything weird or have an idea for a new feature, feel free to open an issue, I read all of them. ♥
