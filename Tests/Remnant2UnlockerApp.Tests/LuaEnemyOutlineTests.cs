@@ -69,7 +69,23 @@ public class LuaEnemyOutlineTests
         function StaticFindObject(path)
             if path:find("GameUtil", 1, true) then return __gameUtil end
             if path:find("CombatUtil", 1, true) then return __combatUtil end
+            for _, a in ipairs(__actors) do if a.name == path then return a end end
             return nil
+        end
+
+        -- The GC freeing an actor: it's gone from the object array, and its old wrapper now points
+        -- at freed memory. Any use of it (even IsValid) is counted, since in the real game that can
+        -- crash past pcall.
+        __freedTouches = 0
+        function Collect(name)
+            for i, a in ipairs(__actors) do
+                if a.name == name then
+                    table.remove(__actors, i)
+                    for k in pairs(a) do a[k] = nil end
+                    setmetatable(a, { __index = function() __freedTouches = __freedTouches + 1 end })
+                    return
+                end
+            end
         end
 
         function MakeActor(name, hostile, alive)
@@ -345,6 +361,23 @@ public class LuaEnemyOutlineTests
         Tick();
 
         Assert.Equal("on:254", CallsFor("Zombie"));
+    }
+
+    // A user crash dump showed UE4SS crashing on IsValid() of a kept wrapper whose actor had been
+    // freed. Characters must be found again by path each tick, never through an old wrapper.
+    [Fact]
+    public void CollectedActors_AreNeverTouchedThroughTheirOldWrapper()
+    {
+        SetFileEnabled(true);
+        Tick();
+        _lua.DoString("Collect('Zombie')");
+        Tick();
+        SetFileEnabled(false);
+        Tick();
+
+        Assert.Equal(0, _lua.DoString("return __freedTouches").Number);
+        Assert.Equal("on:254", CallsFor("Zombie"));
+        Assert.Equal("on:254,off:254", CallsFor("Ambusher"));
     }
 
     [Fact]

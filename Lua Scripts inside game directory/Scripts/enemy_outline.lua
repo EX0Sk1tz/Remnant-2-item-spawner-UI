@@ -19,6 +19,13 @@ local UEHelpers = require("UEHelpers")
 -- (the notification not working would look the same), it falls back to a rescan every
 -- RESCAN_FALLBACK_MS.
 --
+-- Characters are remembered by object path, never by the Lua wrapper, and looked up again with
+-- StaticFindObject every tick. A kept wrapper outlives its actor: once the GC frees the actor,
+-- even obj:IsValid() reads freed memory (InternalIndex) and can crash the game outright, past
+-- pcall (seen in a user crash dump: AV in UE4SS.dll indexing GUObjectArray with pointer garbage).
+-- StaticFindObject only ever returns objects that still exist, so a stale entry just resolves to
+-- nil and is dropped.
+--
 -- Toggled from the app (cheats.json "enemyOutline", edge-triggered like the other cheats) or with
 -- the in-game hotkey (hotkeys.lua -> EnemyOutline.Toggle). The hotkey writes the new value back to
 -- cheats.json so the app's switch follows it. It only flips the flag; the next tick does the
@@ -40,8 +47,8 @@ local lastFileValue = nil
 local needsScan = false
 local spawnNotified = false
 local msSinceScan = 0
-local known = {}    -- address -> character seen by the scan or a spawn notification
-local outlined = {} -- address -> actor we switched on
+local known = {}    -- object path -> true, for characters seen by the scan or a spawn notification
+local outlined = {} -- object path -> true, for actors we switched on
 local gameUtil = nil
 local combatUtil = nil
 
@@ -103,10 +110,22 @@ local function GetPlayerPawn()
     return nil
 end
 
-local function AddressOf(obj)
-    local ok, address = pcall(function() return obj:GetAddress() end)
+-- GetFullName is "<Class> <Path>"; StaticFindObject wants just the path.
+local function PathOf(obj)
+    local ok, fullName = pcall(function() return obj:GetFullName() end)
 
-    if ok then return address end
+    if not ok or fullName == nil then return nil end
+
+    fullName = tostring(fullName)
+
+    return fullName:match("^%S+%s+(.+)$") or fullName
+end
+
+-- Returns the live object at path, or nil once it's gone.
+local function Resolve(path)
+    local ok, obj = pcall(function() return StaticFindObject(path) end)
+
+    if ok and IsValidObject(obj) then return obj end
 
     return nil
 end
@@ -114,9 +133,9 @@ end
 local function Remember(actor)
     if not IsValidObject(actor) or IsDefaultObject(actor) then return end
 
-    local address = AddressOf(actor)
+    local path = PathOf(actor)
 
-    if address then known[address] = actor end
+    if path then known[path] = true end
 end
 
 local function ScanAll()
@@ -143,12 +162,14 @@ end
 local function ClearAll()
     local count = 0
 
-    for address, actor in pairs(outlined) do
-        if gameUtil and IsValidObject(actor) and SetOutline(actor, false) then
+    for path in pairs(outlined) do
+        local actor = Resolve(path)
+
+        if gameUtil and actor and SetOutline(actor, false) then
             count = count + 1
         end
 
-        outlined[address] = nil
+        outlined[path] = nil
     end
 
     return count
@@ -159,24 +180,26 @@ local function OutlineEnemies()
 
     if not player then return end
 
-    local playerAddress = AddressOf(player)
+    local playerPath = PathOf(player)
 
-    for address, actor in pairs(known) do
-        if not IsValidObject(actor) then
-            known[address] = nil
-            outlined[address] = nil
-        elseif address ~= playerAddress then
+    for path in pairs(known) do
+        local actor = Resolve(path)
+
+        if not actor then
+            known[path] = nil
+            outlined[path] = nil
+        elseif path ~= playerPath then
             local okEnemy, isEnemy = pcall(function() return combatUtil:IsEnemy(player, actor) end)
             local okAlive, isAlive = pcall(function() return actor:IsAlive() end)
 
             if okEnemy and isEnemy and okAlive and isAlive then
                 if not IsOutlineOn(actor) and SetOutline(actor, true) then
-                    outlined[address] = actor
+                    outlined[path] = true
                 end
-            elseif outlined[address] then
+            elseif outlined[path] then
                 -- Died (or stopped being hostile): drop the outline like the Mark does.
                 SetOutline(actor, false)
-                outlined[address] = nil
+                outlined[path] = nil
             end
         end
     end

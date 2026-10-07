@@ -393,3 +393,6 @@ Cache/
 
 # Personal notes file for pasting into the Nexus Mods description editor, not part of the app
 NexusMods_Description.txt
+
+# Crash dumps and logs sent in by users for debugging
+LatestLogs/

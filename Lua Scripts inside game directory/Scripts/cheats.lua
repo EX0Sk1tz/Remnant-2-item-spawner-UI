@@ -240,6 +240,7 @@ end
 
 local godModeHookRegistered = false
 local godModeHookAttempts = 0
+local godModeHookQueued = false
 local GOD_MODE_MAX_ATTEMPTS = 5
 
 -- Registered unconditionally, regardless of the current infiniteHealth value -- the hook
@@ -255,10 +256,16 @@ local GOD_MODE_MAX_ATTEMPTS = 5
 -- not the main menu/character preview (confirmed in testing: a menu-only pawn passed the old
 -- "any pawn" check and burned the only attempt), (2) only ever try a bounded number of times
 -- (not forever -- a call that can hard-crash the mod should not be retried indefinitely), and
--- (3) this only ever runs from inside the 1s LoopAsync tick (never from Start() directly), so a
+-- (3) this is only ever queued from the 1s LoopAsync tick (never run from Start() directly), so a
 -- hard failure here happens well after every other module has already started and can't take
 -- them down with it.
+--
+-- Runs on the game thread (queued by QueueGodModeHook): GetPlayerPawn walks the object array and
+-- RegisterHook touches UFunctions, and doing either from the LoopAsync thread races the game's
+-- GC and can read a freed object.
 local function EnsureGodModeHook()
+    godModeHookQueued = false
+
     if godModeHookRegistered or godModeHookAttempts >= GOD_MODE_MAX_ATTEMPTS then
         return
     end
@@ -287,6 +294,17 @@ local function EnsureGodModeHook()
     else
         print("[Remnant2Unlocker] Infinite Health hook registration failed (attempt " .. tostring(godModeHookAttempts) .. "/" .. tostring(GOD_MODE_MAX_ATTEMPTS) .. "), will retry: " .. tostring(err))
     end
+end
+
+-- Called from the LoopAsync thread. Queues at most one attempt at a time, so a slow game thread
+-- (loading screens) can't pile attempts up, and stops queuing once the hook is in or given up on.
+local function QueueGodModeHook()
+    if godModeHookQueued or godModeHookRegistered or godModeHookAttempts >= GOD_MODE_MAX_ATTEMPTS then
+        return
+    end
+
+    godModeHookQueued = true
+    ExecuteInGameThread(EnsureGodModeHook)
 end
 
 -- Generic "keep this VitalityComponent's Value at its own observed peak" -- works for Stamina
@@ -416,7 +434,7 @@ function Cheats.Start()
     -- (or any later SafeStart'd module in main.lua) down with it.
     LoopAsync(1000, function()
         ReloadSettings()
-        EnsureGodModeHook()
+        QueueGodModeHook()
     end)
 
     LoopAsync(250, function()
